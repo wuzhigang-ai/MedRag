@@ -85,6 +85,7 @@ class KBStatusResponse(BaseModel):
     index_size: int
     lightrag_ready: bool = False
     unique_sources: list
+    upload_progress: dict = {}
 
 
 class LoginRequest(BaseModel):
@@ -216,12 +217,13 @@ async def kb_status():
         index_size=stats["faiss_index_size"],
         lightrag_ready=stats.get("lightrag_ready", False),
         unique_sources=unique,
+        upload_progress=p._upload_state,
     )
 
 
 @app.post("/api/upload")
 async def upload_pdf(file: UploadFile = File(...)):
-    """上传PDF并加入知识库"""
+    """上传PDF并在后台异步完成: 远程解析 -> 去重 -> 嵌入 -> 索引"""
     if not file.filename.endswith('.pdf'):
         raise HTTPException(400, "仅支持PDF文件")
 
@@ -229,10 +231,29 @@ async def upload_pdf(file: UploadFile = File(...)):
     content = await file.read()
     file_path.write_bytes(content)
 
+    p = get_pipeline()
+
+    async def _background_upload():
+        try:
+            content_list_path = await asyncio.to_thread(
+                p.parse_remote_pdf, str(file_path)
+            )
+            if content_list_path is None:
+                return
+            await asyncio.to_thread(
+                p.add_parsed_document, content_list_path
+            )
+        except Exception as e:
+            p._upload_state["state"] = "error"
+            p._upload_state["error"] = str(e)[:500]
+            logger.error(f"Background upload failed: {e}")
+
+    asyncio.create_task(_background_upload())
+
     return {
-        "status": "received",
+        "status": "processing",
         "file": file.filename,
-        "message": "PDF已上传，请使用远程MinerU解析后导入content_list",
+        "message": "PDF已接收，后台正在: 远程连接 -> 上传 -> MinerU解析 -> 下载 -> 去重 -> 嵌入 -> 索引",
     }
 
 
