@@ -114,6 +114,17 @@ class MedicalRAGPipeline:
         self._lightrag = None
         self._lightrag_ready = False
 
+        # Dedup
+        self._seen_hashes: set = set()
+
+        # Remote upload state
+        self._upload_state = {
+            "state": "idle",
+            "filename": None,
+            "error": None,
+            "chunks_added": 0,
+        }
+
         # Stats
         self.doc_count = 0
 
@@ -188,8 +199,7 @@ class MedicalRAGPipeline:
         self.all_chunks.clear()
         self.sources.clear()
         self.chunk_meta.clear()
-
-        seen_hashes = set()
+        self._seen_hashes.clear()
         for f in sorted(self.content_dir.glob("*_content_list.json")):
             try:
                 with open(f, encoding="utf-8") as fh:
@@ -205,9 +215,9 @@ class MedicalRAGPipeline:
                     text = item.get("text", "").strip()
                     if text and len(text) > 30:
                         h = hashlib.md5(text.encode()).hexdigest()
-                        if h in seen_hashes:
+                        if h in self._seen_hashes:
                             continue
-                        seen_hashes.add(h)
+                        self._seen_hashes.add(h)
                         self.all_chunks.append(text)
                         self.sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}]")
                         self.chunk_meta.append({
@@ -220,9 +230,9 @@ class MedicalRAGPipeline:
                     if cap and len(cap) > 20:
                         text = f"[图片] {cap}"
                         h = hashlib.md5(text.encode()).hexdigest()
-                        if h in seen_hashes:
+                        if h in self._seen_hashes:
                             continue
-                        seen_hashes.add(h)
+                        self._seen_hashes.add(h)
                         self.all_chunks.append(text)
                         self.sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}, image]")
                         self.chunk_meta.append({
@@ -235,9 +245,9 @@ class MedicalRAGPipeline:
                     text = f"[表格] {cap}\n{body}" if body else f"[表格] {cap}"
                     if len(text) > 30:
                         h = hashlib.md5(text.encode()).hexdigest()
-                        if h in seen_hashes:
+                        if h in self._seen_hashes:
                             continue
-                        seen_hashes.add(h)
+                        self._seen_hashes.add(h)
                         self.all_chunks.append(text)
                         self.sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}, table]")
                         self.chunk_meta.append({
@@ -417,7 +427,7 @@ class MedicalRAGPipeline:
             cdir = Path(content_dir or self.content_dir)
 
             inserted = 0
-            seen_hashes = set()
+            lightrag_seen_hashes = set()
             for f in sorted(cdir.glob("*_content_list.json")):
                 try:
                     with open(f, encoding="utf-8") as fh:
@@ -436,10 +446,10 @@ class MedicalRAGPipeline:
                     # Dedup: skip documents with identical content
                     full_text = "\n\n".join(text_entries)
                     h = hashlib.md5(full_text.encode()).hexdigest()
-                    if h in seen_hashes:
+                    if h in lightrag_seen_hashes:
                         logger.info(f"LightRAG skipping duplicate: {doc_name}")
                         continue
-                    seen_hashes.add(h)
+                    lightrag_seen_hashes.add(h)
 
                     logger.info(f"LightRAG inserting: {doc_name} ({len(text_entries)} entries, {len(full_text)} chars)...")
                     # Use LightRAG's ainsert directly, bypassing RAG-Anything's insert_content_list
@@ -544,8 +554,185 @@ class MedicalRAGPipeline:
             self.sources = meta["sources"]
             self.chunk_meta = meta.get("chunk_meta", [])
             self.doc_count = meta.get("doc_count", 0)
+            # Rebuild _seen_hashes from loaded chunks
+            self._seen_hashes = set()
+            for chunk in self.all_chunks:
+                self._seen_hashes.add(hashlib.md5(chunk.encode()).hexdigest())
         logger.info(f"Index loaded: {self.faiss_index.ntotal} vectors, {self.doc_count} docs")
         return True
+
+    # ═══════════════════════════════════════════════════════
+    # Remote PDF parsing + incremental indexing (T1)
+    # ═══════════════════════════════════════════════════════
+
+    def parse_remote_pdf(self, pdf_path: str) -> Optional[str]:
+        """
+        SSH to remote Linux, upload PDF, run MinerU, download content_list JSON.
+
+        Uses Existing RemoteMinerUParser class from scripts/remote_parse.py.
+        Credentials are read from env vars REMOTE_HOST/REMOTE_PORT/REMOTE_USER/REMOTE_PASSWORD.
+        Returns the local path to the downloaded content_list JSON.
+        """
+        import scripts.remote_parse as rp
+
+        # Apply env var overrides to RemoteMinerUParser's module-level constants
+        rp.REMOTE_HOST = os.getenv("REMOTE_HOST", "82.156.142.212")
+        rp.REMOTE_PORT = int(os.getenv("REMOTE_PORT", "22"))
+        rp.REMOTE_USER = os.getenv("REMOTE_USER", "root")
+        rp.REMOTE_PASSWORD = os.getenv("REMOTE_PASSWORD") or ""
+
+        self._upload_state = {
+            "state": "connecting",
+            "filename": str(pdf_path),
+            "error": None,
+            "chunks_added": 0,
+        }
+
+        remote = rp.RemoteMinerUParser()
+        try:
+            remote.connect()
+            self._upload_state["state"] = "uploading"
+            remote.ensure_dirs()
+
+            remote_pdf_path = remote.upload_pdf(str(pdf_path))
+
+            self._upload_state["state"] = "parsing"
+            remote_content_list = remote.parse_pdf(remote_pdf_path)
+            if not remote_content_list:
+                self._upload_state["state"] = "error"
+                self._upload_state["error"] = "MinerU parsing failed (no content_list.json found)"
+                return None
+
+            self._upload_state["state"] = "downloading"
+            local_name = Path(remote_content_list).name
+            local_path = self.content_dir / local_name
+            self.content_dir.mkdir(parents=True, exist_ok=True)
+            remote.sftp.get(remote_content_list, str(local_path))
+
+            self._upload_state["state"] = "done"
+            logger.info(f"PDF parsed successfully: {local_path}")
+            return str(local_path)
+
+        except Exception as e:
+            self._upload_state["state"] = "error"
+            self._upload_state["error"] = str(e)[:500]
+            logger.error(f"Remote parsing failed: {e}")
+            raise
+
+        finally:
+            remote.close()
+
+    def add_parsed_document(self, content_list_path: str) -> int:
+        """
+        Load a content_list JSON, append new text chunks to the FAISS index incrementally.
+
+        Uses self._seen_hashes for O(1) dedup — skips chunks whose MD5 hash is already
+        present. New chunks are re-encoded via BGE-M3 and added to the FAISS index.
+        Calls save_index() after adding.
+        Returns the number of new chunks added.
+        """
+        content_list_path = Path(content_list_path)
+        self._upload_state["state"] = "indexing"
+        self._upload_state["error"] = None
+        self._upload_state["chunks_added"] = 0
+
+        if not content_list_path.exists():
+            raise FileNotFoundError(f"Content list not found: {content_list_path}")
+
+        with open(content_list_path, encoding="utf-8") as fh:
+            data = json.load(fh)
+
+        doc_name = content_list_path.name.replace("_content_list.json", "")
+        new_chunks: List[str] = []
+        new_sources: List[str] = []
+        new_meta: List[Dict] = []
+
+        for item in data:
+            t = item.get("type", "text")
+            if t == "text":
+                text = item.get("text", "").strip()
+                if text and len(text) > 30:
+                    h = hashlib.md5(text.encode()).hexdigest()
+                    if h in self._seen_hashes:
+                        continue
+                    self._seen_hashes.add(h)
+                    new_chunks.append(text)
+                    new_sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}]")
+                    new_meta.append({
+                        "type": "text", "page_idx": item.get("page_idx", 0),
+                        "doc_name": doc_name,
+                    })
+            elif t == "image":
+                captions = item.get("image_caption", [])
+                cap = " ".join(captions) if captions else ""
+                if cap and len(cap) > 20:
+                    text = f"[图片] {cap}"
+                    h = hashlib.md5(text.encode()).hexdigest()
+                    if h in self._seen_hashes:
+                        continue
+                    self._seen_hashes.add(h)
+                    new_chunks.append(text)
+                    new_sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}, image]")
+                    new_meta.append({
+                        "type": "image", "page_idx": item.get("page_idx", 0),
+                        "doc_name": doc_name,
+                    })
+            elif t == "table":
+                body = item.get("table_body", "")
+                cap = " ".join(item.get("table_caption", []))
+                text = f"[表格] {cap}\n{body}" if body else f"[表格] {cap}"
+                if len(text) > 30:
+                    h = hashlib.md5(text.encode()).hexdigest()
+                    if h in self._seen_hashes:
+                        continue
+                    self._seen_hashes.add(h)
+                    new_chunks.append(text)
+                    new_sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}, table]")
+                    new_meta.append({
+                        "type": "table", "page_idx": item.get("page_idx", 0),
+                        "doc_name": doc_name,
+                    })
+
+        if not new_chunks:
+            logger.info(f"No new chunks from {doc_name} (all deduplicated)")
+            self._upload_state["state"] = "done"
+            return 0
+
+        # Classify sections for text chunks
+        for i, meta in enumerate(new_meta):
+            if meta.get("type") == "text" and "section_tag" not in meta:
+                try:
+                    tag = self._chunker.classify_section(new_chunks[i])
+                    meta["section_tag"] = tag
+                except Exception as e:
+                    logger.warning(f"Section classification failed for chunk {i}: {e}")
+                    meta["section_tag"] = "unknown"
+
+        # Append to main lists
+        self.all_chunks.extend(new_chunks)
+        self.sources.extend(new_sources)
+        self.chunk_meta.extend(new_meta)
+
+        # Add to FAISS index if it exists
+        if self.faiss_index is not None:
+            import faiss
+            logger.info(f"Encoding {len(new_chunks)} new chunks for incremental index update...")
+            new_embeddings = self.encode(new_chunks, show_progress=False)
+            self.faiss_index.add(new_embeddings.astype(np.float32))
+            logger.info(f"FAISS index: {self.faiss_index.ntotal} vectors (was {self.faiss_index.ntotal - len(new_chunks)})")
+
+        # Update doc count
+        self.doc_count = len(set(s.split(" [p.")[0] for s in self.sources))
+
+        self._upload_state["chunks_added"] = len(new_chunks)
+        self._upload_state["state"] = "done"
+        self._upload_state["filename"] = str(content_list_path)
+
+        # Persist updated index
+        self.save_index()
+
+        logger.info(f"Added {len(new_chunks)} chunks from {doc_name}")
+        return len(new_chunks)
 
 
 # ─── CLI Entry ──────────────────────────────────────────
