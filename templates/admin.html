@@ -125,6 +125,20 @@
             <input type="file" id="fileInput" accept=".pdf">
         </div>
 
+        <!-- Upload Progress Bar -->
+        <div id="uploadProgress" class="upload-progress hidden">
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-steps" id="progressSteps">
+                <span class="progress-step" data-step="uploading">上传中</span>
+                <span class="progress-step" data-step="parsing">解析中</span>
+                <span class="progress-step" data-step="indexing">索引中</span>
+                <span class="progress-step" data-step="done">完成</span>
+            </div>
+            <span class="progress-text" id="progressText"></span>
+        </div>
+
         <!-- Recent Files -->
         <div class="files-section animate-on-load">
             <div class="section-header">

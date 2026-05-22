@@ -105,13 +105,78 @@
             }
             addFileRow(file.name, 'received');
             fileInput.value = '';
-            fetchStats();
+
+            // Start polling for parser/indexing progress
+            startProgressPolling(file);
         } catch (err) {
             Toast.show('上传失败: ' + err.message, 'error');
             if (uploadStatus) {
                 uploadStatus.textContent = '上传失败';
                 uploadStatus.style.color = '#f87171';
             }
+        }
+    }
+
+    /* ── Progress Bar Polling ───────────────────────────── */
+    function startProgressPolling(file) {
+        var progressEl = document.getElementById('uploadProgress');
+        if (progressEl) progressEl.classList.remove('hidden');
+
+        var pollInterval = setInterval(async function () {
+            try {
+                var data = await API.get('/api/status');
+                var up = data.upload_progress;
+                if (!up || up.state === 'idle') return;
+
+                updateProgressUI(up);
+
+                if (up.state === 'done') {
+                    clearInterval(pollInterval);
+                    fetchStats();
+                    var filename = up.filename || file.name;
+                    addFileRow(filename, 'indexed');
+                    Toast.show('解析完成！新文献已加入知识库', 'success');
+                    setTimeout(function () {
+                        if (progressEl) progressEl.classList.add('hidden');
+                    }, 4000);
+                } else if (up.state === 'error') {
+                    clearInterval(pollInterval);
+                    Toast.show('解析失败: ' + (up.error || '未知错误'), 'error');
+                    setTimeout(function () {
+                        if (progressEl) progressEl.classList.add('hidden');
+                    }, 5000);
+                }
+            } catch (e) {
+                clearInterval(pollInterval);
+            }
+        }, 5000);
+    }
+
+    function updateProgressUI(up) {
+        var steps = document.querySelectorAll('.progress-step');
+        var text = document.getElementById('progressText');
+        var bar = document.getElementById('progressBar');
+        var states = ['uploading', 'parsing', 'indexing', 'done'];
+        var idx = states.indexOf(up.state);
+
+        steps.forEach(function (s, i) {
+            s.classList.remove('active', 'done');
+            if (i < idx) s.classList.add('done');
+            else if (i === idx) s.classList.add('active');
+        });
+
+        if (bar) {
+            var pct = Math.max(0, Math.min(100, (idx / (states.length - 1)) * 100));
+            bar.style.width = pct + '%';
+        }
+
+        if (text) {
+            var fn = up.filename || '';
+            if (up.state === 'uploading') text.textContent = '正在上传 ' + fn + '...';
+            else if (up.state === 'parsing') text.textContent = '远程解析中，约需30-90秒...';
+            else if (up.state === 'indexing') text.textContent = '正在构建索引...';
+            else if (up.state === 'done') text.textContent = '完成！新增 ' + (up.chunks_added || 0) + ' 个文本块';
+            else if (up.state === 'error') text.textContent = '错误: ' + (up.error || '');
         }
     }
 
@@ -131,7 +196,7 @@
             String(now.getHours()).padStart(2, '0') + ':' +
             String(now.getMinutes()).padStart(2, '0');
 
-        var statusHtml = status === 'received'
+        var statusHtml = (status === 'received' || status === 'indexed')
             ? '<span class="status-done">&#x2713; 已索引</span>'
             : '<span class="status-processing">&#x23F3; 处理中</span>';
 

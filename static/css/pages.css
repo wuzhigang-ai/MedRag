@@ -1313,6 +1313,17 @@
     margin-top: 8px;
 }
 
+/* ── Upload Progress Bar ───────────────────────────────── */
+.upload-progress { margin-top: 20px; padding: 20px 24px; background: var(--bg-elevated); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 32px; }
+.upload-progress.hidden { display: none; }
+.progress-bar-container { height: 6px; background: var(--bg-surface); border-radius: 3px; margin-bottom: 14px; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--medical-green)); border-radius: 3px; width: 0%; transition: width 0.5s ease; }
+.progress-steps { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.progress-step { font-size: 0.8rem; color: var(--text-muted); transition: color 0.3s; }
+.progress-step.active { color: var(--accent-glow); font-weight: 600; }
+.progress-step.done { color: var(--medical-green); }
+.progress-text { font-size: 0.8125rem; color: var(--text-secondary); }
+
 /* ── Utility: Smaller badge ─────────────────────────────── */
 .badge-sm {
     font-size: 0.75rem;
