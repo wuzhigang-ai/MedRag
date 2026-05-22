@@ -412,3 +412,50 @@ git status
 git log --oneline -5
 pytest tests/test_frontend.py -v
 ```
+
+## Review Decisions (Eng Review 2026-05-23)
+
+- D1: SSH 凭证移到 .env + 从 scripts/remote_parse.py 导入常量
+- D2: 维护 `self._seen_hashes` set 避免每次 O(n) 重建
+- C1: pipeline.py 调用 `scripts/remote_parse.RemoteMinerUParser` 而非重复实现
+- T1: 加 mock 状态变迁测试 (uploading→parsing→indexing→done)
+
+## NOT in scope
+
+| 项目 | 原因 |
+|------|------|
+| 并行多文件上传 | 比赛 Demo 单文件足够 |
+| 上传进度实时 WebSocket 推送 | 5s 轮询已满足需求 |
+| 远程服务器健康检查 | SSH 连接成功即健康信号 |
+
+## What already exists
+
+| 能力 | 位置 | 复用 |
+|------|------|------|
+| SSH/MinerU 逻辑 | `scripts/remote_parse.py:RemoteMinerUParser` | pipeline.py 导入复用 |
+| FAISS 增量索引 | `src/pipeline.py:add_document()` | 扩写为 `add_parsed_document()` |
+| `/api/upload` | `api.py:215-229` | 改为后台异步任务 |
+
+## Implementation Tasks
+
+- [ ] **T1 (P1)** — `src/pipeline.py` — parse_remote_pdf() + add_parsed_document() + _seen_hashes
+  - Files: `src/pipeline.py`, `.env`
+  - Verify: `python -c "p = MedicalRAGPipeline(); p.load_index(); print(len(p._seen_hashes))"`
+
+- [ ] **T2 (P1)** — `api.py` — async background upload + upload_progress
+  - Files: `api.py`
+  - Verify: `pytest tests/test_frontend.py -v`
+
+- [ ] **T3 (P2)** — `admin.js` + `admin.html` — progress bar + 5s poll
+  - Files: `static/js/admin.js`, `templates/admin.html`, `static/css/pages.css`
+
+- [ ] **T4 (P2)** — `tests/test_frontend.py` — upload + status + state transition tests
+  - Verify: `pytest tests/test_frontend.py -v` 8/8 pass
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR | 4 issues, 0 critical gaps |
+
+**VERDICT: ENG REVIEW CLEARED — ready to implement.**
