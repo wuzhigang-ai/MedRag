@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedASR — 医学知识，从未如此精准</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/pages.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+</head>
+<body class="page-index">
+
+    <!-- Navbar -->
+    <nav class="index-nav">
+        <div class="nav-inner">
+            <a href="/" class="nav-logo">
+                <img src="/static/img/logo.svg" alt="MedASR" width="32" height="32">
+                MedASR
+            </a>
+            <div class="nav-links">
+                <a href="/login" class="btn btn-ghost">登录</a>
+                <a href="/chat" class="btn btn-primary btn-sm">开始使用</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="index-hero">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span id="typedText"></span><span class="cursor-blink"></span>
+            </h1>
+            <p class="hero-subtitle">Agentic RAG &middot; 863实体 &middot; 证据溯源</p>
+            <a href="/chat" class="btn btn-primary btn-lg hero-cta">
+                开始探索
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <polyline points="12 5 19 12 12 19"/>
+                </svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="index-features">
+        <p class="section-label animate-on-load">核心技术</p>
+        <h2 class="section-title animate-on-load">三大引擎，精准医学检索</h2>
+        <div class="features-grid">
+            <div class="glass-card feature-card animate-on-load">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                </div>
+                <h3>MinerU 解析</h3>
+                <p>高精度PDF文献解析引擎，提取文本、表格与结构化数据，保留学术文献原始语义层次</p>
+            </div>
+            <div class="glass-card feature-card animate-on-load">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                </div>
+                <h3>PICO 分块</h3>
+                <p>基于医学PICO框架智能分块，将文献按Population、Intervention、Comparison、Outcome精准切分</p>
+            </div>
+            <div class="glass-card feature-card animate-on-load">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a4 4 0 0 0-4 4c0 2 1 4 4 6"/>
+                        <path d="M12 2a4 4 0 0 1 4 4c0 2-1 4-4 6"/>
+                        <path d="M12 12c-3 2-4 4-4 6a4 4 0 0 0 8 0c0-2-1-4-4-6"/>
+                    </svg>
+                </div>
+                <h3>Agent 推理</h3>
+                <p>多步推理Agent引擎，自动搜索、交叉验证、矛盾检测，每一步推理可溯源可解释</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonial -->
+    <section class="index-testimonial animate-on-load">
+        <blockquote>它改变了我们检索医学文献的方式</blockquote>
+        <p class="attr"><strong>李教授</strong> &middot; 心血管外科 &middot; 北京协和医院</p>
+    </section>
+
+    <!-- Footer -->
+    <footer class="index-footer">
+        <p>&copy; 2026 MedASR. Powered by MinerU + BGE-M3 + DeepSeek-V4-Pro.</p>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/landing.js"></script>
+</body>
+</html>

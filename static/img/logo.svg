@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="crossGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Outer ring -->
+  <circle cx="100" cy="100" r="88" fill="none" stroke="url(#logoGrad)" stroke-width="3" opacity="0.24"/>
+  <circle cx="100" cy="100" r="84" fill="none" stroke="url(#logoGrad)" stroke-width="1.5" opacity="0.12"/>
+  <!-- Inner circle bg -->
+  <circle cx="100" cy="100" r="72" fill="#14141f" stroke="url(#logoGrad)" stroke-width="1" opacity="0.3"/>
+  <!-- Medical cross -->
+  <g transform="translate(100,100)">
+    <rect x="-8" y="-28" width="16" height="56" rx="3" fill="url(#crossGrad)"/>
+    <rect x="-28" y="-8" width="56" height="16" rx="3" fill="url(#crossGrad)"/>
+  </g>
+  <!-- Text ring -->
+  <text font-family="'Inter', sans-serif" font-size="15" font-weight="700" fill="#94a3b8" letter-spacing="6">
+    <textPath href="#textPath">MEDASR · MEDICAL AI</textPath>
+  </text>
+  <path id="textPath" d="M 38,100 A 62,62 0 1,1 162,100 A 62,62 0 1,1 38,100" fill="none" transform="rotate(8,100,100)"/>
+</svg>

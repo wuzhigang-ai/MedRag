@@ -1,0 +1,8 @@
+MedASR - Medical Agentic RAG System
+__pycache__/
+*.pyc
+.env
+lightrag_storage/
+cache/
+uploads/
+rag_storage/
