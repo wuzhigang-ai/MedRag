@@ -13,17 +13,18 @@ from src.pipeline import MedicalRAGPipeline, PROVIDERS
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """你是循证医学专家Agent，可使用以下工具检索和分析医学文献。
+SYSTEM_PROMPT = """你是循证医学专家Agent，用工具检索医学文献后给出精准回答。
 
 ## 推理规则
-1. 收到问题后，先用 search_rag 检索
-2. 检索结果不足时，用 deep_retrieve 从多角度补充检索
-3. 涉及多篇文献时，用 cross_check 验证结论一致性
-4. 对关键文献，用 get_evidence 确认证据等级
-5. 如需具体图表数据，用 extract_chart 提取
-6. 回答按证据等级排列 (Meta/RCT > Cohort > Expert Consensus)
-7. 每个事实标注来源: [文献名, 页码, 证据等级]
-8. 使用中文，保留医学术语英文缩写"""
+1. 先用 search_rag 检索，最多2次
+2. 检索不足时用 deep_retrieve 补充（最多1次）
+3. 多文献时用 cross_check 验证，单文献可跳过
+4. 需要图表数据时用 extract_chart
+5. 检索到充分证据后立即给出最终答案，不要继续搜索
+6. 回答按证据等级排列: Meta/RCT > Cohort > Expert Consensus
+7. 每个关键事实标注来源: [文献名, 页码, 证据等级]
+8. 使用中文回答，保留医学术语英文缩写
+9. 步骤上限8步，尽量在3-5步内完成"""
 
 # ─── Tool Definitions (OpenAI function-calling format) ───
 
@@ -286,7 +287,7 @@ class MedicalAgent:
 
     # ─── Agent Loop ───────────────────────────────────
 
-    def run(self, query: str, max_steps: int = 15) -> Dict[str, Any]:
+    def run(self, query: str, max_steps: int = 8) -> Dict[str, Any]:
         """
         Agent 多步推理循环:
         1. 发送 query + tool definitions 给 LLM
@@ -301,14 +302,35 @@ class MedicalAgent:
         reasoning_trace = []
 
         for step in range(max_steps):
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                tools=TOOLS,
-                tool_choice="auto",
-                temperature=0.3,
-                max_tokens=1200,
-            )
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    tools=TOOLS,
+                    tool_choice="auto",
+                    temperature=0.3,
+                    max_tokens=800,
+                    timeout=25.0,
+                )
+            except Exception as e:
+                logger.error(f"Agent LLM call failed at step {step+1}: {e}")
+                # Try to give answer from existing trace
+                if reasoning_trace:
+                    return {
+                        "answer": f"推理在第{step+1}步时遇到API超时。已完成的检索结果如下，请基于这些信息判断。",
+                        "reasoning_trace": reasoning_trace,
+                        "steps": step + 1,
+                        "model": self.model,
+                        "sources": [],
+                        "truncated": True,
+                    }
+                return {
+                    "answer": f"推理启动失败: {str(e)[:200]}",
+                    "reasoning_trace": [],
+                    "steps": 0,
+                    "model": self.model,
+                    "sources": [],
+                }
 
             msg = response.choices[0].message
 

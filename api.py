@@ -164,7 +164,12 @@ async def agent_query(req: QueryRequest):
     p = get_pipeline()
     agent = MedicalAgent(p)
     try:
-        result = await asyncio.to_thread(agent.run, req.question)
+        result = await asyncio.wait_for(
+            asyncio.to_thread(agent.run, req.question, 8),
+            timeout=120.0,
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(504, "Agent推理超时（超过120秒），请简化问题重试")
     except Exception as e:
         raise HTTPException(500, f"Agent推理失败: {str(e)[:200]}")
     return {
@@ -189,7 +194,7 @@ async def agent_stream(question: str):
             yield f"data: {json.dumps({'type': 'start', 'message': '开始分析...', 'ts': t0.isoformat()})}\n\n"
             await asyncio.sleep(0.1)
 
-            result = agent.run(question)
+            result = agent.run(question, max_steps=8)
 
             for step in result.get("reasoning_trace", []):
                 elapsed = (datetime.now() - t0).total_seconds()
