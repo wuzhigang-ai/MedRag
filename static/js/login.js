@@ -133,5 +133,9 @@
         } else if (user) {
             window.location.href = '/chat';
         }
+    } else if (document.referrer && document.referrer.indexOf('/admin') !== -1) {
+        errorEl.textContent = '请先登录后再访问管理后台';
+    } else if (document.referrer && document.referrer.indexOf('/chat') !== -1) {
+        errorEl.textContent = '请先登录后再使用问答功能';
     }
 })();
