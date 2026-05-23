@@ -34,15 +34,25 @@
         <!-- Chat Header -->
         <div class="chat-header">
             <span class="current-title" id="currentTitle">新对话</span>
-            <a href="/admin" class="btn btn-ghost btn-sm chat-admin-link">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="7" height="9"/>
-                    <rect x="14" y="3" width="7" height="5"/>
-                    <rect x="14" y="12" width="7" height="9"/>
-                    <rect x="3" y="16" width="7" height="5"/>
-                </svg>
-                管理后台
-            </a>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <a href="/admin" class="btn btn-ghost btn-sm chat-admin-link">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="9"/>
+                        <rect x="14" y="3" width="7" height="5"/>
+                        <rect x="14" y="12" width="7" height="9"/>
+                        <rect x="3" y="16" width="7" height="5"/>
+                    </svg>
+                    管理后台
+                </a>
+                <a href="#" class="btn btn-ghost btn-sm chat-admin-link" id="chatLogoutBtn" style="color:var(--text-muted);">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    退出
+                </a>
+            </div>
         </div>
 
         <!-- Message Area -->

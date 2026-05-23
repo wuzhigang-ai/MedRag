@@ -743,6 +743,16 @@
         });
     }
 
+    /* ── Logout ──────────────────────────────────────────── */
+    var logoutBtn = document.getElementById('chatLogoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            Auth.clearSession();
+            window.location.href = '/login';
+        });
+    }
+
     /* ── Init ───────────────────────────────────────────── */
     renderConvList();
     showEmptyState();
