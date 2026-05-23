@@ -13,18 +13,15 @@ from src.pipeline import MedicalRAGPipeline, PROVIDERS
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """你是循证医学专家Agent，用工具检索医学文献后给出精准回答。
+SYSTEM_PROMPT = """你是医学文献检索助手。用工具检索后给出精准回答。
 
-## 推理规则
-1. 先用 search_rag 检索，最多2次
-2. 检索不足时用 deep_retrieve 补充（最多1次）
-3. 多文献时用 cross_check 验证，单文献可跳过
-4. 需要图表数据时用 extract_chart
-5. 检索到充分证据后立即给出最终答案，不要继续搜索
-6. 回答按证据等级排列: Meta/RCT > Cohort > Expert Consensus
-7. 每个关键事实标注来源: [文献名, 页码, 证据等级]
-8. 使用中文回答，保留医学术语英文缩写
-9. 步骤上限8步，尽量在3-5步内完成"""
+## 规则
+1. search_rag 最多调用2次，deep_retrieve 最多1次
+2. 3次检索后必须给出最终答案，不得继续搜索
+3. 若精确图表/表格数据不在文本中，报告找到的相关文字描述
+4. 答案按证据等级排列，标注来源[文献名, 页码]
+5. 中文回答，保留医学术语英文缩写
+6. 简洁直接，避免冗长"""
 
 # ─── Tool Definitions (OpenAI function-calling format) ───
 
@@ -287,7 +284,7 @@ class MedicalAgent:
 
     # ─── Agent Loop ───────────────────────────────────
 
-    def run(self, query: str, max_steps: int = 8) -> Dict[str, Any]:
+    def run(self, query: str, max_steps: int = 6) -> Dict[str, Any]:
         """
         Agent 多步推理循环:
         1. 发送 query + tool definitions 给 LLM
@@ -300,17 +297,20 @@ class MedicalAgent:
             {"role": "user", "content": query},
         ]
         reasoning_trace = []
+        search_count = 0  # Track total search_rag + deep_retrieve calls
 
         for step in range(max_steps):
+            # After 3 searches, force answer generation
+            force_answer = search_count >= 3
             try:
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
-                    tools=TOOLS,
-                    tool_choice="auto",
+                    tools=[] if force_answer else TOOLS,
+                    tool_choice="none" if force_answer else "auto",
                     temperature=0.3,
-                    max_tokens=800,
-                    timeout=25.0,
+                    max_tokens=600,
+                    timeout=20.0,
                 )
             except Exception as e:
                 logger.error(f"Agent LLM call failed at step {step+1}: {e}")
@@ -338,6 +338,8 @@ class MedicalAgent:
             if msg.tool_calls:
                 for tc in msg.tool_calls:
                     tool_name = tc.function.name
+                    if tool_name in ("search_rag", "deep_retrieve"):
+                        search_count += 1
                     tool_args = json.loads(tc.function.arguments)
 
                     logger.info(f"Agent step {step+1}: {tool_name}({tool_args})")
