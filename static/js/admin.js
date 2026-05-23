@@ -174,8 +174,13 @@
             var fn = up.filename || '';
             if (up.state === 'uploading') text.textContent = '正在上传 ' + fn + '...';
             else if (up.state === 'parsing') text.textContent = '远程解析中，约需30-90秒...';
-            else if (up.state === 'indexing') text.textContent = '正在构建索引...';
-            else if (up.state === 'done') text.textContent = '完成！新增 ' + (up.chunks_added || 0) + ' 个文本块';
+            else if (up.state === 'indexing') {
+                text.textContent = '正在构建索引...';
+                startGraphPolling();
+            } else if (up.state === 'done') {
+                text.textContent = '完成！新增 ' + (up.chunks_added || 0) + ' 个文本块';
+                stopGraphPolling();
+            }
             else if (up.state === 'error') text.textContent = '错误: ' + (up.error || '');
         }
     }
@@ -236,9 +241,128 @@
         }
     }
 
+    /* ── Graph Modal ──────────────────────────────────── */
+    var graphModal = document.getElementById('graphModal');
+    var graphCanvas = document.getElementById('graphCanvas');
+    var graph3d = null;
+    var graphPollInterval = null;
+
+    async function openGraphModal() {
+        graphModal.classList.remove('hidden');
+        var loader = document.getElementById('graphLoader');
+        if (loader) loader.style.display = 'flex';
+
+        if (!graph3d) {
+            try {
+                var data = await API.get('/api/graph');
+                if (loader) loader.style.display = 'none';
+
+                if (data.error) {
+                    document.getElementById('graphStats').textContent = '知识图谱数据不可用';
+                    return;
+                }
+
+                // Wait for Graph3D module to load
+                var attempts = 0;
+                while (!window.Graph3D && attempts < 50) {
+                    await new Promise(function (r) { setTimeout(r, 100); });
+                    attempts++;
+                }
+                if (!window.Graph3D) {
+                    document.getElementById('graphStats').textContent = '3D 渲染模块加载失败';
+                    return;
+                }
+
+                graph3d = new Graph3D(graphCanvas);
+                graph3d.loadGraph(data);
+
+                document.getElementById('graphStats').textContent =
+                    '节点: ' + data.stats.total_nodes +
+                    ' | 边: ' + data.stats.total_edges +
+                    ' | 文献: ' + data.stats.total_docs;
+
+                renderGraphLegend(data.groups);
+            } catch (err) {
+                if (loader) loader.style.display = 'none';
+                document.getElementById('graphStats').textContent =
+                    '加载失败: ' + (err.message || '未知错误');
+                Toast.show('图谱加载失败', 'error');
+            }
+        }
+    }
+
+    function closeGraphModal() {
+        graphModal.classList.add('hidden');
+        stopGraphPolling();
+    }
+
+    function renderGraphLegend(groups) {
+        var colors = ['#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6',
+                       '#ec4899','#06b6d4','#f97316','#84cc16','#6366f1'];
+        var html = '';
+        (groups || []).forEach(function (g, i) {
+            html += '<span style="color:' + colors[i % colors.length] + '">● ' + g + '</span>';
+        });
+        document.getElementById('graphLegend').innerHTML = html || '<span>暂无数据</span>';
+    }
+
+    async function updateGraphBtnStats() {
+        try {
+            var data = await API.get('/api/graph');
+            var el = document.getElementById('graphBtnStats');
+            if (el && data.stats) {
+                el.textContent = '(' + data.stats.total_nodes + '实体 · ' +
+                    data.stats.total_edges + '关系)';
+            }
+        } catch (e) { /* silent */ }
+    }
+
+    function startGraphPolling() {
+        stopGraphPolling();
+        graphPollInterval = setInterval(async function () {
+            if (!graph3d || graphModal.classList.contains('hidden')) return;
+            try {
+                var delta = await API.get('/api/graph/delta');
+                if (delta.new_node_count > 0) {
+                    var badge = document.getElementById('graphDeltaBadge');
+                    if (badge) {
+                        badge.style.display = '';
+                        badge.textContent = '+ ' + delta.new_node_count +
+                            ' 节点, + ' + delta.new_edge_count + ' 关系';
+                    }
+                    if (graph3d) {
+                        graph3d.addNodesWithAnimation(delta.new_nodes);
+                        graph3d.addEdgesWithAnimation(delta.new_edges);
+                    }
+                    updateGraphBtnStats();
+                    // Update header stats
+                    var s = graph3d.getStats();
+                    document.getElementById('graphStats').textContent =
+                        '节点: ' + s.nodes + ' | 边: ' + s.edges;
+                }
+            } catch (e) { /* silent */ }
+        }, 3000);
+    }
+
+    function stopGraphPolling() {
+        if (graphPollInterval) {
+            clearInterval(graphPollInterval);
+            graphPollInterval = null;
+        }
+    }
+
+    document.getElementById('openGraphBtn').addEventListener('click', function () {
+        openGraphModal();
+    });
+
+    document.getElementById('closeGraphBtn').addEventListener('click', function () {
+        closeGraphModal();
+    });
+
     /* ── Periodic Refresh ───────────────────────────────── */
     fetchStats();
     fetchFiles();
+    updateGraphBtnStats();
     setInterval(fetchStats, 30000);
 
     /* ── Init Animations ────────────────────────────────── */

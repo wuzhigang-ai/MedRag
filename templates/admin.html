@@ -10,6 +10,14 @@
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/pages.css">
     <link rel="stylesheet" href="/static/css/animations.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 <body class="page-admin">
 
@@ -110,6 +118,20 @@
             </div>
         </div>
 
+        <!-- Graph Entry -->
+        <div class="graph-entry animate-on-load">
+            <button id="openGraphBtn" class="btn btn-secondary">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 2v4"/><path d="M12 18v4"/>
+                    <path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/>
+                    <path d="M2 12h4"/><path d="M18 12h4"/>
+                    <path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/>
+                </svg>
+                查看知识图谱 <span id="graphBtnStats"></span>
+            </button>
+        </div>
+
         <!-- Upload Zone -->
         <div class="upload-zone animate-on-load" id="uploadZone">
             <svg class="upload-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -164,7 +186,26 @@
         </div>
     </main>
 
+    <!-- Knowledge Graph Modal -->
+    <div id="graphModal" class="graph-modal hidden">
+        <div class="graph-modal-header">
+            <span id="graphStats">加载中...</span>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span id="graphDeltaBadge" style="display:none;color:var(--accent-glow);font-size:13px;"></span>
+                <button id="closeGraphBtn" class="btn btn-ghost btn-sm">关闭</button>
+            </div>
+        </div>
+        <div id="graphCanvas">
+            <div id="graphLoader" class="graph-loader">
+                <div class="graph-spinner"></div>
+                <p>正在加载知识图谱...</p>
+            </div>
+        </div>
+        <div id="graphLegend" class="graph-legend"></div>
+    </div>
+
     <script src="/static/js/api.js"></script>
+    <script type="module" src="/static/js/graph.js"></script>
     <script src="/static/js/admin.js"></script>
 </body>
 </html>
