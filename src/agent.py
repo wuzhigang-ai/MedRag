@@ -151,28 +151,58 @@ class MedicalAgent:
         topic = args.get("topic", "")
         if not isinstance(topic, str) or not topic.strip():
             return json.dumps({"error": "cross_check requires a non-empty string topic"}, ensure_ascii=False)
-        results = self.pipeline._faiss_retrieve(topic, top_k=15)
+        results = self.pipeline._faiss_retrieve(topic, top_k=20)
         docs = {}
         for r in results:
             doc = r["source"].split(" [p.")[0]
             if doc not in docs:
-                docs[doc] = []
-            docs[doc].append(r["text"][:200])
+                docs[doc] = {"texts": [], "evidence_hint": None}
+            docs[doc]["texts"].append(r["text"][:300])
+            # Detect evidence level from text keywords
+            if docs[doc]["evidence_hint"] is None:
+                docs[doc]["evidence_hint"] = self._infer_evidence_level(r["text"])
 
         if len(docs) < 2:
             return json.dumps({
                 "topic": topic,
                 "documents_found": list(docs.keys()),
-                "assessment": "文献不足（<2篇），无法进行一致性评估。建议用search_rag扩大检索范围。",
+                "assessment": "文献不足（<2篇），无法进行一致性评估",
+                "suggestion": "用search_rag扩大检索范围",
             }, ensure_ascii=False)
+
+        # Build evidence-graded summary
+        graded = {}
+        for doc_name, info in docs.items():
+            level = info["evidence_hint"] or "unknown"
+            if level not in graded:
+                graded[level] = []
+            graded[level].append(doc_name)
 
         return json.dumps({
             "topic": topic,
             "documents_compared": list(docs.keys()),
             "document_count": len(docs),
-            "sample_findings": {doc: texts[:2] for doc, texts in list(docs.items())[:5]},
-            "note": "请基于以上文献片段进行一致性判断。关注: 结论方向是否一致？效应量是否在同一方向？推荐等级是否冲突？",
+            "evidence_levels": graded,
+            "evidence_hierarchy": "Meta-analysis > RCT > Cohort > Case-control > Case-series > Expert-opinion",
+            "sample_findings": {doc: info["texts"][:2] for doc, info in list(docs.items())[:5]},
+            "consistency_hint": "比较各文献结论方向是否一致、效应量方向是否相同、证据等级是否有冲突。高等级证据应优先采纳。",
         }, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def _infer_evidence_level(text: str) -> str | None:
+        """从文本关键词推断证据等级"""
+        tl = text.lower()
+        if any(k in tl for k in ["meta-analysis", "meta分析", "systematic review", "系统综述", "pooled analysis"]):
+            return "Meta-analysis"
+        if any(k in tl for k in ["randomized", "随机对照", "rct", "randomised"]):
+            return "RCT"
+        if any(k in tl for k in ["cohort", "队列", "prospective", "前瞻性", "retrospective", "回顾性"]):
+            return "Cohort"
+        if any(k in tl for k in ["case-control", "病例对照", "case control"]):
+            return "Case-control"
+        if any(k in tl for k in ["case report", "case series", "病例报告", "病例系列"]):
+            return "Case-series"
+        return None
 
     def _tool_get_evidence(self, args: dict) -> str:
         doc_name = args["doc_name"]
