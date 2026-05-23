@@ -6,3 +6,4 @@ lightrag_storage/
 cache/
 uploads/
 rag_storage/
+.gstack/
