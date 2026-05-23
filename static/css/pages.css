@@ -903,6 +903,46 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* ── Feedback Row ──────────────────────────────────── */
+.feedback-row {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.feedback-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-right: 4px;
+}
+.feedback-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.feedback-btn:hover {
+    border-color: rgba(255,255,255,0.2);
+    color: var(--text-secondary);
+}
+.feedback-btn.helpful:hover { border-color: rgba(16,185,129,0.4); color: var(--medical-green); }
+.feedback-btn.not-helpful:hover { border-color: rgba(239,68,68,0.4); color: #f87171; }
+.feedback-done {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 /* ── Agent Workbench (Live Tool Calls) ────────────────── */
 .agent-workbench {
     margin: 12px 0;

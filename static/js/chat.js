@@ -134,6 +134,13 @@
                 var srcDiv = buildSourceCitations(msg.sources);
                 bubbleDiv.appendChild(srcDiv);
             }
+
+            // Feedback buttons
+            if (!msg._feedbackRendered) {
+                msg._feedbackRendered = true;
+                var fbDiv = buildFeedbackButtons(msg);
+                bubbleDiv.appendChild(fbDiv);
+            }
         } else if (msg.role === 'agent' && msg.thinking) {
             // Still thinking - just show spinner
             bubbleDiv.innerHTML = '';
@@ -208,6 +215,52 @@
             tag.innerHTML = svgIcon('pin') + ' ' + escapeHtml(srcName) +
                 ' <span class="source-badge">' + escapeHtml(srcType) + '</span>';
             container.appendChild(tag);
+        });
+
+        return container;
+    }
+
+    /* ── Feedback Buttons ───────────────────────────────── */
+    function buildFeedbackButtons(msg) {
+        var container = document.createElement('div');
+        container.className = 'feedback-row';
+
+        if (msg._feedbackGiven) {
+            container.innerHTML = '<span class="feedback-done">' +
+                (msg._feedbackRating === 'helpful' ? '✓ 已标记为有帮助' : '已标记为无帮助') +
+                '</span>';
+            return container;
+        }
+
+        container.innerHTML =
+            '<span class="feedback-label">这个回答有帮助吗？</span>' +
+            '<button class="feedback-btn helpful" data-rating="helpful">' +
+                '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>' +
+                ' 有帮助' +
+            '</button>' +
+            '<button class="feedback-btn not-helpful" data-rating="not_helpful">' +
+                '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10zM17 2h2.67a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H17"/></svg>' +
+                ' 无帮助' +
+            '</button>';
+
+        container.querySelectorAll('.feedback-btn').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                var rating = btn.getAttribute('data-rating');
+                msg._feedbackGiven = true;
+                msg._feedbackRating = rating;
+                try {
+                    var user = Auth.getUser();
+                    await API.post('/api/feedback', {
+                        question: (activeConvId && conversations ? (conversations.find(function(c){return c.id===activeConvId}) || {}).preview || '' : ''),
+                        answer: (msg.answer || '').substring(0, 300),
+                        rating: rating,
+                        username: user ? user.username : 'anonymous'
+                    });
+                } catch (e) { /* silent */ }
+                // Re-render
+                var newFb = buildFeedbackButtons(msg);
+                container.parentNode.replaceChild(newFb, container);
+            });
         });
 
         return container;

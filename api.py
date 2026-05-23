@@ -374,6 +374,48 @@ templates_dir = os.path.join(os.path.dirname(__file__), "templates")
 os.makedirs(templates_dir, exist_ok=True)
 
 
+# ─── User Feedback ────────────────────────────────────
+
+FEEDBACK_STORE: list = []  # [{question, answer, rating, timestamp, username}]
+
+
+class FeedbackRequest(BaseModel):
+    question: str
+    answer: str
+    rating: str  # "helpful" or "not_helpful"
+    username: str = "anonymous"
+
+
+@app.post("/api/feedback")
+async def submit_feedback(req: FeedbackRequest):
+    FEEDBACK_STORE.append({
+        "question": req.question[:200],
+        "answer": req.answer[:300],
+        "rating": req.rating,
+        "username": req.username,
+        "timestamp": datetime.now().isoformat(),
+    })
+    # Keep only last 500 entries
+    if len(FEEDBACK_STORE) > 500:
+        FEEDBACK_STORE.pop(0)
+    return {"status": "ok", "total": len(FEEDBACK_STORE)}
+
+
+@app.get("/api/feedback/stats")
+async def get_feedback_stats():
+    total = len(FEEDBACK_STORE)
+    if total == 0:
+        return {"total": 0, "helpful": 0, "not_helpful": 0, "rate": 0}
+    helpful = sum(1 for f in FEEDBACK_STORE if f["rating"] == "helpful")
+    return {
+        "total": total,
+        "helpful": helpful,
+        "not_helpful": total - helpful,
+        "rate": round(helpful / total * 100, 1) if total > 0 else 0,
+        "recent": FEEDBACK_STORE[-10:],
+    }
+
+
 @app.get("/")
 async def index_page():
     return FileResponse(os.path.join(templates_dir, "index.html"))
