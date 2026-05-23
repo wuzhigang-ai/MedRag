@@ -48,7 +48,9 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/login)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/chat)",
       "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000__TRACKED_VAR__)",
-      "Bash(taskkill //F //PID 23240)"
+      "Bash(taskkill //F //PID 23240)",
+      "WebFetch(domain:medbench.opencompass.org.cn)",
+      "Bash(git reset *)"
     ]
   }
 }
