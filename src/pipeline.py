@@ -232,7 +232,15 @@ class MedicalRAGPipeline:
                     captions = item.get("image_caption", [])
                     cap = " ".join(captions) if captions else ""
                     if cap and len(cap) > 20:
-                        text = f"[图片] {cap}"
+                        # Try VLM analysis for clinical charts
+                        img_path = item.get("img_path", "")
+                        vlm_result = None
+                        if img_path:
+                            vlm_result = self._analyze_chart_image(img_path, cap)
+                        if vlm_result:
+                            text = f"[图表-VLM分析] 类型:{vlm_result.get('chart_type','?')}\n{vlm_result.get('summary','')}\n{vlm_result.get('description','')}"
+                        else:
+                            text = f"[图片] {cap}"
                         h = hashlib.md5(text.encode()).hexdigest()
                         if h in self._seen_hashes:
                             continue
@@ -241,7 +249,7 @@ class MedicalRAGPipeline:
                         self.sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}, image]")
                         self.chunk_meta.append({
                             "type": "image", "page_idx": item.get("page_idx", 0),
-                            "doc_name": doc_name,
+                            "doc_name": doc_name, "vlm_analyzed": bool(vlm_result),
                         })
                 elif t == "table":
                     body = item.get("table_body", "")
@@ -272,6 +280,58 @@ class MedicalRAGPipeline:
         self.doc_count = len(set(s.split(" [p.")[0] for s in self.sources))
         logger.info(f"FAISS: loaded {len(self.all_chunks)} chunks from {self.doc_count} docs")
         return len(self.all_chunks)
+
+    def _analyze_chart_image(self, img_path: str, caption: str) -> dict | None:
+        """用 Moonshot VLM 分析医学图表，返回结构化结果。失败返回 None"""
+        import base64
+        from pathlib import Path
+        if not Path(img_path).exists():
+            return None
+        try:
+            b64 = base64.b64encode(Path(img_path).read_bytes()).decode()
+        except Exception:
+            return None
+
+        prompt = f"""分析这张医学文献图表。标题: {caption}
+判断类型并输出JSON:
+- baseline_table: 基线特征表
+- outcome_table: 结局指标表
+- forest_plot: 森林图/亚组分析
+- km_curve: Kaplan-Meier生存曲线
+- flowchart: 流程图
+- other: 其他
+
+输出格式: {{"chart_type":"类型", "summary":"一句话总结关键医学发现（中文）", "description":"详细描述（50-150字中文）"}}"""
+
+        try:
+            client = self.clients.get("moonshot_vision")
+            if not client:
+                return None
+            model = PROVIDERS["moonshot_vision"]["model"]
+            resp = client.chat.completions.create(
+                model=model,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {
+                            "url": f"data:image/jpeg;base64,{b64}"
+                        }},
+                    ],
+                }],
+                temperature=0.3, max_tokens=400,
+            )
+            raw = resp.choices[0].message.content.strip()
+            # Parse JSON from response
+            if "```json" in raw:
+                raw = raw[raw.find("```json") + 7:]
+            if "```" in raw:
+                raw = raw[:raw.rfind("```")]
+            import json
+            return json.loads(raw.strip())
+        except Exception as e:
+            logger.warning(f"VLM chart analysis failed for {img_path}: {e}")
+            return None
 
     def _build_faiss_index(self, force: bool = False):
         if not self.all_chunks:
@@ -670,7 +730,14 @@ class MedicalRAGPipeline:
                 captions = item.get("image_caption", [])
                 cap = " ".join(captions) if captions else ""
                 if cap and len(cap) > 20:
-                    text = f"[图片] {cap}"
+                    img_path = item.get("img_path", "")
+                    vlm_result = None
+                    if img_path:
+                        vlm_result = self._analyze_chart_image(img_path, cap)
+                    if vlm_result:
+                        text = f"[图表-VLM分析] 类型:{vlm_result.get('chart_type','?')}\n{vlm_result.get('summary','')}\n{vlm_result.get('description','')}"
+                    else:
+                        text = f"[图片] {cap}"
                     h = hashlib.md5(text.encode()).hexdigest()
                     if h in self._seen_hashes:
                         continue
@@ -679,7 +746,7 @@ class MedicalRAGPipeline:
                     new_sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}, image]")
                     new_meta.append({
                         "type": "image", "page_idx": item.get("page_idx", 0),
-                        "doc_name": doc_name,
+                        "doc_name": doc_name, "vlm_analyzed": bool(vlm_result),
                     })
             elif t == "table":
                 body = item.get("table_body", "")
