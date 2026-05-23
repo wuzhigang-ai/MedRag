@@ -257,6 +257,31 @@ async def upload_pdf(file: UploadFile = File(...)):
     }
 
 
+@app.get("/api/files")
+async def list_files():
+    """列出已上传和已解析的文件"""
+    files = []
+    if UPLOAD_DIR.exists():
+        for f in sorted(UPLOAD_DIR.glob("*.pdf"), key=lambda x: x.stat().st_mtime, reverse=True):
+            files.append({
+                "name": f.name,
+                "size_kb": round(f.stat().st_size / 1024, 1),
+                "uploaded_at": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+                "status": "uploaded",
+            })
+    # Also check parsed files
+    p = get_pipeline()
+    parsed_names = set()
+    for s in p.sources:
+        doc = s.split(" [p.")[0] if " [p." in s else ""
+        if doc:
+            parsed_names.add(doc)
+    for f in files:
+        if f["name"].replace(".pdf", "") in parsed_names or any(f["name"].replace(".pdf", "") in pn for pn in parsed_names):
+            f["status"] = "indexed"
+    return {"files": files}
+
+
 @app.post("/api/batch-import")
 async def batch_import():
     """批量导入已解析文档"""

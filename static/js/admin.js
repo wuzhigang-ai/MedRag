@@ -222,8 +222,23 @@
         });
     }
 
+    /* ── Fetch File List ─────────────────────────────────── */
+    async function fetchFiles() {
+        try {
+            var data = await API.get('/api/files');
+            if (data.files && data.files.length > 0) {
+                data.files.forEach(function (f) {
+                    addFileRow(f.name, f.status);
+                });
+            }
+        } catch (e) {
+            console.error('Failed to fetch files:', e);
+        }
+    }
+
     /* ── Periodic Refresh ───────────────────────────────── */
     fetchStats();
+    fetchFiles();
     setInterval(fetchStats, 30000);
 
     /* ── Init Animations ────────────────────────────────── */
