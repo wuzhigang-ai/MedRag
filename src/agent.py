@@ -16,12 +16,12 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = """你是医学文献检索助手。用工具检索后给出精准回答。
 
 ## 规则
-1. search_rag 最多调用2次，deep_retrieve 最多1次
-2. 3次检索后必须给出最终答案，不得继续搜索
-3. 若精确图表/表格数据不在文本中，报告找到的相关文字描述
-4. 答案按证据等级排列，标注来源[文献名, 页码]
-5. 中文回答，保留医学术语英文缩写
-6. 简洁直接，避免冗长"""
+1. 先用list_docs确认知识库有哪些文献(最多1次)
+2. search_rag最多调用2次，查询中加入文献名称关键词提高精度
+3. 2次检索后必须给出最终答案，不得继续搜索
+4. 若图表/表格数据不在文本中，如实报告找到的相关描述
+5. 答案标注来源[文献名, 页码]，中文回答，简洁直接
+6. 对提取类问题，直接搜索并报告结果，不要反问用户"""
 
 # ─── Tool Definitions (OpenAI function-calling format) ───
 
@@ -369,6 +369,12 @@ class MedicalAgent:
 
             # LLM gave final answer
             elif msg.content:
+                # Guard: strip tool-call artifacts from answer
+                answer_text = msg.content
+                if "<｜" in answer_text or "tool_call" in answer_text:
+                    logger.warning(f"Answer contained tool artifacts, retrying without tools")
+                    messages.append({"role": "user", "content": "请基于已有检索结果直接给出最终答案，不要调用工具。"})
+                    continue
                 logger.info(f"Agent final answer at step {step+1}")
                 # Extract sources from last search_rag call results
                 sources = []
@@ -384,11 +390,11 @@ class MedicalAgent:
                             pass
                         break
                 return {
-                    "answer": msg.content,
+                    "answer": answer_text,
                     "reasoning_trace": reasoning_trace,
                     "steps": step + 1,
                     "model": self.model,
-                    "sources": sources[:5],  # top-5 sources
+                    "sources": sources[:5],
                 }
 
             # Safety: empty response
