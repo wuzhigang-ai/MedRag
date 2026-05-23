@@ -13,14 +13,14 @@ from src.pipeline import MedicalRAGPipeline, PROVIDERS
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """你是医学文献检索助手，用工具检索知识库后给出精准回答。
+SYSTEM_PROMPT = """你是循证医学助手，用工具检索知识库后回答。
 
 ## 规则
-1. 必须先用list_docs或search_rag检索知识库，不得直接回答
-2. search_rag最多2次，deep_retrieve最多1次
-3. 检索后必须给出最终答案，标注来源[文献名, 页码]
-4. 若数据不在知识库中，如实说"知识库中未找到"
-5. 中文回答，简洁直接"""
+1. 任何问题都必须先调用search_rag或list_docs检索
+2. search_rag检索1-2次即可，检索结果已包含文献名(doc)、章节(section)、证据等级(evidence_level)
+3. 检索结果充分后立即回答，不要反复搜索
+4. 答案标注来源: [文献名, 页码, 证据等级]
+5. 若知识库无相关数据，如实说明"""
 
 # ─── Tool Definitions (OpenAI function-calling format) ───
 
@@ -136,11 +136,19 @@ class MedicalAgent:
             return "未找到相关文献内容。"
         items = []
         for i, r in enumerate(results):
+            meta = r.get("meta", {})
+            # Infer evidence level from section_tag or text keywords
+            evidence = self._infer_evidence_level(r["text"])
+            section = meta.get("section_tag", "")
+            doc = r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"]
             items.append({
                 "ref": i + 1,
                 "source": r["source"],
+                "doc": doc,
+                "section": section,
+                "evidence_level": evidence,
                 "score": round(r["score"], 3),
-                "text": r["text"][:400],
+                "text": r["text"][:500],
             })
         return json.dumps(items, ensure_ascii=False, indent=2)
 

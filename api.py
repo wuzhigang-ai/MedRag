@@ -159,9 +159,36 @@ async def query(req: QueryRequest):
 
 @app.post("/api/agent")
 async def agent_query(req: QueryRequest):
-    """Agent endpoint: multi-hop reasoning with MedicalAgent."""
+    """Smart-routing Agent endpoint: simple extraction → FAISS, complex reasoning → Agent."""
     import asyncio
     p = get_pipeline()
+
+    # Smart routing: detect if this is a simple extraction question
+    extraction_keywords = ["提取", "列出", "表格", "Table", "数据", "数值", "基线",
+                           "多少", "什么是", "定义", "诊断标准", "适应证", "禁忌证"]
+    is_extraction = any(kw in req.question for kw in extraction_keywords)
+    is_complex = any(kw in req.question for kw in ["比较", "一致性", "矛盾", "综合",
+                       "跨文献", "对比", "差异", "多个", "不同文献", "evidence", "PICO"])
+    # Complex reasoning always goes to Agent; simple extraction uses FAISS for speed
+    use_faiss = is_extraction and not is_complex
+
+    if use_faiss:
+        try:
+            result = await asyncio.to_thread(p.answer_with_sources, req.question, req.top_k)
+            return {
+                "question": req.question,
+                "answer": result["answer"],
+                "reasoning_trace": [],
+                "steps": 0,
+                "model": "FAISS-routed",
+                "sources": result.get("sources", []),
+                "engine": result.get("engine", "faiss"),
+                "timestamp": datetime.now().isoformat(),
+            }
+        except Exception as e:
+            logger.warning(f"FAISS routing failed, falling back to Agent: {e}")
+
+    # Agent for complex reasoning
     agent = MedicalAgent(p)
     try:
         result = await asyncio.wait_for(
