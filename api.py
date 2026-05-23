@@ -221,6 +221,21 @@ async def kb_status():
     )
 
 
+@app.get("/api/graph")
+async def get_graph():
+    """返回完整知识图谱数据"""
+    p = get_pipeline()
+    if not p.graph_manager._built:
+        p.graph_manager.build()
+    return p.graph_manager.get_graph()
+
+
+@app.get("/api/graph/delta")
+async def get_graph_delta():
+    """返回自上次 snapshot() 以来的新增节点和边"""
+    return get_pipeline().graph_manager.get_delta()
+
+
 @app.post("/api/upload")
 async def upload_pdf(file: UploadFile = File(...)):
     """上传PDF并在后台异步完成: 远程解析 -> 去重 -> 嵌入 -> 索引"""
@@ -234,6 +249,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     p = get_pipeline()
 
     async def _background_upload():
+        p.graph_manager.snapshot()
         try:
             content_list_path = await asyncio.to_thread(
                 p.parse_remote_pdf, str(file_path)
@@ -247,6 +263,8 @@ async def upload_pdf(file: UploadFile = File(...)):
             p._upload_state["state"] = "error"
             p._upload_state["error"] = str(e)[:500]
             logger.error(f"Background upload failed: {e}")
+        finally:
+            p.graph_manager.build()
 
     asyncio.create_task(_background_upload())
 

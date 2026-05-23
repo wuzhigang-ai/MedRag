@@ -114,6 +114,10 @@ class MedicalRAGPipeline:
         self._lightrag = None
         self._lightrag_ready = False
 
+        # ─── Knowledge Graph ───
+        from src.graph import GraphManager
+        self.graph_manager = GraphManager()
+
         # Dedup
         self._seen_hashes: set = set()
 
