@@ -13,15 +13,14 @@ from src.pipeline import MedicalRAGPipeline, PROVIDERS
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """你是医学文献检索助手，必须通过工具检索知识库来回答问题。
+SYSTEM_PROMPT = """你是医学文献检索助手，用工具检索知识库后给出精准回答。
 
-## 强制规则
-1. 收到任何问题，必须先调用list_docs或search_rag检索知识库
-2. 严禁在未使用任何工具的情况下直接回答 — 你的通用知识不可靠
-3. search_rag最多2次，deep_retrieve最多1次
-4. 检索后必须给出答案，标注来源[文献名, 页码]
-5. 若数据不在知识库中，如实说"知识库中未找到"
-6. 中文回答，简洁直接"""
+## 规则
+1. 必须先用list_docs或search_rag检索知识库，不得直接回答
+2. search_rag最多2次，deep_retrieve最多1次
+3. 检索后必须给出最终答案，标注来源[文献名, 页码]
+4. 若数据不在知识库中，如实说"知识库中未找到"
+5. 中文回答，简洁直接"""
 
 # ─── Tool Definitions (OpenAI function-calling format) ───
 
@@ -300,14 +299,15 @@ class MedicalAgent:
         search_count = 0  # Track total search_rag + deep_retrieve calls
 
         for step in range(max_steps):
-            # After 3 searches, force answer generation
+            # First call: force tool usage. After 3 searches: force answer.
             force_answer = search_count >= 3
+            force_tool = (step == 0 and search_count == 0)
             try:
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
                     tools=[] if force_answer else TOOLS,
-                    tool_choice="none" if force_answer else "auto",
+                    tool_choice="none" if force_answer else ("required" if force_tool else "auto"),
                     temperature=0.3,
                     max_tokens=600,
                     timeout=20.0,
