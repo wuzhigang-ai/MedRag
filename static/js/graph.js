@@ -34,6 +34,10 @@ class Graph3D {
         this._disabled = false;
         this._groupColors = {};
         this._lastTime = performance.now();
+        this._hovered = null;
+        this._raycaster = new THREE.Raycaster();
+        this._mouse = new THREE.Vector2();
+        this._tooltip = null;
 
         if (!this._checkWebGL()) {
             container.innerHTML = '<div class="graph-fallback">您的浏览器不支持 WebGL，无法显示 3D 知识图谱</div>';
@@ -42,6 +46,8 @@ class Graph3D {
         }
 
         this._initScene();
+        this._initHover();
+        this._initParticles();
         this._startLoop();
     }
 
@@ -55,7 +61,7 @@ class Graph3D {
 
     _initScene() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0a0a0f);
+        this.scene.background = new THREE.Color(0x050510);
 
         var w = this.container.clientWidth || 800;
         var h = this.container.clientHeight || 600;
@@ -68,16 +74,29 @@ class Graph3D {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.container.appendChild(this.renderer.domElement);
 
-        this.scene.add(new THREE.AmbientLight(0x404060, 1.5));
-        var dir = new THREE.DirectionalLight(0xffffff, 0.8);
-        dir.position.set(10, 20, 10);
-        this.scene.add(dir);
+        // Ambient + key light for depth
+        this.scene.add(new THREE.AmbientLight(0x303060, 1.8));
+        var key = new THREE.DirectionalLight(0xffffff, 0.9);
+        key.position.set(15, 20, 10);
+        this.scene.add(key);
+
+        // Rim/fill light from below for cinematic look
+        var fill = new THREE.DirectionalLight(0x4466aa, 0.5);
+        fill.position.set(-10, -5, -5);
+        this.scene.add(fill);
+
+        // Point light at center for node glow
+        var point = new THREE.PointLight(0x6688cc, 0.4, 20);
+        point.position.set(0, 0, 0);
+        this.scene.add(point);
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.08;
         this.controls.minDistance = 2;
         this.controls.maxDistance = 30;
+        this.controls.autoRotate = true;
+        this.controls.autoRotateSpeed = 0.15;
 
         var self = this;
         this.renderer.domElement.addEventListener('webglcontextlost', function (e) {
@@ -90,6 +109,185 @@ class Graph3D {
 
         this._resizeObserver = new ResizeObserver(function () { self._onResize(); });
         this._resizeObserver.observe(this.container);
+    }
+
+    _initParticles() {
+        var count = 300;
+        var geo = new THREE.BufferGeometry();
+        var positions = new Float32Array(count * 3);
+        for (var i = 0; i < count * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 20;
+            positions[i + 1] = (Math.random() - 0.5) * 20;
+            positions[i + 2] = (Math.random() - 0.5) * 20;
+        }
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        var mat = new THREE.PointsMaterial({
+            color: 0x4466aa,
+            size: 0.015,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        this._particles = new THREE.Points(geo, mat);
+        this.scene.add(this._particles);
+    }
+
+    _initHover() {
+        // Create tooltip div
+        this._tooltip = document.createElement('div');
+        this._tooltip.className = 'graph-tooltip';
+        this._tooltip.style.cssText =
+            'position:absolute;display:none;pointer-events:none;z-index:2000;' +
+            'background:rgba(8,8,24,0.94);border:1px solid rgba(255,255,255,0.12);' +
+            'border-radius:8px;padding:10px 14px;color:#e2e8f0;font-size:12px;' +
+            'line-height:1.6;max-width:260px;backdrop-filter:blur(12px);' +
+            'box-shadow:0 8px 32px rgba(0,0,0,0.5);transition:opacity 0.15s;';
+        this.container.appendChild(this._tooltip);
+
+        var self = this;
+        this._onMouseMove = function (e) {
+            var rect = self.renderer.domElement.getBoundingClientRect();
+            self._mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            self._mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        };
+        this.renderer.domElement.addEventListener('mousemove', this._onMouseMove);
+
+        // Cursor style
+        this.renderer.domElement.style.cursor = 'grab';
+        this.renderer.domElement.addEventListener('mousedown', function () {
+            self.renderer.domElement.style.cursor = 'grabbing';
+        });
+        this.renderer.domElement.addEventListener('mouseup', function () {
+            self.renderer.domElement.style.cursor = 'grab';
+        });
+    }
+
+    _updateHover() {
+        this._raycaster.setFromCamera(this._mouse, this.camera);
+
+        var nodes = Array.from(this.nodeMeshes.values());
+        var intersects = this._raycaster.intersectObjects(nodes, false);
+
+        if (intersects.length > 0) {
+            var obj = intersects[0].object;
+            if (this._hovered !== obj) {
+                this._unhighlightNode();
+                this._hovered = obj;
+                this._highlightNode(obj);
+                this._showTooltip(obj);
+                this.renderer.domElement.style.cursor = 'pointer';
+            }
+        } else {
+            if (this._hovered) {
+                this._unhighlightNode();
+                this._hideTooltip();
+                this._hovered = null;
+                this.renderer.domElement.style.cursor = 'grab';
+            }
+        }
+    }
+
+    _highlightNode(mesh) {
+        mesh._origScale = mesh.scale.x;
+        mesh._origEmissive = mesh.material.emissiveIntensity;
+        mesh._origEmissiveColor = mesh.material.emissive.getHex();
+
+        mesh.scale.setScalar(mesh._origScale * 1.6);
+        mesh.material.emissive.set(0xffffff);
+        mesh.material.emissiveIntensity = 0.9;
+
+        // Highlight connected edges
+        var name = mesh.userData.entityName;
+        var self = this;
+        this.edgeLines.forEach(function (line) {
+            if (line.userData.source === name || line.userData.target === name) {
+                line._origOpacity = line.material.opacity;
+                line.material.opacity = 0.8;
+                line.material.color.set(0xffffff);
+            }
+        });
+    }
+
+    _unhighlightNode() {
+        if (!this._hovered) return;
+        var mesh = this._hovered;
+
+        if (mesh._origScale) {
+            mesh.scale.setScalar(mesh._origScale);
+            delete mesh._origScale;
+        }
+        if (mesh._origEmissive !== undefined) {
+            mesh.material.emissiveIntensity = mesh._origEmissive;
+            mesh.material.emissive.setHex(mesh._origEmissiveColor || 0);
+            delete mesh._origEmissive;
+            delete mesh._origEmissiveColor;
+        }
+
+        // Restore connected edges
+        var name = mesh.userData.entityName;
+        var self = this;
+        this.edgeLines.forEach(function (line) {
+            if (line.userData.source === name || line.userData.target === name) {
+                if (line._origOpacity !== undefined) {
+                    line.material.opacity = line._origOpacity;
+                    line.material.color.set(0xffffff);
+                    delete line._origOpacity;
+                }
+            }
+        });
+    }
+
+    _showTooltip(mesh) {
+        if (!this._tooltip) return;
+        var ud = mesh.userData;
+        var html = '<div style="font-weight:600;font-size:13px;margin-bottom:4px;color:#fff;">' +
+            this._escHtml(ud.entityName) + '</div>' +
+            '<div style="color:#94a3b8;">来源: ' + this._escHtml(ud.group || '未知') + '</div>' +
+            '<div style="color:#94a3b8;">关联: ' + (ud.weight || 0) + ' 个文本块</div>';
+
+        // Count connected edges
+        var name = ud.entityName;
+        var edgeCount = 0;
+        this.edgeLines.forEach(function (l) {
+            if (l.userData.source === name || l.userData.target === name) edgeCount++;
+        });
+        html += '<div style="color:#94a3b8;">关系: ' + edgeCount + ' 条边</div>';
+
+        this._tooltip.innerHTML = html;
+        this._tooltip.style.display = 'block';
+
+        // Position near mouse
+        var self = this;
+        var moveHandler = function (e) {
+            var rect = self.container.getBoundingClientRect();
+            var x = e.clientX - rect.left + 16;
+            var y = e.clientY - rect.top - 10;
+            // Keep tooltip within bounds
+            if (x + 270 > rect.width) x = e.clientX - rect.left - 270;
+            if (y + 120 > rect.height) y = e.clientY - rect.top - 130;
+            self._tooltip.style.left = x + 'px';
+            self._tooltip.style.top = y + 'px';
+        };
+        this.renderer.domElement.addEventListener('mousemove', moveHandler);
+        this._tooltipMoveHandler = moveHandler;
+    }
+
+    _hideTooltip() {
+        if (this._tooltip) {
+            this._tooltip.style.display = 'none';
+        }
+        if (this._tooltipMoveHandler) {
+            this.renderer.domElement.removeEventListener('mousemove', this._tooltipMoveHandler);
+            this._tooltipMoveHandler = null;
+        }
+    }
+
+    _escHtml(str) {
+        if (!str) return '';
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
     }
 
     _onResize() {
@@ -125,10 +323,22 @@ class Graph3D {
                 color: new THREE.Color(colorHex),
                 emissive: new THREE.Color(colorHex),
                 emissiveIntensity: 0.3,
-                specular: 0x222222,
-                shininess: 20
+                specular: 0x444444,
+                shininess: 30
             });
             var mesh = new THREE.Mesh(geo, mat);
+
+            // Add glow ring
+            var ringGeo = new THREE.TorusGeometry(r * 1.35, 0.015, 8, 16);
+            var ringMat = new THREE.MeshBasicMaterial({
+                color: new THREE.Color(colorHex),
+                transparent: true,
+                opacity: 0.35,
+                depthWrite: false
+            });
+            var ring = new THREE.Mesh(ringGeo, ringMat);
+            mesh.add(ring);
+
             mesh.position.set(
                 (Math.random() - 0.5) * 4,
                 (Math.random() - 0.5) * 4,
@@ -140,7 +350,7 @@ class Graph3D {
             self.velocities.set(n.id, { x: 0, y: 0, z: 0 });
         });
 
-        // Create edges
+        // Create edges with gradient-like thin lines
         edges.forEach(function (e) {
             var srcMesh = self.nodeMeshes.get(e.source);
             var tgtMesh = self.nodeMeshes.get(e.target);
@@ -149,7 +359,10 @@ class Graph3D {
                 srcMesh.position, tgtMesh.position
             ]);
             var mat = new THREE.LineBasicMaterial({
-                color: 0xffffff, transparent: true, opacity: 0.25
+                color: 0x334466,
+                transparent: true,
+                opacity: 0.18,
+                depthWrite: false
             });
             var line = new THREE.Line(geo, mat);
             line.userData = { source: e.source, target: e.target, created: performance.now() };
@@ -160,7 +373,12 @@ class Graph3D {
 
     _clearGraph() {
         var self = this;
+        this._hovered = null;
         this.nodeMeshes.forEach(function (m) {
+            m.children.forEach(function (c) {
+                if (c.geometry) c.geometry.dispose();
+                if (c.material) c.material.dispose();
+            });
             m.geometry.dispose();
             m.material.dispose();
             self.scene.remove(m);
@@ -186,8 +404,8 @@ class Graph3D {
                 color: new THREE.Color(colorHex),
                 emissive: new THREE.Color('#ffffff'),
                 emissiveIntensity: 1.5,
-                specular: 0x222222,
-                shininess: 20
+                specular: 0x444444,
+                shininess: 30
             });
             var mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(0, 0, 0);
@@ -218,7 +436,7 @@ class Graph3D {
                 srcMesh.position, tgtMesh.position
             ]);
             var mat = new THREE.LineBasicMaterial({
-                color: 0xffffff, transparent: true, opacity: 0.05
+                color: 0x4466aa, transparent: true, opacity: 0.05, depthWrite: false
             });
             var line = new THREE.Line(geo, mat);
             line.userData = { source: e.source, target: e.target, created: performance.now() };
@@ -227,7 +445,6 @@ class Graph3D {
         });
     }
 
-    /* ── Force-directed physics (O(n²) with distance cutoff) ── */
     _tickPhysics(dt) {
         if (this._paused) return;
         var p = PHYSICS;
@@ -240,7 +457,6 @@ class Graph3D {
             var fx = 0, fy = 0, fz = 0;
             var pi = nodes[i].position;
 
-            // Coulomb repulsion
             for (var j = 0; j < n; j++) {
                 if (i === j) continue;
                 var pj = nodes[j].position;
@@ -253,12 +469,10 @@ class Graph3D {
                 fz += (dz / dist) * force;
             }
 
-            // Center gravity
             fx -= p.centerGravity * pi.x;
             fy -= p.centerGravity * pi.y;
             fz -= p.centerGravity * pi.z;
 
-            // Spring attraction on edges
             this.edgeLines.forEach(function (line) {
                 var src = self.nodeMeshes.get(line.userData.source);
                 var tgt = self.nodeMeshes.get(line.userData.target);
@@ -288,7 +502,6 @@ class Graph3D {
             }
         }
 
-        // Update node positions
         nodes.forEach(function (mesh) {
             var v = self.velocities.get(mesh.userData.entityName);
             if (!v) return;
@@ -320,7 +533,7 @@ class Graph3D {
             var elapsed = now - (ud.animStart + ud.animDelay);
             var duration = 600;
             var t = Math.min(elapsed / duration, 1.0);
-            var e = 1 - Math.pow(1 - t, 3);  // ease-out cubic
+            var e = 1 - Math.pow(1 - t, 3);
 
             var s = ud.targetRadius * e;
             if (s < 0.001) s = 0.001;
@@ -347,8 +560,14 @@ class Graph3D {
             var line = this.edgeLines[i];
             var elapsed = now - (line.userData.created || now);
             var t = Math.min(elapsed / 800, 1.0);
-            line.material.opacity = 0.05 + 0.2 * t;
+            line.material.opacity = 0.05 + 0.13 * t;
         }
+    }
+
+    _animateParticles(now) {
+        if (!this._particles) return;
+        this._particles.rotation.y += 0.0001;
+        this._particles.rotation.x += 0.00005;
     }
 
     _startLoop() {
@@ -361,7 +580,9 @@ class Graph3D {
             self._tickPhysics(dt);
             self._animateNodeAnimations(now);
             self._animateEdgeAnimations(now);
+            self._animateParticles(now);
             self._updateEdges();
+            self._updateHover();
             self.controls.update();
             self.renderer.render(self.scene, self.camera);
         }
@@ -374,7 +595,19 @@ class Graph3D {
 
     dispose() {
         if (this._resizeObserver) this._resizeObserver.disconnect();
+        if (this._onMouseMove) {
+            this.renderer.domElement.removeEventListener('mousemove', this._onMouseMove);
+        }
+        this._hideTooltip();
+        if (this._tooltip && this._tooltip.parentNode) {
+            this._tooltip.parentNode.removeChild(this._tooltip);
+        }
         this._clearGraph();
+        if (this._particles) {
+            this._particles.geometry.dispose();
+            this._particles.material.dispose();
+            this.scene.remove(this._particles);
+        }
         if (this.renderer) {
             this.renderer.dispose();
             if (this.renderer.domElement && this.renderer.domElement.parentNode) {

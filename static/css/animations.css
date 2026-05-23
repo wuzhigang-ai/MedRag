@@ -113,6 +113,11 @@
     to { stroke-dashoffset: 0; }
 }
 
+@keyframes uploadPulse {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 1; }
+    50%      { transform: translateY(-6px) scale(1.05); opacity: 0.8; }
+}
+
 /* ── Page Load Stagger ─────────────────────────────────── */
 .animate-on-load {
     opacity: 0;
