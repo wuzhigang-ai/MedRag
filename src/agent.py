@@ -131,7 +131,7 @@ class MedicalAgent:
             top_k = min(int(args.get("top_k", 5)), 15)
         except (ValueError, TypeError):
             top_k = 5
-        results = self.pipeline._faiss_retrieve(query, top_k=top_k)
+        results = self.pipeline._doc_aware_retrieve(query, top_k=top_k)
         if not results:
             return "未找到相关文献内容。"
         items = []

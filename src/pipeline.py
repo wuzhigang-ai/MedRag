@@ -365,9 +365,48 @@ class MedicalRAGPipeline:
                 })
         return results
 
+    def _doc_aware_retrieve(self, query: str, top_k: int = 10, min_score: float = 0.3) -> List[Dict]:
+        """Document-aware retrieval: boost results matching query document names."""
+        results = self._faiss_retrieve(query, top_k=max(top_k * 2, 20), min_score=0.2)
+        if not results:
+            return []
+
+        # Extract potential doc names from query
+        query_lower = query.lower()
+        doc_boost_keywords = {
+            "stanford": "Stanford+B+型主动脉夹层",
+            "tbadtbad": "Stanford+B+型主动脉夹层",
+            "主动脉": "Stanford+B+型主动脉夹层",
+            "seyfarth": "seyfarth2008",
+            "shchelochkov": "shchelochkov2019",
+            "propionic": "shchelochkov2019",
+            "丙酸": "shchelochkov2019",
+            "todo": "todo1992",
+            "肝移植": "todo1992",
+            "urea": "todo1992",
+            "子宫内膜": "子宫内膜异位症超声评估中国专家共识",
+            "超声": "子宫内膜异位症超声评估中国专家共识",
+            "endometriosis": "子宫内膜异位症超声评估中国专家共识",
+        }
+
+        boosted_doc = None
+        for kw, doc_name in doc_boost_keywords.items():
+            if kw in query_lower:
+                boosted_doc = doc_name
+                break
+
+        # Boost results matching the target document
+        if boosted_doc:
+            for r in results:
+                if boosted_doc in r["source"]:
+                    r["score"] = min(1.0, r["score"] * 1.3)  # 30% boost
+            results.sort(key=lambda x: x["score"], reverse=True)
+
+        return [r for r in results if r["score"] > min_score][:top_k]
+
     def _faiss_answer(self, query: str, top_k: int = 8) -> Dict[str, Any]:
         """FAISS检索 + 百度Pro问答"""
-        results = self._faiss_retrieve(query, top_k=top_k)
+        results = self._doc_aware_retrieve(query, top_k=top_k)
         if not results:
             return {"answer": "未找到相关文献内容。", "sources": [], "engine": "faiss"}
 
