@@ -743,6 +743,12 @@
         });
     }
 
+    /* ── Role-Based Visibility ──────────────────────────── */
+    if (user && user.role === 'admin') {
+        var adminLink = document.getElementById('chatAdminLink');
+        if (adminLink) adminLink.style.display = '';
+    }
+
     /* ── Logout ──────────────────────────────────────────── */
     var logoutBtn = document.getElementById('chatLogoutBtn');
     if (logoutBtn) {
