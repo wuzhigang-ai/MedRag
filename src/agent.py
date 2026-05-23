@@ -299,18 +299,17 @@ class MedicalAgent:
         search_count = 0  # Track total search_rag + deep_retrieve calls
 
         for step in range(max_steps):
-            # First call: force tool usage. After 3 searches: force answer.
-            force_answer = search_count >= 3
-            force_tool = (step == 0 and search_count == 0)
+            # After 2 searches: force final answer
+            force_answer = search_count >= 2
             try:
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
                     tools=[] if force_answer else TOOLS,
-                    tool_choice="none" if force_answer else ("required" if force_tool else "auto"),
+                    tool_choice="none" if force_answer else "auto",
                     temperature=0.3,
                     max_tokens=600,
-                    timeout=20.0,
+                    timeout=25.0,
                 )
             except Exception as e:
                 logger.error(f"Agent LLM call failed at step {step+1}: {e}")
