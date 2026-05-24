@@ -138,7 +138,7 @@ class MedicalAgent:
             data = json.dumps({"question": query, "top_k": top_k}).encode()
             req = urllib.request.Request("http://localhost:8000/api/search",
                 data=data, headers={"Content-Type": "application/json"}, method="POST")
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=35) as resp:
                 result = json.loads(resp.read())
             sources = result.get("sources", [])
             if not sources:

@@ -166,22 +166,24 @@ async def search_only(req: QueryRequest):
     results = p._doc_aware_retrieve(req.question, top_k=req.top_k)
     sources_out = []
 
-    # LightRAG supplement with 5s timeout (skip if slow)
+    # LightRAG parallel: FAISS results first, LightRAG graph reasoning supplements
     engine = "faiss"
     if p._lightrag_ready:
         try:
             lr = await asyncio.wait_for(
-                p._lightrag_query(req.question, mode="hybrid"), timeout=5.0
+                p._lightrag_query(req.question, mode="hybrid"), timeout=25.0
             )
             if lr and lr.get("answer"):
-                sources_out.append({
+                sources_out.insert(0, {
                     "ref": 0, "source": "LightRAG-Knowledge-Graph",
                     "doc": "知识图谱", "section": "entity-relation",
                     "score": 1.0, "text": lr["answer"][:500],
                 })
                 engine = "hybrid"
-        except (asyncio.TimeoutError, Exception):
-            pass  # LightRAG too slow, FAISS-only is fine
+        except asyncio.TimeoutError:
+            pass  # LightRAG LLM too slow
+        except Exception:
+            pass
 
     for i, r in enumerate(results):
         meta = r.get("meta", {})
