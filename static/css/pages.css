@@ -903,6 +903,46 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* ── Chart Image Cards ────────────────────────────── */
+.chart-card {
+    margin: 4px 0;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(26,26,46,0.5);
+    transition: border-color 0.3s;
+}
+.chart-card:hover {
+    border-color: rgba(59,130,246,0.3);
+}
+.chart-card-header {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    color: var(--accent-glow);
+    background: rgba(59,130,246,0.06);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.chart-img {
+    width: 100%;
+    max-height: 320px;
+    object-fit: contain;
+    cursor: pointer;
+    background: rgba(0,0,0,0.3);
+    transition: opacity 0.2s;
+}
+.chart-img:hover {
+    opacity: 0.9;
+}
+.chart-caption {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    line-height: 1.4;
+}
+
 /* ── Feedback Row ──────────────────────────────────── */
 .feedback-row {
     margin-top: 14px;

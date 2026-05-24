@@ -208,13 +208,32 @@
         container.className = 'source-citations';
 
         sources.forEach(function (src) {
-            var tag = document.createElement('span');
-            tag.className = 'source-tag';
-            var srcName = typeof src === 'string' ? src : (src.title || src.source || src.name || String(src));
-            var srcType = (typeof src === 'object' && src.type) ? src.type : '文献';
-            tag.innerHTML = svgIcon('pin') + ' ' + escapeHtml(srcName) +
-                ' <span class="source-badge">' + escapeHtml(srcType) + '</span>';
-            container.appendChild(tag);
+            if (typeof src === 'object' && src.image_url) {
+                // Render chart image card
+                var card = document.createElement('div');
+                card.className = 'chart-card';
+                var imgUrl = src.image_url;
+                var chartType = src.chart_type || '图表';
+                var caption = src.text_preview || '';
+                card.innerHTML =
+                    '<div class="chart-card-header">' +
+                        svgIcon('search-icon') + ' ' + escapeHtml(chartType) + ' — ' + escapeHtml(src.source || '') +
+                    '</div>' +
+                    '<img src="' + imgUrl + '" class="chart-img" loading="lazy" ' +
+                        'onerror="this.parentElement.style.display=\'none\'" ' +
+                        'onclick="window.open(\'' + imgUrl + '\',\'_blank\')" ' +
+                        'title="点击查看大图"/>' +
+                    (caption ? '<div class="chart-caption">' + escapeHtml(caption.substring(0, 160)) + '</div>' : '');
+                container.appendChild(card);
+            } else {
+                var tag = document.createElement('span');
+                tag.className = 'source-tag';
+                var srcName = typeof src === 'string' ? src : (src.title || src.source || src.name || String(src));
+                var srcType = (typeof src === 'object' && src.type) ? src.type : '文献';
+                tag.innerHTML = svgIcon('pin') + ' ' + escapeHtml(srcName) +
+                    ' <span class="source-badge">' + escapeHtml(srcType) + '</span>';
+                container.appendChild(tag);
+            }
         });
 
         return container;

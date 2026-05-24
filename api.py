@@ -406,6 +406,12 @@ os.makedirs(os.path.join(static_dir, "img"), exist_ok=True)
 os.makedirs(os.path.join(static_dir, "img", "icons"), exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+# Mount chart images directory for direct image serving
+images_dir = os.path.join(os.path.dirname(__file__), "images")
+os.makedirs(images_dir, exist_ok=True)
+if os.path.isdir(images_dir):
+    app.mount("/images", StaticFiles(directory=images_dir), name="images")
+
 # HTML routes
 templates_dir = os.path.join(os.path.dirname(__file__), "templates")
 os.makedirs(templates_dir, exist_ok=True)

@@ -247,9 +247,13 @@ class MedicalRAGPipeline:
                         self._seen_hashes.add(h)
                         self.all_chunks.append(text)
                         self.sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}, image]")
+                        # Store image URL for frontend rendering
+                        img_filename = os.path.basename(img_path) if img_path else ""
                         self.chunk_meta.append({
                             "type": "image", "page_idx": item.get("page_idx", 0),
                             "doc_name": doc_name, "vlm_analyzed": bool(vlm_result),
+                            "img_path": img_path,
+                            "image_url": f"/images/{img_filename}" if img_filename else None,
                         })
                 elif t == "table":
                     body = item.get("table_body", "")
@@ -410,6 +414,21 @@ class MedicalRAGPipeline:
         if not results:
             return {"answer": "未找到相关文献内容。", "sources": [], "engine": "faiss"}
 
+        # Build sources with image URLs for frontend rendering
+        sources_out = []
+        for i, r in enumerate(results):
+            meta = r.get("meta", {})
+            src = {
+                "ref": i + 1,
+                "source": r["source"],
+                "score": round(r["score"], 3),
+                "text_preview": r["text"][:200],
+            }
+            if meta.get("image_url"):
+                src["image_url"] = meta["image_url"]
+                src["chart_type"] = meta.get("type", "image")
+            sources_out.append(src)
+
         parts = [
             f"[参考{i+1} | {r['source']} | 相关度:{r['score']:.2f}]\n{r['text']}"
             for i, r in enumerate(results)
@@ -434,11 +453,7 @@ class MedicalRAGPipeline:
         )
         return {
             "answer": resp.choices[0].message.content,
-            "sources": [
-                {"ref": i+1, "source": r["source"], "score": r["score"],
-                 "text_preview": r["text"][:200]}
-                for i, r in enumerate(results)
-            ],
+            "sources": sources_out,
             "source_count": len(results),
             "engine": "faiss",
         }
