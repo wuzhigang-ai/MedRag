@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 — MedASR</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/pages.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+</head>
+<body class="page-register">
+    <div class="register-container">
+        <div class="register-card animate-on-load">
+            <a href="/" class="register-logo">MedASR</a>
+            <h1>创建账号</h1>
+            <p>注册加入 MedASR 医学知识平台</p>
+
+            <form id="registerForm" class="register-form">
+                <div class="field-group">
+                    <label>用户名</label>
+                    <input type="text" name="username" class="input" placeholder="选择用户名" required minlength="2">
+                </div>
+                <div class="field-group">
+                    <label>密码</label>
+                    <input type="password" name="password" class="input" placeholder="至少3个字符" required minlength="3">
+                </div>
+                <div class="field-group">
+                    <label>确认密码</label>
+                    <input type="password" name="password2" class="input" placeholder="再次输入密码" required minlength="3">
+                </div>
+                <div class="field-group">
+                    <label>角色</label>
+                    <div class="role-row" id="roleRow">
+                        <span class="role-chip selected" data-role="user">👨‍⚕️ 医生</span>
+                        <span class="role-chip" data-role="admin">🔧 管理员</span>
+                    </div>
+                </div>
+                <div id="formError" class="form-error" style="display:none"></div>
+                <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn">注册</button>
+            </form>
+
+            <p class="register-footer">
+                已有账号？<a href="/login">登录</a>
+            </p>
+        </div>
+    </div>
+
+    <style>
+        .page-register {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image:
+                radial-gradient(ellipse at 50% 0%, rgba(59,130,246,.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(16,185,129,.04) 0%, transparent 40%);
+        }
+        .register-container { width: 100%; max-width: 440px; padding: 24px; }
+        .register-card {
+            background: var(--bg-elevated);
+            border: 1px solid rgba(255,255,255,.06);
+            border-radius: var(--radius-xl);
+            padding: 48px 40px;
+            box-shadow: 0 16px 48px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.03);
+        }
+        .register-logo {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .register-card h1 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .register-card > p {
+            text-align: center;
+            font-size: .875rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+        .register-form { display: flex; flex-direction: column; gap: 16px; }
+        .field-group label { display: block; font-size: .8125rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+        .role-row { display: flex; gap: 10px; }
+        .role-chip {
+            flex: 1; text-align: center; padding: 12px 16px;
+            border-radius: var(--radius-md); font-size: .875rem; font-weight: 500;
+            border: 1px solid var(--border); cursor: pointer;
+            transition: all .2s; color: var(--text-muted);
+        }
+        .role-chip:hover { border-color: rgba(59,130,246,.3); color: var(--text-secondary); }
+        .role-chip.selected {
+            border-color: var(--accent); background: rgba(59,130,246,.08);
+            color: var(--accent-glow);
+            box-shadow: 0 0 16px rgba(59,130,246,.1);
+        }
+        .form-error {
+            padding: 10px 16px; border-radius: var(--radius-sm);
+            background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2);
+            color: #f87171; font-size: .8125rem;
+        }
+        .register-footer {
+            text-align: center; font-size: .875rem; color: var(--text-muted); margin-top: 28px;
+        }
+        .register-footer a { color: var(--accent-glow); text-decoration: none; }
+    </style>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        (function(){
+            var selectedRole = 'user';
+            document.querySelectorAll('.role-chip').forEach(function(el){
+                el.addEventListener('click', function(){
+                    document.querySelectorAll('.role-chip').forEach(function(o){o.classList.remove('selected')});
+                    el.classList.add('selected');
+                    selectedRole = el.getAttribute('data-role');
+                });
+            });
+            document.getElementById('registerForm').addEventListener('submit', async function(e){
+                e.preventDefault();
+                var err = document.getElementById('formError');
+                err.style.display = 'none';
+                var fd = new FormData(e.target);
+                var u = fd.get('username').trim(), p1 = fd.get('password'), p2 = fd.get('password2');
+                if (!u || !p1) { err.textContent = '请填写所有字段'; err.style.display = 'block'; return; }
+                if (p1 !== p2) { err.textContent = '两次密码不一致'; err.style.display = 'block'; return; }
+                if (p1.length < 3) { err.textContent = '密码至少3个字符'; err.style.display = 'block'; return; }
+                var btn = document.getElementById('submitBtn');
+                btn.disabled = true; btn.textContent = '注册中...';
+                try {
+                    var res = await API.post('/api/register', {username:u, password:p1, role:selectedRole});
+                    Auth.setSession(res.token, {username:res.username, role:res.role});
+                    window.location.href = res.role === 'admin' ? '/admin' : '/chat';
+                } catch(ex) {
+                    err.textContent = ex.message || '注册失败'; err.style.display = 'block';
+                    btn.disabled = false; btn.textContent = '注册';
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -3,103 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedASR — 医学知识，从未如此精准</title>
+    <title>MedASR — Agentic RAG 医学知识引擎</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/pages.css">
     <link rel="stylesheet" href="/static/css/animations.css">
-</head>
-<body class="page-index">
+    <style>
+        :root {
+            --nav-height: 64px;
+        }
+        body {
+            background: #050510;
+            overflow-x: hidden;
+        }
 
-    <!-- Navbar -->
-    <nav class="index-nav">
-        <div class="nav-inner">
-            <a href="/" class="nav-logo">
-                <img src="/static/img/logo.svg" alt="MedASR" width="32" height="32">
-                MedASR
-            </a>
-            <div class="nav-links">
-                <a href="/login" class="btn btn-ghost">登录</a>
-                <a href="/chat" class="btn btn-primary btn-sm">开始使用</a>
-            </div>
+        /* Particles canvas */
+        #particles {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Nav */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            height: var(--nav-height);
+            background: rgba(5,5,16,.75); backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,.04);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 32px;
+        }
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem; font-weight: 700; color: #f1f5f9;
+            text-decoration: none; letter-spacing: -.01em;
+        }
+        .nav-links { display: flex; align-items: center; gap: 12px; }
+        .nav-btn {
+            padding: 8px 18px; border-radius: 8px; font-size: .875rem;
+            font-weight: 500; text-decoration: none; transition: all .25s;
+        }
+        .nav-btn-ghost { color: #94a3b8; }
+        .nav-btn-ghost:hover { color: #f1f5f9; }
+        .nav-btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: #fff; box-shadow: 0 4px 16px rgba(59,130,246,.25);
+        }
+        .nav-btn-primary:hover { box-shadow: 0 8px 28px rgba(59,130,246,.4); transform: translateY(-1px); }
+
+        /* Hero */
+        .hero {
+            position: relative; z-index: 1;
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 120px 24px 80px; text-align: center;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 16px; border-radius: 9999px;
+            font-size: .8rem; font-weight: 500; margin-bottom: 28px;
+            background: rgba(59,130,246,.08); border: 1px solid rgba(59,130,246,.15);
+            color: #60a5fa;
+        }
+        .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; animation: pulse-dot 2s infinite; }
+        @keyframes pulse-dot {
+            0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.6)}
+            50%{box-shadow:0 0 0 6px rgba(16,185,129,0)}
+        }
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 7vw, 5.5rem); font-weight: 700;
+            line-height: 1.1; letter-spacing: -.025em; margin-bottom: 20px;
+            background: linear-gradient(180deg, #f1f5f9 20%, #60a5fa 80%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: 1.15rem; color: #64748b; max-width: 560px;
+            line-height: 1.7; margin-bottom: 40px;
+        }
+        .hero-cta { display: flex; gap: 14px; }
+        .hero-cta a {
+            padding: 14px 32px; border-radius: 12px; font-size: .95rem;
+            font-weight: 600; text-decoration: none; transition: all .3s;
+        }
+        .cta-primary {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: #fff; box-shadow: 0 8px 32px rgba(59,130,246,.3);
+        }
+        .cta-primary:hover { box-shadow: 0 12px 40px rgba(59,130,246,.5); transform: translateY(-2px); }
+        .cta-secondary {
+            color: #94a3b8; border: 1px solid rgba(255,255,255,.08);
+            background: rgba(255,255,255,.02);
+        }
+        .cta-secondary:hover { border-color: rgba(255,255,255,.2); color: #f1f5f9; }
+
+        /* Stats */
+        .stats { display: flex; gap: 48px; margin-top: 64px; }
+        .stat { text-align: center; }
+        .stat-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem; font-weight: 700; color: #60a5fa;
+        }
+        .stat-label { font-size: .8rem; color: #475569; margin-top: 4px; }
+
+        /* Features grid */
+        .features {
+            position: relative; z-index: 1;
+            max-width: 960px; margin: 0 auto; padding: 0 24px 100px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+        }
+        .feature-card {
+            padding: 28px 24px; border-radius: 16px;
+            border: 1px solid rgba(255,255,255,.04);
+            background: rgba(20,20,31,.6); backdrop-filter: blur(10px);
+            transition: all .4s cubic-bezier(.16,1,.3,1);
+        }
+        .feature-card:hover {
+            border-color: rgba(59,130,246,.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,.3);
+            transform: translateY(-4px);
+        }
+        .feature-icon { font-size: 1.6rem; margin-bottom: 14px; }
+        .feature-card h3 { font-size: .95rem; font-weight: 600; margin-bottom: 6px; color: #f1f5f9; }
+        .feature-card p { font-size: .8rem; color: #64748b; line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .features { grid-template-columns: 1fr; }
+            .stats { gap: 24px; }
+            .hero h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particles"></canvas>
+
+    <nav class="nav">
+        <a href="/" class="nav-logo">MedASR</a>
+        <div class="nav-links">
+            <a href="/login" class="nav-btn nav-btn-ghost">登录</a>
+            <a href="/register" class="nav-btn nav-btn-primary">开始使用</a>
         </div>
     </nav>
 
-    <!-- Hero -->
-    <section class="index-hero">
-        <div class="hero-content">
-            <h1 class="hero-title">
-                <span id="typedText"></span><span class="cursor-blink"></span>
-            </h1>
-            <p class="hero-subtitle">Agentic RAG &middot; 863实体 &middot; 证据溯源</p>
-            <a href="/chat" class="btn btn-primary btn-lg hero-cta">
-                开始探索
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                    <polyline points="12 5 19 12 12 19"/>
-                </svg>
-            </a>
+    <section class="hero">
+        <div class="hero-badge"><span class="dot"></span> 7 工具 Agent · 双引擎 RAG · 多模态</div>
+        <h1>医学知识<br>从未如此精准</h1>
+        <p>基于 MinerU + BGE-M3 + LightRAG 的 Agentic RAG 引擎。从 PDF 文献到智能问答，全流程自动化，每个答案都有文献溯源。</p>
+        <div class="hero-cta">
+            <a href="/register" class="cta-primary">免费开始</a>
+            <a href="/chat" class="cta-secondary">在线体验 →</a>
+        </div>
+        <div class="stats">
+            <div class="stat"><div class="stat-num">7</div><div class="stat-label">AI 工具</div></div>
+            <div class="stat"><div class="stat-num">863</div><div class="stat-label">知识实体</div></div>
+            <div class="stat"><div class="stat-num">771</div><div class="stat-label">实体关系</div></div>
+            <div class="stat"><div class="stat-num">5</div><div class="stat-label">医学文献</div></div>
         </div>
     </section>
 
-    <!-- Features -->
-    <section class="index-features">
-        <p class="section-label animate-on-load">核心技术</p>
-        <h2 class="section-title animate-on-load">三大引擎，精准医学检索</h2>
-        <div class="features-grid">
-            <div class="glass-card feature-card animate-on-load">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                </div>
-                <h3>MinerU 解析</h3>
-                <p>高精度PDF文献解析引擎，提取文本、表格与结构化数据，保留学术文献原始语义层次</p>
-            </div>
-            <div class="glass-card feature-card animate-on-load">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="7"/>
-                        <rect x="14" y="3" width="7" height="7"/>
-                        <rect x="3" y="14" width="7" height="7"/>
-                        <rect x="14" y="14" width="7" height="7"/>
-                    </svg>
-                </div>
-                <h3>PICO 分块</h3>
-                <p>基于医学PICO框架智能分块，将文献按Population、Intervention、Comparison、Outcome精准切分</p>
-            </div>
-            <div class="glass-card feature-card animate-on-load">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2a4 4 0 0 0-4 4c0 2 1 4 4 6"/>
-                        <path d="M12 2a4 4 0 0 1 4 4c0 2-1 4-4 6"/>
-                        <path d="M12 12c-3 2-4 4-4 6a4 4 0 0 0 8 0c0-2-1-4-4-6"/>
-                    </svg>
-                </div>
-                <h3>Agent 推理</h3>
-                <p>多步推理Agent引擎，自动搜索、交叉验证、矛盾检测，每一步推理可溯源可解释</p>
-            </div>
+    <section class="features">
+        <div class="feature-card">
+            <div class="feature-icon">🔬</div>
+            <h3>VLM 多模态理解</h3>
+            <p>Moonshot 128K Vision 实时分析医学图表、基线表、森林图、KM 生存曲线，提取效应量与置信区间</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3>Agent 多步推理</h3>
+            <p>7 工具自主编排，检索→交叉验证→证据综合。15 步推理上限，SSE 实时展示工具调用过程</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🕸️</div>
+            <h3>知识图谱 3D 可视化</h3>
+            <p>LightRAG 863 实体 771 关系实时渲染，上传文献后知识节点动态生长，悬停查看实体详情</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📄</div>
+            <h3>智能语义切分</h3>
+            <p>LLM 精准识别 Primary/Secondary Outcome、亚组分析、敏感性分析等医学子结构，非固定字数切分</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3>证据溯源与自省</h3>
+            <p>每个答案标注文献来源与证据等级。6 维度自省机制确保输出可信度，低置信度自动回溯重搜</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>端到端自动化</h3>
+            <p>PDF 上传→智能切分预览→医生审核确认→FAISS+LightRAG 增量索引，全程无需人工干预</p>
         </div>
     </section>
 
-    <!-- Testimonial -->
-    <section class="index-testimonial animate-on-load">
-        <blockquote>它改变了我们检索医学文献的方式</blockquote>
-        <p class="attr"><strong>李教授</strong> &middot; 心血管外科 &middot; 北京协和医院</p>
-    </section>
+    <script>
+        // Particle background
+        (function(){
+            var c = document.getElementById('particles');
+            var ctx = c.getContext('2d');
+            var particles = [];
+            var w, h;
 
-    <!-- Footer -->
-    <footer class="index-footer">
-        <p>&copy; 2026 MedASR. Powered by MinerU + BGE-M3 + DeepSeek-V4-Pro.</p>
-    </footer>
+            function resize() {
+                w = c.width = window.innerWidth;
+                h = c.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
 
-    <script src="/static/js/api.js"></script>
-    <script src="/static/js/landing.js"></script>
+            for (var i = 0; i < 60; i++) {
+                particles.push({
+                    x: Math.random() * w, y: Math.random() * h,
+                    r: Math.random() * 1.5 + 0.5,
+                    vx: (Math.random() - .5) * .3,
+                    vy: (Math.random() - .5) * .3,
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, w, h);
+                particles.forEach(function(p, i) {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0) p.x = w;
+                    if (p.x > w) p.x = 0;
+                    if (p.y < 0) p.y = h;
+                    if (p.y > h) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(59,130,246,' + (0.15 + 0.1 * Math.sin(i * .5)) + ')';
+                    ctx.fill();
+
+                    // Draw connections
+                    for (var j = i + 1; j < particles.length; j++) {
+                        var dx = p.x - particles[j].x, dy = p.y - particles[j].y;
+                        var dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 120) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = 'rgba(59,130,246,' + (0.04 * (1 - dist / 120)) + ')';
+                            ctx.stroke();
+                        }
+                    }
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+    </script>
 </body>
 </html>

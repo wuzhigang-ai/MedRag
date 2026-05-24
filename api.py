@@ -632,6 +632,11 @@ async def admin_page():
     return FileResponse(os.path.join(templates_dir, "admin.html"))
 
 
+@app.get("/register")
+async def register_page():
+    return FileResponse(os.path.join(templates_dir, "register.html"))
+
+
 @app.get("/chat")
 async def chat_page():
     return FileResponse(os.path.join(templates_dir, "chat.html"))
