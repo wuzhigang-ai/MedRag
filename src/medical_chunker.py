@@ -94,7 +94,14 @@ class MedicalDocument:
 
 
 class MedicalChunker:
-    """医学语义分块器 v2 — 规则优先 + LLM增强"""
+    """医学语义分块器 v3 — LLM精准分类 + 规则兜底"""
+
+    SECTION_LABELS = [
+        "primary_outcome", "secondary_outcome", "subgroup_analysis",
+        "sensitivity_analysis", "safety", "population", "intervention",
+        "statistical", "methods", "results", "objective",
+        "discussion", "conclusion", "background",
+    ]
 
     def __init__(self, llm_model_func=None):
         self.llm = llm_model_func
@@ -120,6 +127,61 @@ class MedicalChunker:
                     return tag
 
         return "results"
+
+    def classify_section_llm(self, text: str) -> str:
+        """LLM精准分类（用于语义关键文本块）"""
+        if not self.llm or not text.strip():
+            return self.classify_section(text)
+        try:
+            prompt = f"""你是医学文献结构化专家。判断以下文本属于哪个章节类型。
+类型列表: primary_outcome(主要结局) / secondary_outcome(次要结局) /
+subgroup_analysis(亚组分析) / sensitivity_analysis(敏感性分析) /
+safety(安全性) / population(人群) / intervention(干预) /
+statistical(统计方法) / methods(方法) / results(结果) /
+discussion(讨论) / conclusion(结论) / background(背景)
+
+只回复类型名称，不要解释。
+
+文本: {text[:300]}"""
+            resp = self.llm(prompt)
+            label = resp.strip().lower()
+            if label in self.SECTION_LABELS:
+                return label
+        except Exception:
+            pass
+        return self.classify_section(text)
+
+    def classify_batch_llm(self, texts: list) -> list:
+        """LLM批量分类（减少API调用）"""
+        if not self.llm or not texts:
+            return [self.classify_section(t) for t in texts]
+        try:
+            items = "\n\n".join(f"[{i}] {t[:200]}" for i, t in enumerate(texts))
+            prompt = f"""你是医学文献结构化专家。为以下{len(texts)}个文本块各自标注章节类型。
+类型: primary_outcome / secondary_outcome / subgroup_analysis /
+sensitivity_analysis / safety / population / intervention /
+statistical / methods / results / discussion / conclusion / background
+
+输出JSON数组: {{"tags": ["类型1", "类型2", ...]}}
+
+文本块:
+{items}"""
+            resp = self.llm(prompt)
+            json_str = resp.strip()
+            if "```json" in json_str: json_str = json_str[json_str.find("```json")+7:]
+            if "```" in json_str: json_str = json_str[:json_str.rfind("```")]
+            result = json.loads(json_str)
+            tags = result.get("tags", [])
+            # Validate and fill
+            out = []
+            for i, t in enumerate(tags):
+                out.append(t if t in self.SECTION_LABELS else self.classify_section(texts[i]))
+            while len(out) < len(texts):
+                out.append(self.classify_section(texts[len(out)]))
+            return out[:len(texts)]
+        except Exception:
+            pass
+        return [self.classify_section(t) for t in texts]
 
     def detect_evidence_type(self, text: str) -> tuple:
         """基于关键词检测证据类型和等级"""

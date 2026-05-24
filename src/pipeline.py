@@ -106,9 +106,9 @@ class MedicalRAGPipeline:
         self.sources: List[str] = []
         self.chunk_meta: List[Dict] = []
 
-        # ─── 医学语义分块器 (规则匹配, 无LLM) ───
+        # ─── 医学语义分块器 (LLM精准分类 + 规则兜底) ───
         from src.medical_chunker import MedicalChunker
-        self._chunker = MedicalChunker()
+        self._chunker = MedicalChunker(llm_model_func=self._llm_classify_chunk)
 
         # ─── LightRAG 引擎 ───
         self._lightrag = None
@@ -277,19 +277,43 @@ class MedicalRAGPipeline:
                             "doc_name": doc_name,
                         })
 
-        # ─── 医学语义分块: 用规则匹配为每个文本块打 section_tag ───
-        for i, meta in enumerate(self.chunk_meta):
-            if meta.get("type") == "text" and "section_tag" not in meta:
-                try:
-                    tag = self._chunker.classify_section(self.all_chunks[i])
-                    meta["section_tag"] = tag
-                except Exception as e:
-                    logger.warning(f"Section classification failed for chunk {i}: {e}")
-                    meta["section_tag"] = "unknown"
+        # ─── 医学语义分块: LLM批量分类 + 规则兜底 ───
+        text_indices = [i for i, m in enumerate(self.chunk_meta)
+                        if m.get("type") == "text" and "section_tag" not in m]
+        if text_indices:
+            text_batch = [self.all_chunks[i] for i in text_indices]
+            try:
+                tags = self._chunker.classify_batch_llm(text_batch)
+                for idx, tag in zip(text_indices, tags):
+                    self.chunk_meta[idx]["section_tag"] = tag
+                logger.info(f"LLM classified {len(tags)} chunks")
+            except Exception as e:
+                logger.warning(f"LLM batch classify failed, falling back to rules: {e}")
+                for i in text_indices:
+                    try:
+                        self.chunk_meta[i]["section_tag"] = self._chunker.classify_section(self.all_chunks[i])
+                    except Exception:
+                        self.chunk_meta[i]["section_tag"] = "unknown"
 
         self.doc_count = len(set(s.split(" [p.")[0] for s in self.sources))
         logger.info(f"FAISS: loaded {len(self.all_chunks)} chunks from {self.doc_count} docs")
         return len(self.all_chunks)
+
+    def _llm_classify_chunk(self, prompt: str) -> str:
+        """LLM分类器 — 用百度Flash做快速章节分类"""
+        try:
+            client = self.clients.get("baidu_flash", self.clients.get("baidu_pro"))
+            if not client:
+                return ""
+            model = PROVIDERS.get("baidu_flash", PROVIDERS.get("baidu_pro", {})).get("model", "")
+            resp = client.chat.completions.create(
+                model=model, temperature=0.1, max_tokens=20,
+                messages=[{"role": "user", "content": prompt}],
+                timeout=10.0,
+            )
+            return resp.choices[0].message.content
+        except Exception:
+            return ""
 
     def _analyze_chart_image(self, img_path: str, caption: str) -> dict | None:
         """用 Moonshot VLM 分析医学图表，返回结构化结果。失败返回 None"""
