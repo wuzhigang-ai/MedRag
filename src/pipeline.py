@@ -238,7 +238,13 @@ class MedicalRAGPipeline:
                         if img_path:
                             vlm_result = self._analyze_chart_image(img_path, cap)
                         if vlm_result:
-                            text = f"[图表-VLM分析] 类型:{vlm_result.get('chart_type','?')}\n{vlm_result.get('summary','')}\n{vlm_result.get('description','')}"
+                            chart_type = vlm_result.get('chart_type','?')
+                            # Add search keywords for better retrieval
+                            kw_map = {"flowchart":"流程图 图表 图 诊断", "classification_diagram":"分型 分类 示意图 图表 图",
+                                      "baseline_table":"基线 表格 表", "outcome_table":"结局 表格 表",
+                                      "forest_plot":"森林图 图表 图", "km_curve":"生存曲线 图表 图"}
+                            keywords = kw_map.get(chart_type, "图表 图 表格")
+                            text = f"[图表-VLM分析] {keywords} 类型:{chart_type}\n{vlm_result.get('summary','')}\n{vlm_result.get('description','')}"
                         else:
                             text = f"[图片] {cap}"
                         h = hashlib.md5(text.encode()).hexdigest()
