@@ -13,14 +13,15 @@ from src.pipeline import MedicalRAGPipeline, PROVIDERS
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """你是循证医学助手，用工具检索知识库后回答。
+SYSTEM_PROMPT = """你是循证医学助手，用工具检索知识库后回答。你可以实时分析医学图表图片。
 
 ## 规则
 1. 任何问题都必须先调用search_rag或list_docs检索
 2. search_rag检索1-2次即可，检索结果已包含文献名(doc)、章节(section)、证据等级(evidence_level)
-3. 检索结果充分后立即回答，不要反复搜索
-4. 答案标注来源: [文献名, 页码, 证据等级]
-5. 若知识库无相关数据，如实说明"""
+3. 涉及图表/图片的具体数据时，用analyze_image实时调用VLM分析图片，获得结构化数据
+4. 检索结果充分后立即回答，不要反复搜索
+5. 答案标注来源: [文献名, 页码, 证据等级]
+6. 若知识库无相关数据，如实说明"""
 
 # ─── Tool Definitions (OpenAI function-calling format) ───
 
@@ -107,6 +108,21 @@ TOOLS = [
                     "chart_hint": {"type": "string", "description": "图表提示（如'Table 1基线特征'或'森林图'）"},
                 },
                 "required": ["doc_name", "chart_hint"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "analyze_image",
+            "description": "实时调用VLM多模态模型分析医学图表图片（KM曲线/森林图/基线表/流程图等），返回结构化数据和医学解读。用于推理时按需看图，不是查文字描述。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "image_path": {"type": "string", "description": "图片URL路径(如/images/xxx.png)"},
+                    "analysis_hint": {"type": "string", "description": "分析意图(如'KM曲线的生存差异''Table1两组基线是否均衡''森林图的异质性')"},
+                },
+                "required": ["image_path", "analysis_hint"],
             },
         },
     },
@@ -299,6 +315,63 @@ class MedicalAgent:
             })
         return json.dumps(items, ensure_ascii=False, indent=2)
 
+    def _tool_analyze_image(self, args: dict) -> str:
+        """实时调用 Moonshot VLM 分析医学图表图片"""
+        import base64, os
+        image_path = args.get("image_path", "")
+        analysis_hint = args.get("analysis_hint", "")
+        if not image_path:
+            return json.dumps({"error": "image_path is required"}, ensure_ascii=False)
+
+        # Resolve URL path → local file path
+        if image_path.startswith("/images/"):
+            local_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                "images", os.path.basename(image_path)
+            )
+        else:
+            local_path = image_path
+
+        if not os.path.exists(local_path):
+            return json.dumps({"error": f"Image not found: {image_path}"}, ensure_ascii=False)
+
+        try:
+            b64 = base64.b64encode(open(local_path, "rb").read()).decode()
+        except Exception:
+            return json.dumps({"error": "Failed to read image file"}, ensure_ascii=False)
+
+        prompt = f"""你是医学统计专家。请分析这张医学图表。
+分析意图: {analysis_hint}
+输出JSON格式:
+{{
+    "chart_type": "km_curve/forest_plot/baseline_table/outcome_table/flowchart/other",
+    "key_findings": "关键发现（中文，50-100字）",
+    "numbers": {{"effect_size": "效应量", "ci": "95%CI", "p_value": "p值（如有）"}},
+    "clinical_significance": "临床意义解读（中文）",
+    "limitations": "该图表的局限性（如有）"
+}}"""
+
+        try:
+            client = self.pipeline.clients.get("moonshot_vision")
+            if not client:
+                return json.dumps({"error": "VLM client not available"}, ensure_ascii=False)
+            model = self.pipeline.PROVIDERS["moonshot_vision"]["model"] if hasattr(self.pipeline, 'PROVIDERS') else "moonshot-v1-128k-vision-preview"
+            resp = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
+                ]}],
+                temperature=0.3, max_tokens=500,
+            )
+            raw = resp.choices[0].message.content.strip()
+            if "```json" in raw: raw = raw[raw.find("```json") + 7:]
+            if "```" in raw: raw = raw[:raw.rfind("```")]
+            result = json.loads(raw)
+            return json.dumps(result, ensure_ascii=False, indent=2)
+        except Exception as e:
+            return json.dumps({"error": f"VLM analysis failed: {str(e)[:150]}"}, ensure_ascii=False)
+
     def _critique_answer(self, query: str, answer: str, trace: list) -> dict:
         """Self-critique: evaluate answer quality and assign confidence level."""
         issues = []
@@ -380,6 +453,7 @@ class MedicalAgent:
             "list_docs": self._tool_list_docs,
             "deep_retrieve": self._tool_deep_retrieve,
             "extract_chart": self._tool_extract_chart,
+            "analyze_image": self._tool_analyze_image,
         }
         handler = handlers.get(tool_name)
         if handler:
