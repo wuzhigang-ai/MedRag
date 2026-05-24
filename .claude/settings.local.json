@@ -105,7 +105,8 @@
       "Bash(curl -s -X POST http://localhost:8000/api/agent -H \"Content-Type: application/json\" -d '{\"question\":\"你好\",\"top_k\":3}' --max-time 60 -w \"\\\\nHTTP:%{http_code}\")",
       "Bash(curl -s -X POST http://localhost:8000/api/feedback/stats)",
       "Bash(curl -s -X POST http://localhost:8000/api/login -H \"Content-Type: application/json\" -d '{\"username\":\"admin\",\"password\":\"wrong\"}' -w \"\\\\nHTTP:%{http_code}\" -o /dev/null)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(taskkill -f -im \"python.exe\")"
     ]
   }
 }
