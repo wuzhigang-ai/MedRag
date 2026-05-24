@@ -377,6 +377,7 @@ class MedicalAgent:
         ]
         reasoning_trace = []
         search_count = 0  # Track total search_rag + deep_retrieve calls
+        backtrack_count = 0  # Prevent infinite backtrack loops
 
         for step in range(max_steps):
             # After 2 searches: force final answer
@@ -460,9 +461,10 @@ class MedicalAgent:
                 critique = self._critique_answer(query, answer_text, reasoning_trace)
                 logger.info(f"Agent self-critique: confidence={critique['confidence']} issues={len(critique['issues'])}")
 
-                # ─── Backtrack on low confidence ───
-                if critique["confidence"] == "low" and step < max_steps - 1:
+                # ─── Backtrack on low confidence (max 1 attempt) ───
+                if critique["confidence"] == "low" and step < max_steps - 1 and backtrack_count < 1:
                     logger.info(f"Agent backtracking due to low confidence")
+                    backtrack_count += 1
                     refined_query = critique.get("refined_query", query)
                     backtrack_result = self._backtrack_search(refined_query, messages)
                     if backtrack_result:
