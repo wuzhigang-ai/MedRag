@@ -161,14 +161,30 @@ async def query(req: QueryRequest):
 
 @app.post("/api/search")
 async def search_only(req: QueryRequest):
-    """Agent检索专用 — FAISS搜索，不调LLM，直接返回原文sources+image_url"""
+    """Agent检索专用 — FAISS+LightRAG双引擎搜索，不调LLM，直接返回原文sources+image_url"""
     p = get_pipeline()
     results = p._doc_aware_retrieve(req.question, top_k=req.top_k)
     sources_out = []
+
+    # LightRAG supplement: query knowledge graph for entity-aware context
+    engine = "faiss"
+    if p._lightrag_ready:
+        try:
+            lr = await p._lightrag_query(req.question, mode="hybrid")
+            if lr and lr.get("answer"):
+                sources_out.append({
+                    "ref": 0, "source": "LightRAG-Knowledge-Graph",
+                    "doc": "知识图谱", "section": "entity-relation",
+                    "score": 1.0, "text": lr["answer"][:500],
+                })
+                engine = "hybrid"
+        except Exception:
+            pass
+
     for i, r in enumerate(results):
         meta = r.get("meta", {})
         src = {
-            "ref": i + 1,
+            "ref": len(sources_out) + 1,
             "source": r["source"],
             "score": round(r["score"], 3),
             "text": r["text"][:500],
@@ -179,7 +195,7 @@ async def search_only(req: QueryRequest):
             src["image_url"] = meta["image_url"]
         sources_out.append(src)
     return {"question": req.question, "sources": sources_out,
-            "source_count": len(sources_out), "engine": "faiss-search"}
+            "source_count": len(sources_out), "engine": engine}
 
 
 @app.post("/api/agent")
