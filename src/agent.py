@@ -131,18 +131,41 @@ class MedicalAgent:
             top_k = min(int(args.get("top_k", 5)), 15)
         except (ValueError, TypeError):
             top_k = 5
+
+        # ─── Dual-engine: try LightRAG first, fallback to FAISS ───
+        lightrag_result = None
+        if self.pipeline._lightrag_ready:
+            try:
+                lr = self.pipeline._lightrag_query_sync(query, mode="hybrid")
+                if lr and lr.get("answer"):
+                    lightrag_result = lr
+            except Exception:
+                pass  # Silent fallback to FAISS
+
         results = self.pipeline._doc_aware_retrieve(query, top_k=top_k)
-        if not results:
+        if not results and not lightrag_result:
             return "未找到相关文献内容。"
+
         items = []
+        # LightRAG result first if available
+        if lightrag_result:
+            items.append({
+                "ref": 0,
+                "source": "LightRAG-Knowledge-Graph",
+                "doc": "知识图谱",
+                "section": "entity-relation",
+                "evidence_level": "GraphRAG",
+                "score": 1.0,
+                "text": lightrag_result["answer"][:500],
+            })
+
         for i, r in enumerate(results):
             meta = r.get("meta", {})
-            # Infer evidence level from section_tag or text keywords
             evidence = self._infer_evidence_level(r["text"])
             section = meta.get("section_tag", "")
             doc = r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"]
             items.append({
-                "ref": i + 1,
+                "ref": len(items) + 1,
                 "source": r["source"],
                 "doc": doc,
                 "section": section,
