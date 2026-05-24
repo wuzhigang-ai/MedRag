@@ -19,7 +19,11 @@ const serviceAdapter = new OpenAIAdapter({
 });
 
 const runtime = new CopilotRuntime({
-  actions: [
+  agents: {
+    default: {
+      name: "medasr-agent",
+      description: "MedASR医学文献检索助手",
+      actions: [
     {
       name: "search_rag",
       description: "搜索医学文献知识库，返回相关文献片段、来源、证据等级",
@@ -81,6 +85,8 @@ const runtime = new CopilotRuntime({
       },
     },
   ],
+    },
+  },
 });
 
 export const POST = async (req: NextRequest) => {

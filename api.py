@@ -54,17 +54,15 @@ def get_pipeline() -> MedicalRAGPipeline:
         except Exception:
             pipeline.load_documents()
             pipeline.build_index()
-        # Auto-restore LightRAG if storage exists
+        # Auto-restore LightRAG if storage exists (lazy init on first query)
         from pathlib import Path
         if Path("./lightrag_storage/graph_chunk_entity_relation.graphml").exists():
             try:
-                import asyncio
-                rag = pipeline._init_lightrag()
-                asyncio.run(rag._ensure_lightrag_initialized())
+                pipeline._init_lightrag()
                 pipeline._lightrag_ready = True
-                logger.info("LightRAG runtime restored from storage")
+                logger.info("LightRAG storage found — will lazy-init on first query")
             except Exception as e:
-                logger.warning(f"LightRAG restore failed: {e}")
+                logger.warning(f"LightRAG pre-init failed: {e}")
                 pass
     return pipeline
 

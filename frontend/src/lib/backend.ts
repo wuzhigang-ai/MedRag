@@ -2,7 +2,10 @@
  * Backend API Client — proxies requests to Python FastAPI (port 8000)
  */
 
-const BACKEND = process.env.BACKEND_URL || "http://localhost:8000";
+// In browser, use localhost:8000 directly. Server-side can use env var.
+const BACKEND = typeof window !== "undefined"
+  ? "http://localhost:8000"
+  : (process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "http://localhost:8000");
 
 export interface GraphData {
   nodes: Array<{ id: string; label: string; weight: number; group: string }>;

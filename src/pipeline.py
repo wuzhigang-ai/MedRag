@@ -588,19 +588,24 @@ class MedicalRAGPipeline:
             raise
 
     def _lightrag_query_sync(self, query: str, mode: str = "hybrid") -> Dict[str, Any] | None:
-        """Sync wrapper for Agent tool calls (runs in threaded context)."""
+        """Sync wrapper for Agent tool calls. Handles both threaded and async contexts."""
         import asyncio
         try:
-            return asyncio.run(self._lightrag_query(query, mode))
+            loop = asyncio.get_running_loop()
         except RuntimeError:
-            # Already in event loop, create new one
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                future = pool.submit(asyncio.run, self._lightrag_query(query, mode))
-                return future.result(timeout=15)
-        except Exception as e:
-            logger.warning(f"LightRAG sync query failed: {str(e)[:100]}")
-            return None
+            return asyncio.run(self._lightrag_query(query, mode))
+        # Already in event loop — use concurrent.futures in a new thread
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            future = pool.submit(asyncio.run, self._lightrag_query(query, mode))
+            try:
+                return future.result(timeout=20)
+            except concurrent.futures.TimeoutError:
+                logger.warning("LightRAG query timed out after 20s")
+                return None
+            except Exception as e:
+                logger.warning(f"LightRAG sync query failed: {str(e)[:100]}")
+                return None
 
     # ═══════════════════════════════════════════════════════
     # 统一接口
