@@ -25,10 +25,12 @@ SECTION_KEYWORDS = {
     "intervention": ["干预", "治疗", "手术", "药物", "方案",
                      "intervention", "treatment", "therapy", "regimen"],
     "primary_outcome": ["主要结局", "主要终点", "主要指标", "主要疗效",
-                        "primary endpoint", "primary outcome"],
+                        "primary endpoint", "primary end point", "primary outcome"],
     "secondary_outcome": ["次要结局", "次要终点", "次要指标",
                           "secondary endpoint", "secondary outcome"],
     "subgroup_analysis": ["亚组", "分层分析", "子组", "subgroup", "stratified"],
+    "sensitivity_analysis": ["敏感性分析", "敏感度分析", "sensitivity analysis",
+                              "sensitivity analyses", "稳健性检验", "robustness"],
     "safety": ["安全性", "不良事件", "不良反应", "并发症",
                "safety", "adverse event", "adverse effect", "complication"],
     "results": ["结果", "结局", "疗效", "results", "outcomes", "findings"],
@@ -98,16 +100,25 @@ class MedicalChunker:
         self.llm = llm_model_func
 
     def classify_section(self, text: str) -> str:
-        """基于关键词规则进行章节分类（无LLM调用）"""
-        text_lower = text[:200].lower()
+        """基于关键词规则进行章节分类（子结构优先，无LLM调用）"""
+        text_lower = text[:300].lower()
 
-        # 检查标题关键词
-        for tag, keywords in SECTION_KEYWORDS.items():
-            for kw in keywords:
+        # Phase 1: check sub-structure tags first (most specific)
+        sub_tags = ["primary_outcome", "secondary_outcome", "subgroup_analysis",
+                    "sensitivity_analysis", "safety", "population", "intervention"]
+        for tag in sub_tags:
+            for kw in SECTION_KEYWORDS.get(tag, []):
                 if kw.lower() in text_lower:
                     return tag
 
-        # 启发式：前1/3位置可能是方法/背景，后1/3可能是结论/讨论
+        # Phase 2: broad section tags as fallback
+        broad_tags = ["statistical", "methods", "results", "objective",
+                      "discussion", "conclusion", "background"]
+        for tag in broad_tags:
+            for kw in SECTION_KEYWORDS.get(tag, []):
+                if kw.lower() in text_lower:
+                    return tag
+
         return "results"
 
     def detect_evidence_type(self, text: str) -> tuple:
