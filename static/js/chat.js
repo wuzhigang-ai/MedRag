@@ -838,21 +838,9 @@
         });
     }
 
-    /* ── Connection Check ──────────────────────────────── */
-    async function checkBackend() {
-        try {
-            await API.get('/health');
-        } catch (e) {
-            var banner = document.createElement('div');
-            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:10px 16px;text-align:center;font-size:13px;background:rgba(239,68,68,0.12);border-bottom:1px solid rgba(239,68,68,0.25);color:#f87171;';
-            banner.textContent = '⚠ 后端服务未连接 — 问答功能可能不可用。请运行 uvicorn api:app --port 8000';
-            document.body.prepend(banner);
-        }
-    }
-    checkBackend();
-
     /* ── Init ───────────────────────────────────────────── */
-    // Clear any browser-restored DOM state (prevents freeze on refresh)
+    // CRITICAL: clear state BEFORE anything else
+    isStreaming = false;
     if (chatMessages) chatMessages.innerHTML = '';
     if (chatInput) { chatInput.value = ''; chatInput.disabled = false; }
     if (sendBtn) sendBtn.disabled = false;
@@ -860,13 +848,28 @@
     renderConvList();
     showEmptyState();
 
-    // Handle bfcache restore — re-enable UI after back/forward navigation
+    // Lazy connection check — non-blocking with timeout
+    setTimeout(function () {
+        var controller = new AbortController();
+        var timeout = setTimeout(function () { controller.abort(); }, 5000);
+        fetch('/health', { signal: controller.signal })
+            .then(function (r) { if (!r.ok) throw new Error('down'); })
+            .catch(function () {
+                var banner = document.createElement('div');
+                banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:10px 16px;text-align:center;font-size:13px;background:rgba(239,68,68,0.12);border-bottom:1px solid rgba(239,68,68,0.25);color:#f87171;';
+                banner.textContent = '⚠ 后端服务未连接 — 请运行 uvicorn api:app --port 8000';
+                document.body.prepend(banner);
+            })
+            .finally(function () { clearTimeout(timeout); });
+    }, 500);
+
+    // Handle bfcache restore — reset ALL state
     window.addEventListener('pageshow', function (e) {
         if (e.persisted) {
+            isStreaming = false;
             if (chatMessages) chatMessages.innerHTML = '';
             if (chatInput) { chatInput.value = ''; chatInput.disabled = false; }
             if (sendBtn) sendBtn.disabled = false;
-            isStreaming = false;
             renderConvList();
             showEmptyState();
         }
