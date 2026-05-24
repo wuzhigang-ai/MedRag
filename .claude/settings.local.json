@@ -50,7 +50,12 @@
       "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000__TRACKED_VAR__)",
       "Bash(taskkill //F //PID 23240)",
       "WebFetch(domain:medbench.opencompass.org.cn)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(curl -s http://localhost:8000/api/query -X POST -H \"Content-Type: application/json\" -d '{\"question\":\"test\",\"top_k\":2}')",
+      "Bash(curl -s http://localhost:8000/api/agent -X POST -H \"Content-Type: application/json\" -d '{\"question\":\"TBAD的诊断标准是什么？\",\"top_k\":5}')",
+      "Bash(curl -s --max-time 60 http://localhost:8000/api/agent -X POST -H \"Content-Type: application/json\" -d '{\"question\":\"TBAD分型\",\"top_k\":3}')",
+      "Bash(grep -E \"^Query:|^  \\\\[|^$\")"
     ]
   }
 }

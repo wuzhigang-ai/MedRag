@@ -85,3 +85,38 @@
 {"ts":"2026-05-23T02:39:58.486Z","cmd":"js","args":"window.location.href","origin":"http://localhost:8000/login","durationMs":0,"status":"ok","hasCookies":false,"mode":"launched"}
 {"ts":"2026-05-23T02:46:43.068Z","cmd":"js","args":"JSON.stringify({token: localStorage.getItem('medasr_token'), user: localStorage.getItem('medasr_user')})","origin":"http://localhost:8000/login","durationMs":1,"status":"ok","hasCookies":false,"mode":"launched"}
 {"ts":"2026-05-23T02:52:11.037Z","cmd":"goto","args":"http://localhost:8000/chat","origin":"http://localhost:8000/login","durationMs":15002,"status":"error","hasCookies":false,"mode":"launched","error":"page.goto: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8000/chat\", waiting until \"domcontentloaded\"\u001b[22m\n"}
+{"ts":"2026-05-23T03:49:40.502Z","cmd":"goto","args":"http://localhost:8000/login","origin":"http://localhost:8000/login","durationMs":1254,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:49:45.767Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8000/login","durationMs":22,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:49:49.741Z","cmd":"fill","args":"@e1 admin","origin":"http://localhost:8000/login","durationMs":9,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:49:49.826Z","cmd":"fill","args":"@e2 admin123","origin":"http://localhost:8000/login","durationMs":5,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:49:49.941Z","cmd":"click","args":"@e3","origin":"http://localhost:8000/login","durationMs":36,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:49:54.949Z","cmd":"goto","args":"http://localhost:8000/admin","origin":"http://localhost:8000/admin","durationMs":10,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:49:55.047Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8000/admin","durationMs":14,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:50:02.132Z","cmd":"screenshot","args":"C:/Users/bigda/Desktop/比赛信息/MinerU比赛/赛道三/医疗赛题/.gstack/qa-reports/screenshots/admin-initial.png","origin":"http://localhost:8000/admin","durationMs":123,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:51:38.227Z","cmd":"goto","args":"http://localhost:8000/login","origin":"http://localhost:8000/admin","durationMs":82,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:51:38.328Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8000/admin","durationMs":14,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:51:44.269Z","cmd":"click","args":"@e5","origin":"http://localhost:8000/admin","durationMs":33,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:51:45.409Z","cmd":"console","args":"--errors","origin":"http://localhost:8000/admin","durationMs":1,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:51:51.275Z","cmd":"screenshot","args":"C:/Users/bigda/Desktop/比赛信息/MinerU比赛/赛道三/医疗赛题/.gstack/qa-reports/screenshots/admin-graph-open.png","origin":"http://localhost:8000/admin","durationMs":460,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:51:55.920Z","cmd":"network","args":"","origin":"http://localhost:8000/admin","durationMs":1,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:08.122Z","cmd":"js","args":"fetch('http://localhost:8000/api/graph').then(r => r.json()).then(d => JSON.stringify({keys: Object.keys(d), nodes: d.nodes?.length, edges: d.edges?.length})).catch(e => e.message)","origin":"http://localhost:8000/admin","durationMs":162,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:14.322Z","cmd":"goto","args":"http://localhost:8000/admin","origin":"http://localhost:8000/admin","durationMs":57,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:16.435Z","cmd":"console","args":"--errors","origin":"http://localhost:8000/admin","durationMs":0,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:22.773Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8000/admin","durationMs":12,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:28.297Z","cmd":"click","args":"@e5","origin":"http://localhost:8000/admin","durationMs":32,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:32.000Z","cmd":"screenshot","args":"C:/Users/bigda/Desktop/比赛信息/MinerU比赛/赛道三/医疗赛题/.gstack/qa-reports/screenshots/graph-modal-opened.png","origin":"http://localhost:8000/admin","durationMs":568,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:32.358Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8000/admin","durationMs":223,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:39.081Z","cmd":"console","args":"","origin":"http://localhost:8000/admin","durationMs":0,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:45.410Z","cmd":"network","args":"","origin":"http://localhost:8000/admin","durationMs":0,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:52.399Z","cmd":"click","args":"@e6","origin":"http://localhost:8000/admin","durationMs":431,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:52:53.539Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8000/admin","durationMs":28,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:53:07.330Z","cmd":"goto","args":"http://localhost:8000/chat","origin":"http://localhost:8000/chat","durationMs":8388,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:53:07.423Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8000/chat","durationMs":12,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T03:53:07.521Z","cmd":"console","args":"--errors","origin":"http://localhost:8000/chat","durationMs":0,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T04:04:49.980Z","cmd":"goto","args":"http://localhost:8000/admin","origin":"http://localhost:8000/admin","durationMs":324,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T04:04:51.084Z","cmd":"console","args":"","origin":"http://localhost:8000/admin","durationMs":0,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T04:04:51.191Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8000/admin","durationMs":14,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T04:04:55.502Z","cmd":"click","args":"@e5","origin":"http://localhost:8000/admin","durationMs":42,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T04:04:57.811Z","cmd":"console","args":"","origin":"http://localhost:8000/admin","durationMs":0,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T04:05:06.183Z","cmd":"goto","args":"http://localhost:8000/chat","origin":"http://localhost:8000/chat","durationMs":85,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-23T04:05:06.283Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8000/chat","durationMs":12,"status":"ok","hasCookies":false,"mode":"launched"}
