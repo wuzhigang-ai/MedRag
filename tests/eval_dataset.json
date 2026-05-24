@@ -1,0 +1,87 @@
+{
+  "description": "MedASR自建评测集 — 基于5篇知识库文献的问答对，覆盖3个赛题要求",
+  "created": "2026-05-25",
+  "total_questions": 10,
+  "cases": [
+    {
+      "id": "E01",
+      "requirement": "要求一-表格提取",
+      "question": "seyfarth2008文献中Table 1的基线患者特征是什么？两组患者的年龄和性别分布如何？",
+      "expected_elements": ["Impella", "IABP", "n=13", "年龄", "baseline", "Table 1"],
+      "target_doc": "seyfarth2008",
+      "difficulty": "medium"
+    },
+    {
+      "id": "E02",
+      "requirement": "要求一-图表解析",
+      "question": "TBAD共识中图1展示了什么内容？DeBakey分型和Stanford分型的对应关系是什么？",
+      "expected_elements": ["DeBakey", "Stanford", "I型", "II型", "III型", "A型", "B型"],
+      "target_doc": "Stanford+B+型主动脉夹层共识",
+      "difficulty": "easy"
+    },
+    {
+      "id": "E03",
+      "requirement": "要求一-临床图表",
+      "question": "TBAD共识中表2各型主动脉夹层的临床表现和影像学特征是什么？",
+      "expected_elements": ["非复杂型", "高危型", "复杂型", "临床表现", "影像学"],
+      "target_doc": "Stanford+B+型主动脉夹层共识",
+      "difficulty": "medium"
+    },
+    {
+      "id": "E04",
+      "requirement": "要求二-Primary Outcome",
+      "question": "seyfarth2008研究的主要终点(primary endpoint)是什么？结果如何？",
+      "expected_elements": ["primary end point", "cardiac index", "CI", "hemodynamic", "30 min"],
+      "target_doc": "seyfarth2008",
+      "difficulty": "hard"
+    },
+    {
+      "id": "E05",
+      "requirement": "要求二-亚组分析",
+      "question": "shchelochkov2019文献中Propionic acidemia患者的肾脏并发症有哪些？慢性肾脏疾病的证据是什么？",
+      "expected_elements": ["CKD", "kidney", "renal", "eGFR", "propionic acidemia"],
+      "target_doc": "shchelochkov2019",
+      "difficulty": "hard"
+    },
+    {
+      "id": "E06",
+      "requirement": "要求二-证据等级",
+      "question": "不同文献对TBAD药物治疗(beta-blockers)的证据等级分别是什么？请按证据等级排序",
+      "expected_elements": ["专家共识", "RCT", "证据", "推荐", "beta-blocker"],
+      "target_doc": "ALL",
+      "difficulty": "hard"
+    },
+    {
+      "id": "E07",
+      "requirement": "要求三-多文献综合",
+      "question": "请列出知识库中所有已索引的医学文献，并简述每篇文献的研究类型",
+      "expected_elements": ["Stanford", "seyfarth", "shchelochkov", "todo", "子宫内膜"],
+      "target_doc": "ALL",
+      "difficulty": "easy"
+    },
+    {
+      "id": "E08",
+      "requirement": "要求三-跨文献一致性",
+      "question": "关于主动脉疾病的药物治疗，TBAD专家共识和seyfarth2008研究的结论是否一致？",
+      "expected_elements": ["一致", "beta-blocker", "药物治疗", "推荐"],
+      "target_doc": "Stanford共识 + seyfarth2008",
+      "difficulty": "hard"
+    },
+    {
+      "id": "E09",
+      "requirement": "要求二-敏感性分析",
+      "question": "shchelochkov2019文献中是否有敏感性分析？CKD的预测因素有哪些？",
+      "expected_elements": ["CKD", "GFR", "PA", "renal", "预测"],
+      "target_doc": "shchelochkov2019",
+      "difficulty": "medium"
+    },
+    {
+      "id": "E10",
+      "requirement": "要求一-超声影像",
+      "question": "子宫内膜异位症的超声影像学特征有哪些？CDFI和二维灰阶分别有什么表现？",
+      "expected_elements": ["CDFI", "彩色多普勒", "磨玻璃", "囊肿", "血流信号"],
+      "target_doc": "子宫内膜异位症超声评估中国专家共识",
+      "difficulty": "medium"
+    }
+  ]
+}
