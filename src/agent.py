@@ -132,50 +132,52 @@ class MedicalAgent:
         except (ValueError, TypeError):
             top_k = 5
 
-        # ─── Dual-engine: try LightRAG first, fallback to FAISS ───
-        lightrag_result = None
-        if self.pipeline._lightrag_ready:
-            try:
-                lr = self.pipeline._lightrag_query_sync(query, mode="hybrid")
-                if lr and lr.get("answer"):
-                    lightrag_result = lr
-            except Exception:
-                pass  # Silent fallback to FAISS
+        # ─── Call /api/query via HTTP → gets FAISS+LightRAG hybrid + sources+images ───
+        try:
+            import urllib.request
+            data = json.dumps({"question": query, "top_k": top_k}).encode()
+            req = urllib.request.Request("http://localhost:8000/api/query",
+                data=data, headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                result = json.loads(resp.read())
+        except Exception as e:
+            # Fallback to direct FAISS if HTTP fails
+            results = self.pipeline._doc_aware_retrieve(query, top_k=top_k)
+            if not results:
+                return "未找到相关文献内容。"
+            items = []
+            for i, r in enumerate(results):
+                meta = r.get("meta", {})
+                item = {
+                    "ref": i + 1, "source": r["source"],
+                    "doc": r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"],
+                    "section": meta.get("section_tag", ""),
+                    "evidence_level": self._infer_evidence_level(r["text"]),
+                    "score": round(r["score"], 3), "text": r["text"][:500],
+                }
+                if meta.get("image_url"):
+                    item["image_url"] = meta["image_url"]
+                items.append(item)
+            return json.dumps(items, ensure_ascii=False, indent=2)
 
-        results = self.pipeline._doc_aware_retrieve(query, top_k=top_k)
-        if not results and not lightrag_result:
-            return "未找到相关文献内容。"
-
-        items = []
-        # LightRAG result first if available
-        if lightrag_result:
-            items.append({
-                "ref": 0,
-                "source": "LightRAG-Knowledge-Graph",
-                "doc": "知识图谱",
-                "section": "entity-relation",
-                "evidence_level": "GraphRAG",
-                "score": 1.0,
-                "text": lightrag_result["answer"][:500],
-            })
-
-        for i, r in enumerate(results):
-            meta = r.get("meta", {})
-            evidence = self._infer_evidence_level(r["text"])
-            section = meta.get("section_tag", "")
-            doc = r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"]
-            item = {
-                "ref": len(items) + 1,
-                "source": r["source"],
-                "doc": doc,
-                "section": section,
-                "evidence_level": evidence,
-                "score": round(r["score"], 3),
-                "text": r["text"][:500],
-            }
-            if meta.get("image_url"):
-                item["image_url"] = meta["image_url"]
-            items.append(item)
+        # Parse the hybrid response
+        answer = result.get("answer", "")
+        sources = result.get("sources", [])
+        engine = result.get("engine", "faiss")
+        items = [{"ref": 0, "source": f"Hybrid-{engine}", "doc": "知识库",
+                  "section": "hybrid", "evidence_level": "综合", "score": 1.0,
+                  "text": answer[:500]}]
+        for i, s in enumerate(sources):
+            if isinstance(s, dict):
+                item = {
+                    "ref": i + 1, "source": s.get("source", ""),
+                    "doc": s.get("source", "").split(" [p.")[0] if " [p." in s.get("source", "") else "",
+                    "section": "", "evidence_level": self._infer_evidence_level(s.get("text_preview", "")),
+                    "score": s.get("score", 0), "text": s.get("text_preview", "")[:500],
+                }
+                if s.get("image_url"):
+                    item["image_url"] = s["image_url"]
+                items.append(item)
         return json.dumps(items, ensure_ascii=False, indent=2)
 
     def _tool_cross_check(self, args: dict) -> str:
