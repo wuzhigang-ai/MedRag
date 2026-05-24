@@ -316,7 +316,7 @@ class MedicalAgent:
         return json.dumps(items, ensure_ascii=False, indent=2)
 
     def _tool_analyze_image(self, args: dict) -> str:
-        """实时调用 Moonshot VLM 分析医学图表图片"""
+        """实时调用 Moonshot VLM 提取医学图表结构化数据（效应量+CI+p值）"""
         import base64, os
         image_path = args.get("image_path", "")
         analysis_hint = args.get("analysis_hint", "")
@@ -340,34 +340,80 @@ class MedicalAgent:
         except Exception:
             return json.dumps({"error": "Failed to read image file"}, ensure_ascii=False)
 
-        prompt = f"""你是医学统计专家。请分析这张医学图表。
-分析意图: {analysis_hint}
-输出JSON格式:
-{{
-    "chart_type": "km_curve/forest_plot/baseline_table/outcome_table/flowchart/other",
-    "key_findings": "关键发现（中文，50-100字）",
-    "numbers": {{"effect_size": "效应量", "ci": "95%CI", "p_value": "p值（如有）"}},
-    "clinical_significance": "临床意义解读（中文）",
-    "limitations": "该图表的局限性（如有）"
-}}"""
+        # ─── Step 1: classify chart type ───
+        client = self.pipeline.clients.get("moonshot_vision")
+        if not client:
+            return json.dumps({"error": "VLM client not available"}, ensure_ascii=False)
+        model = "moonshot-v1-128k-vision-preview"
+
+        classify_prompt = f"""判断这张医学图表的类型。分析意图: {analysis_hint}
+类型选项: baseline_table(基线特征表) / outcome_table(结局指标表) / forest_plot(森林图/亚组分析) / km_curve(Kaplan-Meier生存曲线) / flowchart(流程图) / other
+只回复类型名称。"""
+        try:
+            resp = client.chat.completions.create(
+                model=model, temperature=0.1, max_tokens=30,
+                messages=[{"role":"user","content":[
+                    {"type":"text","text":classify_prompt},
+                    {"type":"image_url","image_url":{"url":f"data:image/png;base64,{b64}"}},
+                ]}])
+            chart_type = resp.choices[0].message.content.strip().lower()
+        except Exception:
+            chart_type = "other"
+
+        # ─── Step 2: specialized medical prompt per chart type ───
+        prompts = {
+            "baseline_table": """深度解析这张临床基线特征表。提取患者人群、分组、各变量数值。
+输出JSON:
+{"chart_type":"baseline_table","study_groups":["组1","组2"],"total_patients":0,
+ "characteristics":[{"variable":"变量名","group1_value":"","group2_value":"","p_value":"","clinical_note":""}],
+ "balance_assessment":"组间均衡性评估","summary":"一句话总结"}""",
+
+            "outcome_table": """深度解析这张临床结局指标表。提取效应量(RR/OR/HR)、95%CI、p值。
+输出JSON:
+{"chart_type":"outcome_table",
+ "outcomes":[{"outcome_name":"","effect_measure":"RR/OR/HR","effect_value":0.0,
+   "ci_lower":0.0,"ci_upper":0.0,"p_value":0.0,"direction":"favor_intervention/favor_control",
+   "interpretation":""}],
+ "primary_endpoint_met":false,"summary":""}""",
+
+            "forest_plot": """深度解析这张森林图。提取各亚组的效应量、CI、交互p值。
+输出JSON:
+{"chart_type":"forest_plot",
+ "overall_effect":{"measure":"HR/OR/RR","value":0.0,"ci_lower":0.0,"ci_upper":0.0,"p_value":0.0},
+ "subgroups":[{"subgroup_name":"","n":0,"effect_value":0.0,"ci_lower":0.0,"ci_upper":0.0,"p_interaction":""}],
+ "heterogeneity":"异质性评估","summary":""}""",
+
+            "km_curve": """深度解析这张Kaplan-Meier生存曲线。提取各时间点生存率、中位生存期、HR、log-rank p值。
+输出JSON:
+{"chart_type":"km_curve","groups":["组1","组2"],
+ "survival_at":[{"timepoint":"","group1":"","group2":""}],
+ "median_survival":{"group1":"","group2":""},
+ "hr":{"value":0.0,"ci_lower":0.0,"ci_upper":0.0,"p_value":0.0},
+ "log_rank_p":"","interpretation":""}""",
+
+            "flowchart": """分析这张流程图。提取步骤、判断节点、终点。
+输出JSON:
+{"chart_type":"flowchart","steps":[{"step":1,"description":"","criteria":"","next":""}],
+ "start":"","endpoints":[],"summary":""}""",
+        }
+
+        prompt = prompts.get(chart_type, f"""分析这张医学图表。意图:{analysis_hint}
+输出JSON: {{"chart_type":"{chart_type}","key_findings":"","description":"","clinical_significance":""}}""")
 
         try:
-            client = self.pipeline.clients.get("moonshot_vision")
-            if not client:
-                return json.dumps({"error": "VLM client not available"}, ensure_ascii=False)
-            model = self.pipeline.PROVIDERS["moonshot_vision"]["model"] if hasattr(self.pipeline, 'PROVIDERS') else "moonshot-v1-128k-vision-preview"
             resp = client.chat.completions.create(
                 model=model,
-                messages=[{"role": "user", "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
+                messages=[{"role":"user","content":[
+                    {"type":"text","text":prompt},
+                    {"type":"image_url","image_url":{"url":f"data:image/png;base64,{b64}"}},
                 ]}],
-                temperature=0.3, max_tokens=500,
+                temperature=0.3, max_tokens=600,
             )
             raw = resp.choices[0].message.content.strip()
-            if "```json" in raw: raw = raw[raw.find("```json") + 7:]
+            if "```json" in raw: raw = raw[raw.find("```json")+7:]
             if "```" in raw: raw = raw[:raw.rfind("```")]
             result = json.loads(raw)
+            result["_vlm_chart_type"] = chart_type
             return json.dumps(result, ensure_ascii=False, indent=2)
         except Exception as e:
             return json.dumps({"error": f"VLM analysis failed: {str(e)[:150]}"}, ensure_ascii=False)
