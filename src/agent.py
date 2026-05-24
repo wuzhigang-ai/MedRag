@@ -274,6 +274,78 @@ class MedicalAgent:
             })
         return json.dumps(items, ensure_ascii=False, indent=2)
 
+    def _critique_answer(self, query: str, answer: str, trace: list) -> dict:
+        """Self-critique: evaluate answer quality and assign confidence level."""
+        issues = []
+        confidence = "high"
+
+        # 1. Source check: does the answer cite the knowledge base?
+        has_source = any(kw in answer for kw in ["[", "p.", "文献", "来源", "参考"])
+        if not has_source and trace:
+            issues.append("答案未引用知识库来源，可能基于通用知识而非文献")
+            confidence = "medium"
+
+        # 2. Retrieval check: did we actually search?
+        search_steps = [t for t in trace if t["tool"] in ("search_rag", "deep_retrieve")]
+        if not search_steps:
+            issues.append("未进行任何知识库检索，答案可能不可靠")
+            confidence = "low"
+
+        # 3. Data presence check: did search return results?
+        empty_searches = [t for t in search_steps if "未找到" in t.get("result_preview", "")]
+        if len(empty_searches) == len(search_steps) and search_steps:
+            issues.append("所有检索均未返回结果，知识库可能不包含相关数据")
+            confidence = "low"
+
+        # 4. Uncertainty markers: is the answer hedging too much?
+        uncertainty_count = answer.count("可能") + answer.count("不确定") + answer.count("暂无")
+        if uncertainty_count > 5:
+            issues.append("答案包含过多不确定表述，证据可能不充分")
+            confidence = "medium" if confidence == "high" else confidence
+
+        # 5. Vague answer check: too short or too generic
+        if len(answer) < 80 and query:
+            issues.append("答案过于简短，可能未充分回答用户问题")
+            confidence = "medium" if confidence == "high" else confidence
+
+        # 6. Tool artifact check
+        if "<｜" in answer or "tool_call" in answer:
+            issues.append("答案包含工具调用残留，输出异常")
+            confidence = "low"
+
+        # Build refined query for backtracking
+        refined_query = query
+        if confidence == "low" and query:
+            # Simplify and re-search with core keywords
+            refined_query = " ".join(query.replace("？", "").replace("?", "").split()[:5])
+
+        return {
+            "confidence": confidence,
+            "issues": issues,
+            "refined_query": refined_query if confidence == "low" else query,
+        }
+
+    def _backtrack_search(self, query: str, messages: list) -> str | None:
+        """Re-search with refined query when initial answer has low confidence."""
+        try:
+            results = self.pipeline._doc_aware_retrieve(query, top_k=8)
+            if not results:
+                return None
+            items = []
+            for i, r in enumerate(results):
+                meta = r.get("meta", {})
+                evidence = self._infer_evidence_level(r["text"])
+                items.append({
+                    "ref": i + 1,
+                    "source": r["source"],
+                    "evidence_level": evidence,
+                    "text": r["text"][:500],
+                })
+            return json.dumps(items, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.warning(f"Backtrack search failed: {e}")
+            return None
+
     def execute_tool(self, tool_name: str, args: dict) -> str:
         """分发 tool call 到对应执行器"""
         handlers = {
@@ -383,7 +455,27 @@ class MedicalAgent:
                     messages.append({"role": "user", "content": "请基于已有检索结果直接给出最终答案，不要调用工具。"})
                     continue
                 logger.info(f"Agent final answer at step {step+1}")
-                # Extract sources from last search_rag call results
+
+                # ─── Self-Reflection: critique the answer ───
+                critique = self._critique_answer(query, answer_text, reasoning_trace)
+                logger.info(f"Agent self-critique: confidence={critique['confidence']} issues={len(critique['issues'])}")
+
+                # ─── Backtrack on low confidence ───
+                if critique["confidence"] == "low" and step < max_steps - 1:
+                    logger.info(f"Agent backtracking due to low confidence")
+                    refined_query = critique.get("refined_query", query)
+                    backtrack_result = self._backtrack_search(refined_query, messages)
+                    if backtrack_result:
+                        reasoning_trace.append({
+                            "step": step + 2,
+                            "tool": "self_reflect",
+                            "args": {"action": "backtrack", "reason": critique["issues"]},
+                            "result_preview": backtrack_result[:200],
+                        })
+                        messages.append({"role": "user", "content": f"补充检索结果:\n{backtrack_result}\n\n请基于以上补充信息和之前检索结果，重新给出更准确的回答。"})
+                        continue  # Re-enter the loop for refined answer
+
+                # Extract sources
                 sources = []
                 for t in reversed(reasoning_trace):
                     if t["tool"] == "search_rag" and t.get("result_preview"):
@@ -402,6 +494,8 @@ class MedicalAgent:
                     "steps": step + 1,
                     "model": self.model,
                     "sources": sources[:5],
+                    "confidence": critique["confidence"],
+                    "critique": critique["issues"],
                 }
 
             # Safety: empty response
