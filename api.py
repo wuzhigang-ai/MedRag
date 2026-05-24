@@ -362,40 +362,26 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 @app.get("/api/documents")
 async def list_documents_full():
-    """统一的文献列表 — 合并已构建知识库文献 + MySQL记录"""
+    """文献列表 — 与Agent list_docs工具同一数据源(pipeline.sources)"""
     p = get_pipeline()
-    # From FAISS index
-    doc_names = set(s.split(" [p.")[0] for s in p.sources)
+    doc_names = sorted(set(s.split(" [p.")[0] for s in p.sources))
     docs = []
-    for name in sorted(doc_names):
-        chunks = [s for s in p.sources if name in s]
-        chunk_count = len(chunks)
+    for name in doc_names:
+        chunk_count = sum(1 for s in p.sources if name in s)
         pages = set()
-        for s in chunks:
-            if "p." in s:
-                try: pages.add(int(s.split("p.")[1].split("]")[0]))
-                except: pass
-        # Count section tags
         tags = {}
         for i, s in enumerate(p.sources):
-            if name in s and i < len(p.chunk_meta):
-                tag = p.chunk_meta[i].get("section_tag", "unknown")
-                tags[tag] = tags.get(tag, 0) + 1
+            if name in s:
+                if "p." in s:
+                    try: pages.add(int(s.split("p.")[1].split("]")[0]))
+                    except: pass
+                if i < len(p.chunk_meta):
+                    tag = p.chunk_meta[i].get("section_tag", "unknown")
+                    tags[tag] = tags.get(tag, 0) + 1
         docs.append({
             "name": name, "chunks": chunk_count, "pages": sorted(pages),
-            "section_tags": tags, "source": "faiss_index",
+            "section_tags": tags,
         })
-    # From MySQL (uploads)
-    try:
-        for row in db_list_docs():
-            if row["filename"] not in [d["name"] for d in docs]:
-                docs.append({
-                    "name": row["filename"], "chunks": 0, "pages": [],
-                    "section_tags": {}, "source": "mysql",
-                    "status": row["status"], "uploaded_at": str(row["created_at"]),
-                })
-    except Exception:
-        pass
     return {"documents": docs, "total": len(docs)}
 
 
