@@ -159,6 +159,29 @@ async def query(req: QueryRequest):
     )
 
 
+@app.post("/api/search")
+async def search_only(req: QueryRequest):
+    """Agent检索专用 — FAISS搜索，不调LLM，直接返回原文sources+image_url"""
+    p = get_pipeline()
+    results = p._doc_aware_retrieve(req.question, top_k=req.top_k)
+    sources_out = []
+    for i, r in enumerate(results):
+        meta = r.get("meta", {})
+        src = {
+            "ref": i + 1,
+            "source": r["source"],
+            "score": round(r["score"], 3),
+            "text": r["text"][:500],
+            "doc": r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"],
+            "section": meta.get("section_tag", ""),
+        }
+        if meta.get("image_url"):
+            src["image_url"] = meta["image_url"]
+        sources_out.append(src)
+    return {"question": req.question, "sources": sources_out,
+            "source_count": len(sources_out), "engine": "faiss-search"}
+
+
 @app.post("/api/agent")
 async def agent_query(req: QueryRequest):
     """Smart-routing Agent endpoint: simple extraction → FAISS, complex reasoning → Agent."""

@@ -132,52 +132,49 @@ class MedicalAgent:
         except (ValueError, TypeError):
             top_k = 5
 
-        # ─── Call /api/query via HTTP → gets FAISS+LightRAG hybrid + sources+images ───
+        # ─── Call /api/search via HTTP → FAISS原文 + sources + image_url ───
         try:
             import urllib.request
             data = json.dumps({"question": query, "top_k": top_k}).encode()
-            req = urllib.request.Request("http://localhost:8000/api/query",
+            req = urllib.request.Request("http://localhost:8000/api/search",
                 data=data, headers={"Content-Type": "application/json"}, method="POST")
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            with urllib.request.urlopen(req, timeout=30) as resp:
                 result = json.loads(resp.read())
-        except Exception as e:
-            # Fallback to direct FAISS if HTTP fails
-            results = self.pipeline._doc_aware_retrieve(query, top_k=top_k)
-            if not results:
+            sources = result.get("sources", [])
+            if not sources:
                 return "未找到相关文献内容。"
             items = []
-            for i, r in enumerate(results):
-                meta = r.get("meta", {})
+            for s in sources:
                 item = {
-                    "ref": i + 1, "source": r["source"],
-                    "doc": r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"],
-                    "section": meta.get("section_tag", ""),
-                    "evidence_level": self._infer_evidence_level(r["text"]),
-                    "score": round(r["score"], 3), "text": r["text"][:500],
-                }
-                if meta.get("image_url"):
-                    item["image_url"] = meta["image_url"]
-                items.append(item)
-            return json.dumps(items, ensure_ascii=False, indent=2)
-
-        # Parse the hybrid response
-        answer = result.get("answer", "")
-        sources = result.get("sources", [])
-        engine = result.get("engine", "faiss")
-        items = [{"ref": 0, "source": f"Hybrid-{engine}", "doc": "知识库",
-                  "section": "hybrid", "evidence_level": "综合", "score": 1.0,
-                  "text": answer[:500]}]
-        for i, s in enumerate(sources):
-            if isinstance(s, dict):
-                item = {
-                    "ref": i + 1, "source": s.get("source", ""),
-                    "doc": s.get("source", "").split(" [p.")[0] if " [p." in s.get("source", "") else "",
-                    "section": "", "evidence_level": self._infer_evidence_level(s.get("text_preview", "")),
-                    "score": s.get("score", 0), "text": s.get("text_preview", "")[:500],
+                    "ref": s.get("ref", 0), "source": s.get("source", ""),
+                    "doc": s.get("doc", ""), "section": s.get("section", ""),
+                    "evidence_level": self._infer_evidence_level(s.get("text", "")),
+                    "score": s.get("score", 0), "text": s.get("text", "")[:500],
                 }
                 if s.get("image_url"):
                     item["image_url"] = s["image_url"]
                 items.append(item)
+            return json.dumps(items, ensure_ascii=False, indent=2)
+        except Exception:
+            pass  # Fallback below
+
+        # Direct FAISS fallback
+        results = self.pipeline._doc_aware_retrieve(query, top_k=top_k)
+        if not results:
+            return "未找到相关文献内容。"
+        items = []
+        for i, r in enumerate(results):
+            meta = r.get("meta", {})
+            item = {
+                "ref": i + 1, "source": r["source"],
+                "doc": r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"],
+                "section": meta.get("section_tag", ""),
+                "evidence_level": self._infer_evidence_level(r["text"]),
+                "score": round(r["score"], 3), "text": r["text"][:500],
+            }
+            if meta.get("image_url"):
+                item["image_url"] = meta["image_url"]
+            items.append(item)
         return json.dumps(items, ensure_ascii=False, indent=2)
 
     def _tool_cross_check(self, args: dict) -> str:
