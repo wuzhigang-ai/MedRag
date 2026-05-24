@@ -164,7 +164,7 @@ class MedicalAgent:
             evidence = self._infer_evidence_level(r["text"])
             section = meta.get("section_tag", "")
             doc = r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"]
-            items.append({
+            item = {
                 "ref": len(items) + 1,
                 "source": r["source"],
                 "doc": doc,
@@ -172,7 +172,10 @@ class MedicalAgent:
                 "evidence_level": evidence,
                 "score": round(r["score"], 3),
                 "text": r["text"][:500],
-            })
+            }
+            if meta.get("image_url"):
+                item["image_url"] = meta["image_url"]
+            items.append(item)
         return json.dumps(items, ensure_ascii=False, indent=2)
 
     def _tool_cross_check(self, args: dict) -> str:
@@ -500,7 +503,7 @@ class MedicalAgent:
                         messages.append({"role": "user", "content": f"补充检索结果:\n{backtrack_result}\n\n请基于以上补充信息和之前检索结果，重新给出更准确的回答。"})
                         continue  # Re-enter the loop for refined answer
 
-                # Extract sources
+                # Extract sources with image URLs
                 sources = []
                 for t in reversed(reasoning_trace):
                     if t["tool"] == "search_rag" and t.get("result_preview"):
@@ -509,7 +512,12 @@ class MedicalAgent:
                             if isinstance(items, list):
                                 for item in items:
                                     if isinstance(item, dict) and "source" in item:
-                                        sources.append({"title": item["source"], "type": "文献"})
+                                        src = {"title": item["source"], "type": "文献"}
+                                        if item.get("image_url"):
+                                            src["image_url"] = item["image_url"]
+                                            src["chart_type"] = item.get("type", "image")
+                                            src["text_preview"] = item.get("text", "")[:200]
+                                        sources.append(src)
                         except Exception:
                             pass
                         break
