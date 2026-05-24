@@ -646,13 +646,19 @@ class MedicalRAGPipeline:
     def answer_with_sources(self, query: str, top_k: int = 8) -> Dict[str, Any]:
         return self._faiss_answer(query, top_k)
 
-    async def aanswer(self, query: str, top_k: int = 8, prefer_lightrag: bool = True) -> Dict[str, Any]:
+    async def aanswer(self, query: str, top_k: int = 8, prefer_lightrag: bool = False) -> Dict[str, Any]:
+        # FAISS first — provides sources with image_url for frontend rendering
+        result = await asyncio.to_thread(self._faiss_answer, query, top_k)
+        # Supplement with LightRAG if available
         if prefer_lightrag and self._lightrag_ready:
             try:
-                return await self._lightrag_query(query)
+                lr = await self._lightrag_query(query)
+                if lr and lr.get("answer"):
+                    result["answer"] = lr["answer"] + "\n\n---\n" + result["answer"]
+                    result["engine"] = "hybrid"
             except Exception:
-                logger.warning("LightRAG failed, falling back to FAISS")
-        return await asyncio.to_thread(self._faiss_answer, query, top_k)
+                logger.warning("LightRAG supplement failed")
+        return result
 
     def get_stats(self) -> Dict[str, Any]:
         return {
