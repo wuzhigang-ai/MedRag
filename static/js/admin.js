@@ -351,13 +351,14 @@
         document.getElementById('graphLegend').innerHTML = html || '<span>暂无数据</span>';
     }
 
-    async function updateGraphBtnStats() {
+    async function updateGraphPanelStats() {
         try {
             var data = await API.get('/api/graph');
-            var el = document.getElementById('graphBtnStats');
-            if (el && data.stats) {
-                el.textContent = '(' + data.stats.total_nodes + '实体 · ' +
-                    data.stats.total_edges + '关系)';
+            if (data.stats) {
+                var nc = document.getElementById('graphNodeCount');
+                var ec = document.getElementById('graphEdgeCount');
+                if (nc) nc.textContent = data.stats.total_nodes;
+                if (ec) ec.textContent = data.stats.total_edges;
             }
         } catch (e) { /* silent */ }
     }
@@ -379,7 +380,7 @@
                         graph3d.addNodesWithAnimation(delta.new_nodes);
                         graph3d.addEdgesWithAnimation(delta.new_edges);
                     }
-                    updateGraphBtnStats();
+                    updateGraphPanelStats();
                     // Update header stats
                     var s = graph3d.getStats();
                     document.getElementById('graphStats').textContent =
@@ -408,7 +409,7 @@
     fetchStats();
     fetchUploadHistory();
     fetchDocumentLibrary();
-    updateGraphBtnStats();
+    updateGraphPanelStats();
     setInterval(fetchStats, 30000);
     setInterval(fetchDocumentLibrary, 60000);
 
