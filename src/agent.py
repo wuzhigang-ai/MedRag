@@ -457,11 +457,14 @@ class MedicalAgent:
                         tool_result = json.dumps({"error": f"Tool execution failed: {str(e)[:200]}"}, ensure_ascii=False)
                         logger.warning(f"Tool {tool_name} failed: {e}")
 
+                    preview = tool_result
+                    if tool_name != "search_rag" and len(tool_result) > 300:
+                        preview = tool_result[:300] + "..."
                     reasoning_trace.append({
                         "step": step + 1,
                         "tool": tool_name,
                         "args": tool_args,
-                        "result_preview": tool_result[:300] + "..." if len(tool_result) > 300 else tool_result,
+                        "result_preview": preview,
                     })
 
                     messages.append({
