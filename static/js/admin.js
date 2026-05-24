@@ -365,6 +365,127 @@
     updateGraphBtnStats();
     setInterval(fetchStats, 30000);
 
+    /* ── Smart Chunk Preview ──────────────────────────── */
+    var chunkPreview = document.getElementById('chunkPreview');
+    var cpContent = document.getElementById('cpContent');
+    var cpDocName = document.getElementById('cpDocName');
+    var cpStats = document.getElementById('cpStats');
+    var cpTextCount = document.getElementById('cpTextCount');
+    var cpImgCount = document.getElementById('cpImgCount');
+    var cpTblCount = document.getElementById('cpTblCount');
+    var currentPreviewData = null;
+    var currentTab = 'text';
+
+    async function startChunkPreview(file) {
+        try {
+            var formData = new FormData();
+            formData.append('file', file);
+            var resp = await fetch('/api/preview', { method: 'POST', body: formData });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            var data = await resp.json();
+            currentPreviewData = data;
+            renderPreview(data);
+            chunkPreview.classList.remove('hidden');
+            cpDocName.textContent = file.name;
+            cpStats.textContent = data.chunks.length + ' 文本块 · ' + data.images.length + ' 图表';
+        } catch (e) {
+            Toast.show('预览生成失败: ' + (e.message || '未知错误'), 'error');
+        }
+    }
+
+    function renderPreview(data) {
+        var textChunks = (data.chunks || []).filter(function(c) { return c.type === 'text'; });
+        var tableChunks = (data.chunks || []).filter(function(c) { return c.type === 'table'; });
+        var images = data.images || [];
+        cpTextCount.textContent = textChunks.length;
+        cpImgCount.textContent = images.length;
+        cpTblCount.textContent = tableChunks.length;
+        showPreviewTab(currentTab);
+    }
+
+    function showPreviewTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.cp-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelector('[data-tab=\"' + tab + '\"]').classList.add('active');
+
+        var data = currentPreviewData;
+        if (!data) return;
+        var html = '';
+
+        if (tab === 'text') {
+            (data.chunks || []).filter(function(c) { return c.type === 'text'; }).forEach(function(c) {
+                var tagClass = c.section_tag || 'results';
+                html += '<div class=\"cp-chunk\">' +
+                    '<div class=\"chunk-meta\">' +
+                        '<span class=\"chunk-tag ' + tagClass + '\">' + (c.section_tag || 'results') + '</span>' +
+                        '<span class=\"chunk-page\">p.' + (c.page || '?') + ' | ' + (c.length || 0) + ' 字</span>' +
+                    '</div>' +
+                    '<div class=\"chunk-text\">' + escapeHtml(c.text || '') + '</div>' +
+                '</div>';
+            });
+        } else if (tab === 'images') {
+            (data.images || []).forEach(function(img) {
+                html += '<div class=\"cp-image-card\">' +
+                    '<div class=\"img-caption\">🖼️ ' + escapeHtml(img.caption || '') + '</div>' +
+                    '<span class=\"chunk-page\">p.' + (img.page || '?') + '</span>' +
+                '</div>';
+            });
+        } else if (tab === 'tables') {
+            (data.chunks || []).filter(function(c) { return c.type === 'table'; }).forEach(function(c) {
+                html += '<div class=\"cp-chunk\">' +
+                    '<div class=\"chunk-meta\"><span class=\"chunk-tag results\">TABLE</span>' +
+                    '<span class=\"chunk-page\">p.' + (c.page || '?') + '</span></div>' +
+                    '<div class=\"chunk-text\">' + escapeHtml((c.caption || '') + ' ' + (c.body || '')).substring(0, 300) + '</div>' +
+                '</div>';
+            });
+        }
+        cpContent.innerHTML = html || '<p style=\"color:var(--text-muted);font-size:.85rem;\">暂无内容</p>';
+    }
+
+    document.querySelectorAll('.cp-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() { showPreviewTab(this.getAttribute('data-tab')); });
+    });
+
+    document.getElementById('cpCancelBtn').addEventListener('click', function() {
+        chunkPreview.classList.add('hidden');
+        currentPreviewData = null;
+    });
+
+    document.getElementById('cpConfirmBtn').addEventListener('click', async function() {
+        if (!currentPreviewData || !currentPreviewData.doc_id) {
+            Toast.show('请先上传PDF生成预览', 'error');
+            return;
+        }
+        var btn = document.getElementById('cpConfirmBtn');
+        btn.disabled = true; btn.textContent = '入库中...';
+        try {
+            await API.post('/api/preview/confirm', { doc_id: currentPreviewData.doc_id });
+            Toast.show('✅ 已确认入库！文档已加入知识库', 'success');
+            chunkPreview.classList.add('hidden');
+            currentPreviewData = null;
+            fetchStats();
+            fetchFiles();
+        } catch (e) {
+            Toast.show('入库失败: ' + (e.message || ''), 'error');
+            btn.disabled = false; btn.textContent = '✅ 确认入库';
+        }
+    });
+
+    // Hook into existing upload flow — show preview after upload
+    var origHandleFileUpload = handleFileUpload;
+    handleFileUpload = async function(file) {
+        await origHandleFileUpload(file);
+        // After upload, show preview
+        setTimeout(function() { startChunkPreview(file); }, 1500);
+    };
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+    }
+
     /* ── Init Animations ────────────────────────────────── */
     Anim.initPageLoad();
 })();

@@ -167,6 +167,30 @@
                 <h2>最近文献</h2>
                 <span class="badge badge-success badge-sm">已索引</span>
             </div>
+
+            <!-- Smart Chunk Preview Panel -->
+            <div id="chunkPreview" class="chunk-preview hidden animate-on-load">
+                <div class="cp-header">
+                    <div>
+                        <h3>📋 智能切分预览</h3>
+                        <p id="cpDocName" class="cp-doc-name"></p>
+                    </div>
+                    <div class="cp-actions">
+                        <span id="cpStats" class="cp-stats"></span>
+                        <button id="cpCancelBtn" class="btn btn-ghost btn-sm">取消</button>
+                        <button id="cpConfirmBtn" class="btn btn-primary btn-sm">✅ 确认入库</button>
+                    </div>
+                </div>
+                <div class="cp-body">
+                    <div class="cp-tabs">
+                        <button class="cp-tab active" data-tab="text">文本块 <span id="cpTextCount">0</span></button>
+                        <button class="cp-tab" data-tab="images">图表 <span id="cpImgCount">0</span></button>
+                        <button class="cp-tab" data-tab="tables">表格 <span id="cpTblCount">0</span></button>
+                    </div>
+                    <div class="cp-content" id="cpContent"></div>
+                </div>
+            </div>
+
             <table class="files-table">
                 <thead>
                     <tr>
