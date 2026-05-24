@@ -852,6 +852,23 @@
     checkBackend();
 
     /* ── Init ───────────────────────────────────────────── */
+    // Clear any browser-restored DOM state (prevents freeze on refresh)
+    if (chatMessages) chatMessages.innerHTML = '';
+    if (chatInput) { chatInput.value = ''; chatInput.disabled = false; }
+    if (sendBtn) sendBtn.disabled = false;
+
     renderConvList();
     showEmptyState();
+
+    // Handle bfcache restore — re-enable UI after back/forward navigation
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+            if (chatMessages) chatMessages.innerHTML = '';
+            if (chatInput) { chatInput.value = ''; chatInput.disabled = false; }
+            if (sendBtn) sendBtn.disabled = false;
+            isStreaming = false;
+            renderConvList();
+            showEmptyState();
+        }
+    });
 })();
