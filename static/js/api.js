@@ -6,19 +6,41 @@ const API = {
     base: '',
 
     async get(path) {
-        const r = await fetch(this.base + path);
-        if (!r.ok) throw new Error(await r.text());
-        return r.json();
+        try {
+            const r = await fetch(this.base + path);
+            if (!r.ok) {
+                const txt = await r.text().catch(() => '');
+                throw new Error(txt || 'HTTP ' + r.status);
+            }
+            return r.json();
+        } catch (e) {
+            if (e.name === 'TypeError' && e.message.includes('fetch')) {
+                throw new Error('无法连接到服务器，请检查服务是否启动');
+            }
+            throw e;
+        }
     },
 
     async post(path, data) {
-        const r = await fetch(this.base + path, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        if (!r.ok) throw new Error(await r.text());
-        return r.json();
+        try {
+            const r = await fetch(this.base + path, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!r.ok) {
+                const txt = await r.text().catch(() => '');
+                // Try to extract meaningful message from API error
+                try { const j = JSON.parse(txt); throw new Error(j.detail || j.message || '请求失败'); } catch (e) { if (e.message !== '请求失败') throw e; }
+                throw new Error('HTTP ' + r.status);
+            }
+            return r.json();
+        } catch (e) {
+            if (e.name === 'TypeError' && e.message.includes('fetch')) {
+                throw new Error('无法连接到服务器，请检查服务是否启动');
+            }
+            throw e;
+        }
     },
 
     async upload(path, formData) {

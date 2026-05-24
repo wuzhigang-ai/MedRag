@@ -566,11 +566,18 @@
                 await postAgentResponse(question, agentMsg);
             } catch (err2) {
                 removeThinking();
-                agentMsg.answer = '抱歉，请求处理失败: ' + (err2.message || '未知错误');
+                var errMsg = (err2.message || '未知错误');
+                if (errMsg.includes('429') || errMsg.includes('quota')) {
+                    agentMsg.answer = '⚠️ API配额已用尽，请稍后重试。当前使用百度DeepSeek-V4-Pro，小时配额有限。';
+                } else if (errMsg.includes('fetch') || errMsg.includes('连接')) {
+                    agentMsg.answer = '⚠️ 无法连接到后端服务。请确认 uvicorn api:app --port 8000 已启动。';
+                } else {
+                    agentMsg.answer = '抱歉，请求处理失败: ' + errMsg;
+                }
                 conv.messages.pop();
                 conv.messages.push(agentMsg);
                 renderMessages(conv.messages);
-                Toast.show('请求失败，请重试', 'error');
+                Toast.show('请求失败', 'error');
             }
         }
 
@@ -811,6 +818,19 @@
             window.location.href = '/login';
         });
     }
+
+    /* ── Connection Check ──────────────────────────────── */
+    async function checkBackend() {
+        try {
+            await API.get('/health');
+        } catch (e) {
+            var banner = document.createElement('div');
+            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:10px 16px;text-align:center;font-size:13px;background:rgba(239,68,68,0.12);border-bottom:1px solid rgba(239,68,68,0.25);color:#f87171;';
+            banner.textContent = '⚠ 后端服务未连接 — 问答功能可能不可用。请运行 uvicorn api:app --port 8000';
+            document.body.prepend(banner);
+        }
+    }
+    checkBackend();
 
     /* ── Init ───────────────────────────────────────────── */
     renderConvList();
