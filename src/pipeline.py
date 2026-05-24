@@ -578,6 +578,7 @@ class MedicalRAGPipeline:
 
     async def _lightrag_query(self, query: str, mode: str = "hybrid") -> Dict[str, Any]:
         rag = self._init_lightrag()
+        await rag._ensure_lightrag_initialized()
         try:
             result = await rag.aquery(query, mode=mode)
             answer = result if isinstance(result, str) else str(result)

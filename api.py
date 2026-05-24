@@ -58,9 +58,13 @@ def get_pipeline() -> MedicalRAGPipeline:
         from pathlib import Path
         if Path("./lightrag_storage/graph_chunk_entity_relation.graphml").exists():
             try:
-                pipeline._init_lightrag()
+                import asyncio
+                rag = pipeline._init_lightrag()
+                asyncio.run(rag._ensure_lightrag_initialized())
                 pipeline._lightrag_ready = True
-            except Exception:
+                logger.info("LightRAG runtime restored from storage")
+            except Exception as e:
+                logger.warning(f"LightRAG restore failed: {e}")
                 pass
     return pipeline
 
