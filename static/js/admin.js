@@ -108,6 +108,8 @@
 
             // Start polling for parser/indexing progress
             startProgressPolling(file);
+            // Show chunk preview after upload (doctor review before index)
+            setTimeout(function () { startChunkPreview(file); }, 2000);
         } catch (err) {
             Toast.show('上传失败: ' + err.message, 'error');
             if (uploadStatus) {
@@ -157,7 +159,7 @@
         var steps = document.querySelectorAll('.progress-step');
         var text = document.getElementById('progressText');
         var bar = document.getElementById('progressBar');
-        var states = ['uploading', 'parsing', 'indexing', 'done'];
+        var states = ['uploading', 'parsing', 'downloading', 'indexing', 'done'];
         var idx = states.indexOf(up.state);
 
         steps.forEach(function (s, i) {
@@ -175,11 +177,21 @@
             var fn = up.filename || '';
             if (up.state === 'uploading') text.textContent = '正在上传 ' + fn + '...';
             else if (up.state === 'parsing') text.textContent = '远程解析中，约需30-90秒...';
+            else if (up.state === 'downloading') text.textContent = '下载解析结果中...';
             else if (up.state === 'indexing') {
                 text.textContent = '正在构建索引...';
                 startGraphPolling();
             } else if (up.state === 'done') {
-                text.textContent = '完成！新增 ' + (up.chunks_added || 0) + ' 个文本块';
+                var added = up.chunks_added || 0;
+                if (up.is_update) {
+                    text.textContent = '文档已更新！替换旧版本，新增 ' + added + ' 个文本块';
+                    Toast.show('文档已更新，旧版本数据已自动清理', 'success');
+                } else if (added === 0) {
+                    text.textContent = '文档已存在，所有文本块已去重，未新增内容';
+                    Toast.show('该文档已入库，自动跳过重复内容', 'info');
+                } else {
+                    text.textContent = '完成！新增 ' + added + ' 个文本块';
+                }
                 stopGraphPolling();
             }
             else if (up.state === 'error') text.textContent = '错误: ' + (up.error || '');
@@ -227,6 +239,16 @@
             window.location.href = '/';
         });
     }
+
+    /* ── Sidebar Nav Active State ──────────────────────── */
+    document.querySelectorAll('.sidebar-nav a').forEach(function (link) {
+        link.addEventListener('click', function () {
+            document.querySelectorAll('.sidebar-nav a').forEach(function (l) {
+                l.classList.remove('active');
+            });
+            this.classList.add('active');
+        });
+    });
 
     /* ── Upload History ────────────────────────────────── */
     async function fetchUploadHistory() {
@@ -397,6 +419,11 @@
         }
     }
 
+    document.getElementById('sidebarGraphBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+        openGraphModal();
+    });
+
     document.getElementById('openGraphBtn').addEventListener('click', function () {
         openGraphModal();
     });
@@ -426,16 +453,34 @@
 
     async function startChunkPreview(file) {
         try {
+            // Check if document already exists (graceful fallback if endpoint unavailable)
+            var isUpdate = false;
+            var oldChunkCount = 0;
+            try {
+                var checkResp = await fetch('/api/preview/check-doc?filename=' + encodeURIComponent(file.name));
+                if (checkResp.ok) {
+                    var checkData = await checkResp.json();
+                    isUpdate = checkData.exists;
+                    oldChunkCount = checkData.chunk_count || 0;
+                }
+            } catch (e) { /* endpoint not yet available, proceed without update check */ }
+
             var formData = new FormData();
             formData.append('file', file);
             var resp = await fetch('/api/preview', { method: 'POST', body: formData });
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             var data = await resp.json();
             currentPreviewData = data;
+            currentPreviewData._is_update = isUpdate;
             renderPreview(data);
             chunkPreview.classList.remove('hidden');
-            cpDocName.textContent = file.name;
-            cpStats.textContent = data.chunks.length + ' 文本块 · ' + data.images.length + ' 图表';
+            if (isUpdate) {
+                cpDocName.innerHTML = file.name + ' <span style="background:rgba(245,158,11,.15);color:#fbbf24;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600;">🔄 文档更新</span>';
+                cpStats.textContent = '检测到同名文档 (' + oldChunkCount + ' 旧块将被替换) | ' + data.chunks.length + ' 新文本块 · ' + data.images.length + ' 图表';
+            } else {
+                cpDocName.textContent = file.name;
+                cpStats.textContent = data.chunks.length + ' 文本块 · ' + data.images.length + ' 图表';
+            }
         } catch (e) {
             Toast.show('预览生成失败: ' + (e.message || '未知错误'), 'error');
         }
@@ -448,6 +493,15 @@
         cpTextCount.textContent = textChunks.length;
         cpImgCount.textContent = images.length;
         cpTblCount.textContent = tableChunks.length;
+        // Update confirm button for update vs new
+        var confirmBtn = document.getElementById('cpConfirmBtn');
+        if (confirmBtn && data._is_update) {
+            confirmBtn.textContent = '🔄 更新文档';
+            confirmBtn.title = '将替换旧版本，旧数据自动清理';
+        } else if (confirmBtn) {
+            confirmBtn.textContent = '✅ 确认入库';
+            confirmBtn.title = '';
+        }
         showPreviewTab(currentTab);
     }
 
@@ -512,20 +566,12 @@
             chunkPreview.classList.add('hidden');
             currentPreviewData = null;
             fetchStats();
-            fetchFiles();
+            fetchUploadHistory();
         } catch (e) {
             Toast.show('入库失败: ' + (e.message || ''), 'error');
             btn.disabled = false; btn.textContent = '✅ 确认入库';
         }
     });
-
-    // Hook into existing upload flow — show preview after upload
-    var origHandleFileUpload = handleFileUpload;
-    handleFileUpload = async function(file) {
-        await origHandleFileUpload(file);
-        // After upload, show preview
-        setTimeout(function() { startChunkPreview(file); }, 1500);
-    };
 
     function escapeHtml(str) {
         if (!str) return '';
