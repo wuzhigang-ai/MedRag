@@ -134,6 +134,7 @@
                     clearInterval(pollInterval);
                     fetchStats();
                     var filename = up.filename || file.name;
+                    fetchUploadHistory();
                     addFileRow(filename, 'indexed');
                     Toast.show('解析完成！新文献已加入知识库', 'success');
                     setTimeout(function () {
@@ -227,61 +228,62 @@
         });
     }
 
-    /* ── Fetch Document List (unified) ──────────────────── */
-    async function fetchDocuments() {
+    /* ── Upload History ────────────────────────────────── */
+    async function fetchUploadHistory() {
         try {
-            var data = await API.get('/api/documents');
-            if (data.documents && data.documents.length > 0) {
-                var tbody = document.getElementById('filesTableBody');
-                if (!tbody) return;
-                // Clear existing
-                var emptyRow = tbody.querySelector('.empty-state');
-                tbody.innerHTML = '';
-                if (emptyRow) emptyRow.closest('tr')?.remove();
-
-                data.documents.forEach(function (doc) {
-                    addDocumentRow(doc);
-                });
-            }
-        } catch (e) {
-            console.error('Failed to fetch documents:', e);
-        }
+            var data = await API.get('/api/files');
+            var tbody = document.getElementById('filesTableBody');
+            if (!tbody || !data.files || data.files.length === 0) return;
+            tbody.innerHTML = '';
+            data.files.forEach(function (f) {
+                var tr = document.createElement('tr');
+                var statusBadge = f.status === 'indexed'
+                    ? '<span class=\"badge badge-success badge-sm\">✓ 已索引</span>'
+                    : '<span class=\"badge badge-user badge-sm\">已上传</span>';
+                tr.innerHTML =
+                    '<td>' + escapeHtml(f.name) + '</td>' +
+                    '<td>' + (f.size_kb || '?') + ' KB</td>' +
+                    '<td>' + statusBadge + '</td>';
+                tbody.appendChild(tr);
+            });
+        } catch (e) { /* silent */ }
     }
 
-    function addDocumentRow(doc) {
-        var tbody = document.getElementById('filesTableBody');
-        if (!tbody) return;
+    /* ── Document Library (Knowledge Base) ─────────────── */
+    async function fetchDocumentLibrary() {
+        try {
+            var data = await API.get('/api/documents');
+            var tbody = document.getElementById('docLibBody');
+            var badge = document.getElementById('docCountBadge');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (badge) badge.textContent = (data.total || 0) + ' 篇';
 
-        var tr = document.createElement('tr');
-        var tagsHtml = '';
-        if (doc.section_tags && Object.keys(doc.section_tags).length > 0) {
-            var topTags = Object.entries(doc.section_tags)
-                .sort(function(a,b){return b[1]-a[1]})
-                .slice(0, 3);
-            tagsHtml = topTags.map(function(t){
-                return '<span class=\"chunk-tag ' + t[0] + '\">' + t[0] + ':' + t[1] + '</span>';
-            }).join(' ');
-        }
-        var pagesStr = '';
-        if (doc.pages && doc.pages.length > 0) {
-            if (doc.pages.length <= 5) {
-                pagesStr = doc.pages.join(', ');
-            } else {
-                pagesStr = doc.pages.slice(0,3).join(',') + '...' + doc.pages[doc.pages.length-1];
+            if (!data.documents || data.documents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan=\"3\"><div class=\"empty-state\">知识库为空，请先上传并确认入库文献</div></td></tr>';
+                return;
             }
+
+            data.documents.forEach(function (doc) {
+                var tagsHtml = '';
+                if (doc.section_tags && Object.keys(doc.section_tags).length > 0) {
+                    var topTags = Object.entries(doc.section_tags)
+                        .sort(function(a,b){return b[1]-a[1]})
+                        .slice(0, 4);
+                    tagsHtml = topTags.map(function(t){
+                        return '<span class=\"chunk-tag ' + t[0] + '\">' + t[0] + ':' + t[1] + '</span>';
+                    }).join(' ');
+                }
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td><span class=\"file-name\">📄 ' + escapeHtml(doc.name) + '</span></td>' +
+                    '<td><strong>' + (doc.chunks || 0) + '</strong> 块</td>' +
+                    '<td>' + (tagsHtml || '—') + '</td>';
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            console.error('Failed to fetch document library:', e);
         }
-        tr.innerHTML =
-            '<td><span class=\"file-name\">' +
-            '<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\">' +
-            '<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/>' +
-            '<polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/>' +
-            '<line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>' +
-            escapeHtml(doc.name || '') + '</span>' +
-            '<div class=\"file-meta\">' + tagsHtml + '</div>' +
-            '</td>' +
-            '<td><span class=\"badge badge-success badge-sm\">✓ ' + (doc.chunks || 0) + ' chunks</span></td>' +
-            '<td>' + (pagesStr || '—') + '</td>';
-        tbody.appendChild(tr);
     }
 
     /* ── Graph Modal ──────────────────────────────────── */
@@ -404,10 +406,11 @@
 
     /* ── Periodic Refresh ───────────────────────────────── */
     fetchStats();
-    fetchDocuments();
+    fetchUploadHistory();
+    fetchDocumentLibrary();
     updateGraphBtnStats();
     setInterval(fetchStats, 30000);
-    setInterval(fetchDocuments, 60000);
+    setInterval(fetchDocumentLibrary, 60000);
 
     /* ── Smart Chunk Preview ──────────────────────────── */
     var chunkPreview = document.getElementById('chunkPreview');

@@ -161,48 +161,70 @@
             <span class="progress-text" id="progressText"></span>
         </div>
 
-        <!-- Recent Files -->
+        <!-- Smart Chunk Preview Panel -->
+        <div id="chunkPreview" class="chunk-preview hidden animate-on-load">
+            <div class="cp-header">
+                <div>
+                    <h3>📋 智能切分预览</h3>
+                    <p id="cpDocName" class="cp-doc-name"></p>
+                </div>
+                <div class="cp-actions">
+                    <span id="cpStats" class="cp-stats"></span>
+                    <button id="cpCancelBtn" class="btn btn-ghost btn-sm">取消</button>
+                    <button id="cpConfirmBtn" class="btn btn-primary btn-sm">✅ 确认入库</button>
+                </div>
+            </div>
+            <div class="cp-body">
+                <div class="cp-tabs">
+                    <button class="cp-tab active" data-tab="text">文本块 <span id="cpTextCount">0</span></button>
+                    <button class="cp-tab" data-tab="images">图表 <span id="cpImgCount">0</span></button>
+                    <button class="cp-tab" data-tab="tables">表格 <span id="cpTblCount">0</span></button>
+                </div>
+                <div class="cp-content" id="cpContent"></div>
+            </div>
+        </div>
+
+        <!-- Upload History -->
         <div class="files-section animate-on-load">
             <div class="section-header">
-                <h2>最近文献</h2>
-                <span class="badge badge-success badge-sm">已索引</span>
+                <h2>📤 上传历史</h2>
             </div>
-
-            <!-- Smart Chunk Preview Panel -->
-            <div id="chunkPreview" class="chunk-preview hidden animate-on-load">
-                <div class="cp-header">
-                    <div>
-                        <h3>📋 智能切分预览</h3>
-                        <p id="cpDocName" class="cp-doc-name"></p>
-                    </div>
-                    <div class="cp-actions">
-                        <span id="cpStats" class="cp-stats"></span>
-                        <button id="cpCancelBtn" class="btn btn-ghost btn-sm">取消</button>
-                        <button id="cpConfirmBtn" class="btn btn-primary btn-sm">✅ 确认入库</button>
-                    </div>
-                </div>
-                <div class="cp-body">
-                    <div class="cp-tabs">
-                        <button class="cp-tab active" data-tab="text">文本块 <span id="cpTextCount">0</span></button>
-                        <button class="cp-tab" data-tab="images">图表 <span id="cpImgCount">0</span></button>
-                        <button class="cp-tab" data-tab="tables">表格 <span id="cpTblCount">0</span></button>
-                    </div>
-                    <div class="cp-content" id="cpContent"></div>
-                </div>
-            </div>
-
             <table class="files-table">
                 <thead>
                     <tr>
                         <th>文件名</th>
+                        <th>大小</th>
                         <th>状态</th>
-                        <th>上传时间</th>
                     </tr>
                 </thead>
                 <tbody id="filesTableBody">
                     <tr>
                         <td colspan="3">
-                            <div class="empty-state">暂无上传文件</div>
+                            <div class="empty-state">暂无上传记录</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Document Library (Knowledge Base) -->
+        <div class="files-section animate-on-load">
+            <div class="section-header">
+                <h2>📚 文献库</h2>
+                <span class="badge badge-success badge-sm" id="docCountBadge">0 篇</span>
+            </div>
+            <table class="files-table">
+                <thead>
+                    <tr>
+                        <th>文献名称</th>
+                        <th>文本块</th>
+                        <th>Section 标签</th>
+                    </tr>
+                </thead>
+                <tbody id="docLibBody">
+                    <tr>
+                        <td colspan="3">
+                            <div class="empty-state">加载中...</div>
                         </td>
                     </tr>
                 </tbody>
