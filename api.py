@@ -205,6 +205,9 @@ async def agent_query(req: QueryRequest):
         "reasoning_trace": result["reasoning_trace"],
         "steps": result["steps"],
         "model": result["model"],
+        "confidence": result.get("confidence", "unknown"),
+        "critique": result.get("critique", []),
+        "sources": result.get("sources", []),
         "timestamp": datetime.now().isoformat(),
     }
 
