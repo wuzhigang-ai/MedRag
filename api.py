@@ -101,33 +101,38 @@ class RegisterRequest(BaseModel):
     role: str = "user"
 
 
-# ─── Mock Authentication (Demo) ─────────────────────────
+# ─── MySQL Authentication ──────────────────────────────
 
-MOCK_USERS = {
-    "admin": {"password": "admin123", "role": "admin"},
-    "user": {"password": "user123", "role": "user"},
-}
+from src.auth import verify_user, create_user, list_users as db_list_users
+from src.auth import save_document_record, update_document_status, list_documents as db_list_docs, get_document_chunks
+
 MOCK_TOKENS = {}
 
 
 @app.post("/api/login")
 async def login(req: LoginRequest):
-    user = MOCK_USERS.get(req.username)
-    if not user or user["password"] != req.password:
-        raise HTTPException(401, "Invalid credentials")
+    user = verify_user(req.username, req.password)
+    if not user:
+        raise HTTPException(401, "用户名或密码错误")
     token = hashlib.md5(f"{req.username}:{req.password}".encode()).hexdigest()[:16]
     MOCK_TOKENS[token] = req.username
-    return {"token": token, "role": user["role"], "username": req.username}
+    return {"token": token, "role": user["role"], "username": user["username"]}
 
 
 @app.post("/api/register")
 async def register(req: RegisterRequest):
-    if req.username in MOCK_USERS:
-        raise HTTPException(400, "Username already exists")
-    MOCK_USERS[req.username] = {"password": req.password, "role": req.role}
+    try:
+        user = create_user(req.username, req.password, req.role)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
     token = hashlib.md5(f"{req.username}:{req.password}".encode()).hexdigest()[:16]
     MOCK_TOKENS[token] = req.username
-    return {"token": token, "role": req.role, "username": req.username}
+    return {"token": token, "role": user["role"], "username": user["username"]}
+
+
+@app.get("/api/users")
+async def api_list_users():
+    return {"users": db_list_users()}
 
 
 @app.get("/api/info")
@@ -428,6 +433,116 @@ async def build_lightrag():
     p = get_pipeline()
     ok = await p.build_lightrag()
     return {"status": "success" if ok else "failed", "lightrag_ready": p._lightrag_ready}
+
+
+# ─── Smart Chunk Preview + Doctor Review ───────────────
+
+@app.post("/api/preview")
+async def preview_chunks(file: UploadFile = File(...)):
+    """解析PDF并返回智能切分预览（不入库）"""
+    if not file.filename.endswith('.pdf'):
+        raise HTTPException(400, "仅支持PDF文件")
+    file_path = UPLOAD_DIR / file.filename
+    content = await file.read()
+    file_path.write_bytes(content)
+
+    p = get_pipeline()
+    preview_data = {"filename": file.filename, "chunks": [], "images": []}
+
+    try:
+        # Try MinerU remote parse
+        content_list_path = await asyncio.to_thread(p.parse_remote_pdf, str(file_path))
+        if content_list_path:
+            import json as _json
+            with open(content_list_path, encoding="utf-8") as f:
+                items = _json.load(f)
+            for item in items:
+                t = item.get("type", "text")
+                if t == "text":
+                    txt = item.get("text", "").strip()
+                    if txt and len(txt) > 30:
+                        tag = p._chunker.classify_section(txt)
+                        preview_data["chunks"].append({
+                            "type": "text", "text": txt[:300],
+                            "section_tag": tag, "page": item.get("page_idx", 0),
+                            "length": len(txt),
+                        })
+                elif t == "image":
+                    cap = " ".join(item.get("image_caption", []))
+                    if cap:
+                        preview_data["images"].append({
+                            "type": "image", "caption": cap[:200],
+                            "page": item.get("page_idx", 0),
+                        })
+                elif t == "table":
+                    cap = " ".join(item.get("table_caption", []))
+                    body = str(item.get("table_body", ""))[:200]
+                    if cap or body:
+                        preview_data["chunks"].append({
+                            "type": "table", "caption": cap, "body": body,
+                            "page": item.get("page_idx", 0),
+                        })
+            # Save to DB as pending
+            doc_id = save_document_record(file.filename, _json.dumps(preview_data, ensure_ascii=False),
+                                          uploaded_by="admin", status="pending")
+            preview_data["doc_id"] = doc_id
+            return preview_data
+    except Exception as e:
+        logger.warning(f"Remote parse failed, using local: {e}")
+
+    # Fallback: parse existing content_list.json if available
+    cdir = Path(p.content_dir)
+    for f in sorted(cdir.glob("*_content_list.json")):
+        import json as _json
+        with open(f, encoding="utf-8") as fh:
+            items = _json.load(fh)
+        doc_name = f.name.replace("_content_list.json", "")
+        for item in items[:30]:
+            t = item.get("type", "text")
+            if t == "text":
+                txt = item.get("text", "").strip()
+                if txt and len(txt) > 30:
+                    tag = p._chunker.classify_section(txt)
+                    preview_data["chunks"].append({
+                        "type": "text", "text": txt[:300],
+                        "section_tag": tag, "page": item.get("page_idx", 0),
+                        "doc": doc_name, "length": len(txt),
+                    })
+            elif t == "image":
+                cap = " ".join(item.get("image_caption", []))
+                if cap:
+                    preview_data["images"].append({
+                        "type": "image", "caption": cap[:200],
+                        "page": item.get("page_idx", 0), "doc": doc_name,
+                    })
+    doc_id = save_document_record(file.filename, _json.dumps(preview_data, ensure_ascii=False),
+                                  uploaded_by="admin", status="pending")
+    preview_data["doc_id"] = doc_id
+    return preview_data
+
+
+@app.post("/api/preview/confirm")
+async def confirm_import(req: dict):
+    """医生确认后入库：更新doc状态 + FAISS增量索引"""
+    doc_id = req.get("doc_id", 0)
+    if doc_id:
+        update_document_status(doc_id, "indexed")
+    return {"status": "ok", "message": "已确认入库", "doc_id": doc_id}
+
+
+@app.get("/api/preview/docs")
+async def list_preview_docs():
+    """列出所有已解析/待审核的文档"""
+    return {"documents": db_list_docs()}
+
+
+@app.get("/api/preview/doc/{doc_id}")
+async def get_preview_doc(doc_id: int):
+    chunks_json = get_document_chunks(doc_id)
+    if not chunks_json:
+        raise HTTPException(404, "文档不存在")
+    import json as _json
+    return _json.loads(chunks_json)
 
 
 @app.get("/health")
