@@ -227,18 +227,61 @@
         });
     }
 
-    /* ── Fetch File List ─────────────────────────────────── */
-    async function fetchFiles() {
+    /* ── Fetch Document List (unified) ──────────────────── */
+    async function fetchDocuments() {
         try {
-            var data = await API.get('/api/files');
-            if (data.files && data.files.length > 0) {
-                data.files.forEach(function (f) {
-                    addFileRow(f.name, f.status);
+            var data = await API.get('/api/documents');
+            if (data.documents && data.documents.length > 0) {
+                var tbody = document.getElementById('filesTableBody');
+                if (!tbody) return;
+                // Clear existing
+                var emptyRow = tbody.querySelector('.empty-state');
+                tbody.innerHTML = '';
+                if (emptyRow) emptyRow.closest('tr')?.remove();
+
+                data.documents.forEach(function (doc) {
+                    addDocumentRow(doc);
                 });
             }
         } catch (e) {
-            console.error('Failed to fetch files:', e);
+            console.error('Failed to fetch documents:', e);
         }
+    }
+
+    function addDocumentRow(doc) {
+        var tbody = document.getElementById('filesTableBody');
+        if (!tbody) return;
+
+        var tr = document.createElement('tr');
+        var tagsHtml = '';
+        if (doc.section_tags && Object.keys(doc.section_tags).length > 0) {
+            var topTags = Object.entries(doc.section_tags)
+                .sort(function(a,b){return b[1]-a[1]})
+                .slice(0, 3);
+            tagsHtml = topTags.map(function(t){
+                return '<span class=\"chunk-tag ' + t[0] + '\">' + t[0] + ':' + t[1] + '</span>';
+            }).join(' ');
+        }
+        var pagesStr = '';
+        if (doc.pages && doc.pages.length > 0) {
+            if (doc.pages.length <= 5) {
+                pagesStr = doc.pages.join(', ');
+            } else {
+                pagesStr = doc.pages.slice(0,3).join(',') + '...' + doc.pages[doc.pages.length-1];
+            }
+        }
+        tr.innerHTML =
+            '<td><span class=\"file-name\">' +
+            '<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\">' +
+            '<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/>' +
+            '<polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/>' +
+            '<line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>' +
+            escapeHtml(doc.name || '') + '</span>' +
+            '<div class=\"file-meta\">' + tagsHtml + '</div>' +
+            '</td>' +
+            '<td><span class=\"badge badge-success badge-sm\">✓ ' + (doc.chunks || 0) + ' chunks</span></td>' +
+            '<td>' + (pagesStr || '—') + '</td>';
+        tbody.appendChild(tr);
     }
 
     /* ── Graph Modal ──────────────────────────────────── */
@@ -361,9 +404,10 @@
 
     /* ── Periodic Refresh ───────────────────────────────── */
     fetchStats();
-    fetchFiles();
+    fetchDocuments();
     updateGraphBtnStats();
     setInterval(fetchStats, 30000);
+    setInterval(fetchDocuments, 60000);
 
     /* ── Smart Chunk Preview ──────────────────────────── */
     var chunkPreview = document.getElementById('chunkPreview');
