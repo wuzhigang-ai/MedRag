@@ -1,0 +1,899 @@
+[
+    {
+        "type": "text",
+        "text": "WORKS IN PROGRESS",
+        "bbox": [
+            74,
+            81,
+            414,
+            104
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "A Randomized Clinical Trial to Evaluate the Safety and Efficacy of a Percutaneous Left Ventricular Assist Device Versus Intra-Aortic Balloon Pumping for Treatment of Cardiogenic Shock Caused by Myocardial Infarction",
+        "text_level": 1,
+        "bbox": [
+            92,
+            122,
+            798,
+            276
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Melchior Seyfarth, MD,\\*† Dirk Sibbing, MD,\\* Iris Bauer, MS,\\* Georg Fröhlich, MD,† Lorenz Bott-Flügel, MD,† Robert Byrne, MB, MRCPI,\\* Josef Dirschinger, MD,† Adnan Kastrati, MD,\\* Albert Schömig, MD\\*†",
+        "bbox": [
+            92,
+            290,
+            798,
+            351
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Munich, Germany",
+        "bbox": [
+            95,
+            354,
+            239,
+            373
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Objectives The aim of this study was to test whether the left ventricular assist device (LVAD) Impella LP2.5 (Abiomed Europe GmbH, Aachen, Germany) provides superior hemodynamic support compared with the intra-aortic balloon pump (IABP).",
+        "bbox": [
+            123,
+            391,
+            925,
+            437
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Background Cardiogenic shock caused by left ventricular failure is associated with high mortality in patients with acute myocardial infarction (AMI). An LVAD may help to bridge patients to recovery from left ventricular failure.",
+        "bbox": [
+            125,
+            441,
+            928,
+            472
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Methods In a prospective, randomized study, 26 patients with cardiogenic shock were studied. The primary end point was the change of the cardiac index (CI) from baseline to 30 min after implantation. Secondary end points included lactic acidosis, hemolysis, and mortality after 30 days.",
+        "bbox": [
+            125,
+            476,
+            935,
+            521
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Results In 25 patients the allocated device (n \u0001 13 IABP, n \u0001 12 Impella LP2.5) could be safely placed. One patient died before implantation. The CI after 30 min of support was significantly increased in patients with the Impella LP2.5 compared with patients with IABP (Impella: -CI \u0001 0.49 \u0003 0.46 l/min/m2 ; IABP: -CI \u0001 0.11 \u0003 0.31 l/min/m2 ; p \u0001 0.02). Overall 30-day mortality was 46% in both groups.",
+        "bbox": [
+            125,
+            525,
+            920,
+            585
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Conclusions In patients presenting with cardiogenic shock caused by AMI, the use of a percutaneously placed LVAD (Impella LP 2.5) is feasible and safe, and provides superior hemodynamic support compared with standard treatment using an intra-aortic balloon pump. (Efficacy Study of LV Assist Device to Treat Patients With Cardiogenic Shock [ISAR-SHOCK]; NCT00417378) (J Am Coll Cardiol 2008;52:1584–8) © 2008 by the American College of Cardiology Foundation",
+        "bbox": [
+            125,
+            589,
+            930,
+            664
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Cardiogenic shock (CS) affects about 6% to 8% of patients with acute myocardial infarction (AMI), and remains associated with a mortality rate of 40% to 50% despite a high rate of early revascularization and use of intra-aortic balloon pump (IABP) counterpulsation (1). Because of limited hemodynamic benefits inherent in IABP therapy, new technological developments such as left ventricular assist devices (LVAD) have focused on improved hemodynamic support of the failing ventricle to bridge patients to recovery (2). Recently developed LVADs either have been limited by significant complication rates (3) or have required cardiac surgery for implantation (2). The Impella LP2.5 (Abiomed Europe GmbH, Aachen, Germany) is a catheter-based, impeller-driven, axial-flow pump with a maximal flow of 2.5 l/min from the left ventricle to the ascending aorta and can be implanted via a percutaneous approach (4,5). The ISAR-SHOCK (Impella LP2.5 vs. IABP in Cardiogenic SHOCK) trial is the first study to test this technology in a randomized manner and should test the hypothesis that the Impella LP2.5 provides superior hemodynamic support compared with IABP in patients with CS caused by AMI.",
+        "bbox": [
+            62,
+            697,
+            489,
+            841
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            508,
+            697,
+            937,
+            887
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Methods",
+        "text_level": 2,
+        "bbox": [
+            510,
+            899,
+            592,
+            916
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Study design. The study was conducted as a prospective, 2-center, randomized trial. All patients with AMI and a compromised hemodynamic state received positive inotropic drugs as needed. After initial assessment of hemodynamics, eligible patients were randomly assigned to either treatment with IABP or Impella LP2.5. Patients were immediately transferred to the catheterization laboratory for coronary angiography. The assigned device was implanted after revascularization therapy and following the measurement of baseline hemodynamic parameters. Thirty minutes later, a subsequent hemodynamic measurement was undertaken to calculate the primary end point of the study with maximal support of both devices. Between both measurements, the doses of vasopressors remained unchanged by protocol. Thereafter no further regulation by protocol was mandated. As long as the assigned device was implanted, heparin was given intravenously adjusted to a partial thromboplastin time of 60 to 80 s. No additional heparin was used for purging the Impella LP2.5 device.",
+        "bbox": [
+            510,
+            921,
+            937,
+            956
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "Journal of the American College of Cardiology © 2008 by the American College of Cardiology Foundation Published by Elsevier Inc.",
+        "bbox": [
+            62,
+            38,
+            371,
+            73
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "Vol. 52, No. 19, 2008 ISSN 0735-1097/08/\\$34.00 doi:10.1016/j.jacc.2008.05.065",
+        "bbox": [
+            777,
+            40,
+            935,
+            73
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "From the \\*Deutsches Herzzentrum München and †1. Medizinische Klinik rechts der Isar, Technische Universität, Munich, Germany.",
+        "bbox": [
+            62,
+            870,
+            487,
+            895
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "Supported by Abiomed Europe GmbH, Germany. Dr. Seyfarth received lecture fees from Abiomed. Presented in part as a Late-Breaking Clinical Trial at the American College of Cardiology 2007 Annual Meeting, New Orleans, Louisiana.",
+        "bbox": [
+            62,
+            895,
+            489,
+            930
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "Manuscript received January 15, 2008; revised manuscript received April 22, 2008, accepted May 27, 2008.",
+        "bbox": [
+            62,
+            928,
+            487,
+            954
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            60,
+            85,
+            489,
+            350
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "The study protocol was approved by the institutional ethics committees. Exemption from informed consent was specifically approved by the ethical board for patients who were unable to give informed consent following the National Institutes of Health/Food and Drug Administration guidelines for emergency research (21 CFR 50.24).",
+        "bbox": [
+            62,
+            348,
+            487,
+            443
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Eligible participants for this study were patients with AMI \u000448 h and CS; CS was defined using both clinical and hemodynamic criteria as previously described in the SHOCK trial (6). Please see the Online Appendix for details of the inclusion and exclusion criteria of the study. Percutaneous transvalvular LVAD. The Impella LP2.5 device, a catheter-based miniaturized rotary blood pump, was inserted via a 13-F sheath in the femoral artery and placed retrogradely through the aortic valve. The microaxial pump continuously aspirates blood from the left ventricle and expels it to the ascending aorta with a maximal flow of 2.5 l/min (5).",
+        "bbox": [
+            60,
+            441,
+            489,
+            629
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Statistical analysis. The primary end point of the study was the hemodynamic improvement at 30 min after implantation defined as the change in cardiac index (CI) from baseline. Secondary end points of the study were hemodynamic and metabolic parameters; all-cause mortality at 30 days; device-related complications including hemolysis, major bleeding, cerebrovascular events, limb ischemia, and multiple-organ dysfunction scores at 30 days using Multiple Organ Dysfunction Score (MODS) and Sepsis-related Organ Failure Assessment (SOFA) criteria. Cardiac power index (CPI) was calculated as: CI \u0005 mean arterial pressure (MAP) \u0005 0.0022 (7). With a sample size of 26 patients, we achieved 80% power to detect a significant enhancement of CI from \u00060.15 l/min in patients with IABP to \u00060.50 l/min in patients with Impella ( level of 0.05). For further details of the statistical analysis, please see the Online Appendix.",
+        "bbox": [
+            60,
+            627,
+            489,
+            879
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Results",
+        "text_level": 2,
+        "bbox": [
+            62,
+            899,
+            137,
+            916
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Baseline characteristics. We included 26 patients in this analysis. There were no significant differences between the study groups with respect to clinical characteristics (Table 1) and baseline hemodynamics (Table 2). In keeping with the inclusion criteria, the CI of the study patients was low $( 1 . 7 \\pm 0 . 5 $ l/min/ m2 ) and MAP was reduced (75 \u0003 16 mm Hg). On admission, 92% (IABP) and 84% (Impella LP2.5) received vasopressor therapy $( \\mathtt { p } = 0 . 8 3 )$",
+        "bbox": [
+            62,
+            921,
+            489,
+            956
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            508,
+            85,
+            751,
+            257
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Study intervention. The percutaneous coronary intervention was performed in all except 2 patients (1 in each group) (Table 1) and was successful in more than 90% in both groups. All devices were implanted after percutaneous coronary intervention",
+        "bbox": [
+            510,
+            255,
+            751,
+            379
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "image",
+        "img_path": "images/4fcdaed3ecd08b0ff895b32885523e425ccf9afe08edf263f6f2c10afd62ee2f.jpg",
+        "image_caption": [],
+        "image_footnote": [],
+        "bbox": [
+            765,
+            87,
+            934,
+            357
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "via the access site. One patient assigned to Impella LP2.5 died after enrollment before implantation. The time required to implant the device was longer in the Impella group (Impella: 22 \u0003 9 min; IABP: 14 \u0003 8 min; p \u0001 0.40).",
+        "bbox": [
+            508,
+            379,
+            937,
+            443
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Hemodynamic effects. The primary end point of the study (-CI) was achieved in 25 patients. The patient who died before implantation was additionally included in the analysis by assuming a null effect (Table 2). The -CI was significantly greater in Impella patients (-CI \u0001 0.49 \u0003 0.46 l/min/m2 ) than in patients with IABP (-CI \u0001 0.11 \u0003 0.31 l/min/m2 ; p \u0001 0.02). The MAP increased in patients with Impella LP2.5 by $9 . 0 \\pm 1 4 . 0$ mm Hg versus \u00071.2 \u0003 16.2 mm Hg in the IABP group (p \u0001 0.09). The greatest difference was observed in diastolic arterial pressure, which increased by 9.2 \u0003 12.1 mm Hg under Impella support, and was reduced by \u00078.0 \u0003 13.1 mm Hg in patients with IABP (p \u0001 0.002) (Table 2).",
+        "bbox": [
+            508,
+            441,
+            937,
+            644
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "The CI improved in both groups during the next hours: after 4 h, CI was 2.23 \u0003 0.58 l/min/m2 in the Impella group and 2.25 \u0003 0.92 l/min/m2 in the IABP group. After 30 h, CI was 2.51 \u0003 0.53 l/min/m2 in the Impella group and 2.40 \u0003 0.67 l/min/m2 in the IABP group. Figure 1A shows the CPI, which also gradually recovered in the subsequent 30 h in both groups. Because the overall CPI was only slightly higher in Impella patients at the subsequent time points, the endogenous cardiac output of the left ventricle was significantly lower at all time points in Impella patients because of the additional work of the LVAD (Fig. 1A).",
+        "bbox": [
+            508,
+            643,
+            937,
+            815
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Serum lactate was lower in patients treated with Impella during the first 48 h at all time points (Fig. 1B). The area under the curve for serum lactate was 123 \u0003 87 h·mmol/l in patients with Impella compared with 180 \u0003 147 h·mmol/l in patients with IABP $\\bar { ( \\mathrm { p } ) } = 0 . 1 2 )$ . During the first 24 h, urine output was 110 (76 to 197) ml/h in patients assigned to Impella versus 117 (95 to 223) ml/h in patients assigned to IABP. The overall dose of the vasopressor agent epinephrine was similar in both groups during the first 24 h (Impella: 7.1 [0.8 to 13.5] mg/kg; IABP: 4.2 [1.0 to 13.5] mg/kg; p \u0001 0.63) as well as the median vasopressor support time (Impella: 46 [7.4 to 67.0] h; IABP: 46 [19.5 to 83.8] h). However, the mechanical ventilation support time was shorter in the Impella group than in the IABP group, 48 (6.7 to 147.8) h versus 98 (21.3 to 167.5) h, respectively $( \\mathsf { p } = 0 . 1 5 )$",
+        "bbox": [
+            508,
+            813,
+            939,
+            957
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "header",
+        "text": "JACC Vol. 52, No. 19, 2008 November 4, 2008:1584–8",
+        "bbox": [
+            64,
+            38,
+            206,
+            67
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "header",
+        "text": "Seyfarth LVAD Versus IABP in Cardiogenic Shock",
+        "bbox": [
+            638,
+            40,
+            873,
+            67
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "page_number",
+        "text": "1585",
+        "bbox": [
+            901,
+            40,
+            934,
+            52
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "table",
+        "img_path": "images/44c0c2d623fd9892a7ef5c2dcf97021f9f1b4dce6089a38feb48961a3a1a6be2.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "AMI \u0001 acute myocardial infarction; CABG \u0001 coronary artery bypass graft; CPR \u0001 cardiopulmonary resuscitation; IABP \u0001 intra-aortic balloon pump; IQR \u0001 interquartile range; LVEF \u0001 left ventricular ejection fraction, determined before percutaneous coronary intervention and implantation of assigned device; PCI \u0001 percutaneous coronary intervention; STEMI \u0001 ST-segment elevation myocardial infarction; TIMI \u0001 Thrombolysis In Myocardial Infarction; VF \u0001 ventricular fibrillation; VT \u0001 ventricular tachycardia."
+        ],
+        "table_body": "<table><tr><td>Table 1</td><td>Baseline Patient Characteristics</td></tr><tr><td colspan=\"3\">Impella LP2.5 (n = 13) IABP (n = 13)</td></tr><tr><td>Age, median [IQR], yrs</td><td>65 [57-71]</td><td>67 [55-80]</td></tr><tr><td colspan=\"2\">Male gender, n (%)</td><td>8(62) 11(85)</td></tr><tr><td colspan=\"2\">Arterial hypertension, n (%)</td><td>7(54) 9(69)</td></tr><tr><td colspan=\"2\">Diabetes mellitus, n (%)</td><td>5(39) 3 (23)</td></tr><tr><td colspan=\"2\">Smoking, n (%)</td><td>8(62) 7 (54)</td></tr><tr><td colspan=\"2\">Hypercholesterolemia, n (%) 8(62)</td><td>7(54)</td></tr><tr><td colspan=\"2\">LVEF, median [IQR], % 27 [20-39]</td><td>28 [23-44]</td></tr><tr><td colspan=\"2\">Multivessel disease, n (%) 9(69)</td><td>10(77)</td></tr><tr><td colspan=\"2\">Peak creatine kinase, median [IQR], U/I 3,719 [295-8,535]</td><td>4,150 [2,275-9,310]</td></tr><tr><td colspan=\"2\">Anterior myocardial infarction, n (%) 7(54)</td><td>8(62)</td></tr><tr><td colspan=\"2\">Time from AMI to randomization, median [IQR], h 4.5 [3.8-13.2]</td><td>5.0 [3.3-13.0]</td></tr><tr><td colspan=\"2\">Mechanical ventilation at admission, n (%) 12(92)</td><td>12(92)</td></tr><tr><td colspan=\"2\">CPR, VT, or VF before randomization, n (%) 11(85)</td><td>9 (69)</td></tr><tr><td colspan=\"2\">pH at admission, median [IQR] 7.31 [7.21-7.42]</td><td>7.24 [7.18-7.37]</td></tr><tr><td colspan=\"2\">Urine output at admission, median [IQR], ml/h 52 [28-90]</td><td>35 [19–67]</td></tr><tr><td colspan=\"2\">PCl as revascularization, n (%) 12(92)</td><td>12(92)</td></tr><tr><td colspan=\"2\">CABG as revascularization, n (%)</td><td></td></tr><tr><td colspan=\"2\">0</td><td>1(8)</td></tr><tr><td colspan=\"2\">TIMI flow grade before PCI</td><td>8(62)</td></tr><tr><td colspan=\"2\">0/1 7 (54)</td><td>5(38)</td></tr><tr><td colspan=\"2\">2/3 6(46)</td><td></td></tr><tr><td colspan=\"2\">TIMI flow grade after PCI 3 12 (100)</td><td>12 (92)</td></tr></table>",
+        "bbox": [
+            187,
+            90,
+            814,
+            449
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            62,
+            511,
+            487,
+            620
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Clinical outcomes. The median duration of support was 25 (6.0 to 41.0) h in patients with Impella and 23 (14.1 to 34.1) h in patients with IABP. Excluding the patients who died during support (3 patients in each group), the median duration of support with Impella was 38 (21.8 to",
+        "bbox": [
+            62,
+            620,
+            489,
+            700
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Table 2 Hemodynamic Values Before and After Device Implantation",
+        "bbox": [
+            72,
+            719,
+            519,
+            735
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "41.1) h versus 23 (14.8 to 31.1) h with IABP $( \\mathrm { p } = 0 . 2 6 )$ During support we observed no device-related technical failure, major bleeding, or ischemia. There was 1 case of acute limb ischemia requiring surgery after device explantation in a patient assigned to Impella. Hemolysis was assessed by measurements of free hemoglobin, which was significantly higher in Impella patients in the first 24 h (Fig. 1C). During intensive care treatment, more packed red blood cells and fresh-frozen plasma were administered to Impella patients (red blood cells: Impella $2 . 6 \\pm 2 . 7$ U vs. IABP 1.2 \u0003 1.9 U, p \u0001 0.18; and fresh-frozen plasma: Impella $1 . 8 \\pm 2 . 5 \\ : \\mathrm { U }$ vs. IABP: 1.0 \u0003 1.7 U, p \u0001 0.39).",
+        "bbox": [
+            508,
+            511,
+            937,
+            700
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "table",
+        "img_path": "images/f37970d581e8f0a701366acfa3af5a874c1ceb20b5c22480ae1cde52393c88ed.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Values are mean \u0003 SD; p values are for independent comparisons of values for Impella after and IABP after implantation.",
+            "AP \u0001 arterial pressure; CI \u0001 cardiac index; CO \u0001 cardiac output; IABP \u0001 intra-aortic balloon pump; PAP \u0001 pulmonary arterial pressure; PCWP \u0001 pulmonary capillary wedge pressure; RAP \u0001 right atrial pressure; SVR \u0001 systemic vascular resistance."
+        ],
+        "table_body": "<table><tr><td></td><td>Impella Before (n = 13)</td><td>IABP Before (n = 13)</td><td>Impella After (n = 13)</td><td>IABP After (n = 13)</td><td>p Value</td></tr><tr><td>C1 (/min/m^²)</td><td> $\\pm 0 . 4 5$ </td><td> $1 . 7 3 \\pm 0 . 5 9$ </td><td> $2 . 2 0 \\pm 0 . 6 4$ </td><td> $1 . 8 4 \\pm 0 . 7 1$ </td><td>0.18</td></tr><tr><td>co (/min)</td><td> $3 . 1 6 \\pm 0 . 7 7$ </td><td> $3 . 4 6 \\pm 1 . 4 6$ </td><td> $4 . 1 2 \\pm 1 . 2 1$ </td><td> ${ \\bf 3 . 6 7 \\pm 1 . 7 6 }$ </td><td>0.48</td></tr><tr><td>Mean AP (mm Hg)</td><td> $7 8 \\pm 1 6$ </td><td> $7 2 \\pm 1 7$ </td><td> $8 7 \\pm 1 8$ </td><td> $7 1 \\pm 2 2$ </td><td>0.062</td></tr><tr><td>Systolic AP (mm Hg)</td><td> $1 0 6 \\pm 2 2$ </td><td> $1 0 1 \\pm 2 3$ </td><td> $1 1 0 \\pm 2 4$ </td><td> $9 7 \\pm 2 9$ </td><td>0.20</td></tr><tr><td>Diastolic AP (mm Hg)</td><td> $6 4 \\pm 1 5$ </td><td> $5 8 \\pm 1 4$ </td><td> $7 4 \\pm 1 7$ </td><td> $5 0 \\pm 1 6$ </td><td>0.001</td></tr><tr><td>Heart rte (beats/min)</td><td> $9 5 \\pm 2 4$ </td><td> $9 7 \\pm 2 4$ </td><td> $1 0 3 \\pm 2 1$ </td><td> $9 9 \\pm 2 2$ </td><td>0.68</td></tr><tr><td>PCWP (mm Hg)</td><td> $2 2 \\pm 8$ </td><td> $2 2 \\pm 7$ </td><td> ${ \\bf 1 9 \\pm 5 }$ </td><td> $2 0 \\pm 6$ </td><td>0.67</td></tr><tr><td>RAP (mm Hg)</td><td> ${ \\bf 1 3 \\pm 7 }$ </td><td> $1 2 \\pm 6$ </td><td> ${ \\tt 1 3 \\pm 3 }$ </td><td> $\\hphantom { 0 } 1 2 \\pm 5$ </td><td>0.82</td></tr><tr><td>Mean PAP (mm Hg)</td><td> $2 8 \\pm 8$ </td><td> $2 8 \\pm 9$ </td><td> $2 8 \\pm 8$ </td><td> $3 0 \\pm 1 1$ </td><td>0.73</td></tr><tr><td>SVR  $( \\mathsf { d y n } { \\cdot } \\mathsf { s } { \\cdot } \\mathsf { c m } ^ { - 5 } )$ </td><td> ${ \\bf 1 } , { \\bf 6 1 7 } \\pm 3 8 5$ </td><td> $1 , 5 4 6 \\pm 7 6 3$ </td><td> ${ \\bf 1 } , 4 5 7 \\pm 4 6 7$ </td><td> $^ { 1 , 3 3 3 } \\pm 7 8 4$ </td><td>0.63</td></tr></table>",
+        "bbox": [
+            65,
+            739,
+            932,
+            914
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "page_number",
+        "text": "1586",
+        "bbox": [
+            65,
+            40,
+            100,
+            52
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "header",
+        "text": "Seyfarth",
+        "bbox": [
+            126,
+            40,
+            211,
+            52
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "header",
+        "text": "LVAD Versus IABP in Cardiogenic Shock",
+        "bbox": [
+            126,
+            52,
+            354,
+            67
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "header",
+        "text": "JACC Vol. 52, No. 19, 2008",
+        "bbox": [
+            800,
+            38,
+            935,
+            52
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "header",
+        "text": "November 4, 2008:1584–8",
+        "bbox": [
+            800,
+            52,
+            935,
+            65
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "chart",
+        "img_path": "images/a1fb6a47d5069d8013ace0507c8b983a63ccf5462409eb4cb7e9d56a6da6aadf.jpg",
+        "content": "",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "bbox": [
+            72,
+            103,
+            475,
+            346
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "chart",
+        "img_path": "images/68d1a973bafc3a581c4756b3adcc996c036e76988dc78c9ab764391d35f174cb.jpg",
+        "content": "",
+        "chart_caption": [
+            "B"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            72,
+            373,
+            475,
+            576
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "chart",
+        "img_path": "images/4443b14557d868316f4bbf96f5698c7d5a70f2fe8cc4b70b1e53694fb25cf906.jpg",
+        "content": "",
+        "chart_caption": [
+            "(A) Time course of the modified cardiac power index (CPI) after implantation of Impella LP2.5 or intra-aortic balloon pump. For Impella patients, total CPI is shown as the sum of CPI attributable to the work of the left ventricle $( \\mathsf { L V } ) ( \\mathsf { C P l } _ { \\mathsf { L V } } ;$ red bars) and of the device $( \\mathsf { C P l } _ { \\mathsf { I m p e l l a } } ,$ black bars). (B) Time course of serum lactate (mean \u0003 SD). (C) Time course of free hemoglobin (median and interquartile range). ${ } ^ { * } \\mathsf { p } < 0 . 0 5$ between treatment groups at the specific time points."
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            72,
+            587,
+            475,
+            775
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "We measured multiple organ dysfunction scores, using MODS and SOFA criteria. After 30 days, MODS and SOFA scores had improved significantly in both treatment arms (Fig. 2A). In particular, after 30 days, median serum creatinine level was 1.2 (1.0 to 2.0) mg/dl in patients assigned to Impella versus 0.8 (0.7 to 0.9) mg/dl in patients assigned to IABP $( \\mathrm { p } = 0 . 1 7 )$ , and serum bilirubin level was 0.9 (0.4 to 1.2) mg/dl and 1.2 (1.0 to 1.5) mg/dl (Impella, respectively IABP; $\\mathrm { ~ p ~ } = \\ 0 . 3 5 )$ . In the Impella group, 6 patients survived without neurological deficit compared with 4 patients in the IABP group. At discharge echocardiographically determined left ventricular ejection fraction was $3 \\bar { 5 } \\pm 1 7 \\%$ in the Impella group versus $4 5 \\pm 1 7 \\%$ in the IABP group $( \\mathtt { p } = 0 . 3 4 )$ . Overall, 6 patients died in each group within 30 days (Fig. 2B).",
+        "bbox": [
+            62,
+            906,
+            487,
+            956
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            508,
+            85,
+            937,
+            275
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Discussion",
+        "text_level": 2,
+        "bbox": [
+            510,
+            291,
+            611,
+            308
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "This study is the first randomized clinical trial to evaluate the feasibility, safety, and efficacy of a new LVAD compared with the IABP in patients with CS caused by AMI. Compared with other LVADs, the catheter-based, miniaturized rotary blood pump Impella LP2.5 affords easy percutaneous access (2). The use of Impella LP2.5 increased CI, cardiac output, and MAP 30 min after implantation, whereas IABP significantly reduced DAP. The improvement in hemodynamics with the Impella device may explain the more rapid reversal of serum lactate levels observed in Impella patients, although this did not reach significance. The use of positive inotropic drugs or vasopressors was expected to be lower in patients with Impella. However, we could not detect any differences in the overall use of these agents. Calculation of the CPI was additionally used to estimate the hemodynamic support offered by the LVAD (7). The endogenous cardiac work of Impella patients was significantly lower than in patients with IABP at all time points. This may explain why the overall cardiac output of patients with Impella was not a simple sum of pump flow and endogenous cardiac output. Furthermore, this may explain why a significant hemodynamic improvement was limited to the first hours after implantation.",
+        "bbox": [
+            508,
+            316,
+            937,
+            675
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Complex organ dysfunction scores (MODS and SOFA) were used to evaluate overall outcome. Reversal of the hemodynamic derangement resulted in better scores at 30 days in both groups without a significant difference between treatment arms. Explanation for the overall lack of a significant improvement in clinical outcome may be attributable to the protocol used, which left it to the discretion of the physician how long the mechanical device was used, after the primary end point was reached.",
+        "bbox": [
+            508,
+            674,
+            937,
+            815
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "We also investigated the feasibility and safety of the new device in patients with CS. There was no technical failure during support and no increase in major bleeding, distal limb ischemia, arrhythmias, or infection. The increase in hemolysis in Impella patients was only transitory.",
+        "bbox": [
+            508,
+            813,
+            937,
+            892
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Study limitations. A major limitation of the study is the small number of patients, which did not allow for a meaningful evaluation of potential mortality differences. Therefore, evidence from this initial study can only serve as support for future",
+        "bbox": [
+            508,
+            891,
+            937,
+            956
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "header",
+        "text": "JACC Vol. 52, No. 19, 2008 November 4, 2008:1584–8",
+        "bbox": [
+            64,
+            38,
+            204,
+            67
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "header",
+        "text": "Seyfarth LVAD Versus IABP in Cardiogenic Shock",
+        "bbox": [
+            638,
+            40,
+            875,
+            67
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "page_number",
+        "text": "1587",
+        "bbox": [
+            901,
+            40,
+            934,
+            52
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "image",
+        "img_path": "images/3c110a93fc2688d916e22094ecf78cb9fcdbcffd30ae38aef21539f293baae3d.jpg",
+        "image_caption": [
+            "Organ Dysfunction Scores and Survival Curve"
+        ],
+        "image_footnote": [],
+        "bbox": [
+            515,
+            881,
+            541,
+            895
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "chart",
+        "img_path": "images/e7ff616eae28d0f33531ec723939aaad8126e5251fbffd90faf99bdc54e05b60.jpg",
+        "content": "",
+        "chart_caption": [
+            "A"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            135,
+            117,
+            409,
+            332
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "chart",
+        "img_path": "images/dd2f6118412a52f75f46ec9c851b668b25f158cf8138244bbad7fbec15045fd0.jpg",
+        "content": "",
+        "chart_caption": [
+            "B"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            135,
+            364,
+            414,
+            582
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "chart",
+        "img_path": "images/2be77fa9a440a4131a1dfafc4296266535403a5b00025846074de2b30268645a.jpg",
+        "content": "",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "bbox": [
+            88,
+            594,
+            461,
+            811
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Figure 2",
+        "text_level": 2,
+        "bbox": [
+            74,
+            829,
+            131,
+            842
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "(A) Multiple Organ Dysfunction Score (MODS). (B) Sepsis-related Organ Failure Assessment (SOFA). Scores are shown at baseline and 30 days. Values are $\\mathsf { m e a n } \\pm \\mathsf { S D } . \\mathsf { \\Omega } ^ { * } \\mathsf { p } < 0 . 0 1$ between baseline and 30 days for each score and each treatment group. (C) Overall 30-day survival curves for Impella patients versus intra-aortic balloon pump patients.",
+        "bbox": [
+            72,
+            855,
+            472,
+            914
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "larger studies to test for a clinical benefit or mortality reduction. Another limitation may be the early time point chosen for primary end point assessment, which was intended to avoid the loss of patients by early mortality. This obviously impedes the extrapolation of the present results to the effects of longer hemodynamic support by Impella. Finally, the Impella LP2.5 is the smallest LVAD with the advantage of a percutaneous approach, albeit limited by the maximal pump flow of 2.5 l/min. Therefore, future studies might evaluate not just the best choice of initial device, but also the optimal time point to switch to a higher-output but more invasive device in patients with CS (2,8).",
+        "bbox": [
+            510,
+            85,
+            935,
+            273
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Conclusions",
+        "text_level": 2,
+        "bbox": [
+            510,
+            286,
+            619,
+            302
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "This randomized study shows the feasibility and safety of a percutaneously delivered LVAD implanted in patients with CS caused by AMI. The LVAD Impella LP2.5 offered an effective and superior hemodynamic support in these patients compared with standard treatment using IABP counterpulsation.",
+        "bbox": [
+            510,
+            311,
+            935,
+            406
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Reprint requests and correspondence: Dr. Melchior Seyfarth, Deutsches Herzzentrum München, Lazarettstrasse 36, 80636 Munich, Germany. E-mail: seyfarth@dhm.mhn.de.",
+        "bbox": [
+            510,
+            423,
+            934,
+            468
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "REFERENCES",
+        "text_level": 2,
+        "bbox": [
+            512,
+            485,
+            595,
+            500
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "list",
+        "sub_type": "ref_text",
+        "list_items": [
+            "1. Babaev A, Frederick PD, Pasta DJ, et al. Trends in management and outcomes of patients with acute myocardial infarction complicated by cardiogenic shock. JAMA 2005;294:448–54.",
+            "2. Baughman KL, Jarcho JA. Bridge to life— cardiac mechanical support. N Engl J Med 2007;357:846–9.",
+            "3. Thiele H, Sick P, Boudriot E, et al. Randomized comparison of intra-aortic balloon support with a percutaneous left ventricular assist device in patients with revascularized acute myocardial infarction complicated by cardiogenic shock. Eur Heart J 2005;26:1276 – 83.",
+            "4. Sjauw KD, Remmelink M, Baan J Jr., et al. Left ventricular unloading in acute ST-segment elevation myocardial infarction patients is safe and feasible and provides acute and sustained left ventricular recovery. J Am Coll Cardiol 2008;51:1044–6.",
+            "5. Henriques JP, Remmelink M, Baan J Jr., et al. Safety and feasibility of elective high-risk percutaneous coronary intervention procedures with left ventricular support of the Impella Recover LP 2.5. Am J Cardiol 2006;97:990–2.",
+            "6. Hochman JS, Sleeper LA, Webb JG, et al., SHOCK Investigators. Early revascularization in acute myocardial infarction complicated by cardiogenic shock. Should we emergently revascularize occluded coronaries for cardiogenic shock. N Engl J Med 1999;341:625–34.",
+            "7. Cotter G, Moshkovitz Y, Kaluski E, et al. The role of cardiac power and systemic vascular resistance in the pathophysiology and diagnosis of patients with acute congestive heart failure. Eur J Heart Fail 2003;5:443–51.",
+            "8. Meyns B, Dens J, Sergeant P, Herijgers P, Daenen W, Flameng W. Initial experiences with the Impella device in patients with cardiogenic shock—Impella support for cardiogenic shock. Thorac Cardiovasc Surg 2003;51:312–7."
+        ],
+        "bbox": [
+            513,
+            510,
+            934,
+            546
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Key Words: shock y myocardial infarction y heart-assist device y hemodynamics.",
+        "bbox": [
+            512,
+            848,
+            897,
+            873
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "APPENDIX",
+        "text_level": 2,
+        "bbox": [
+            546,
+            881,
+            607,
+            895
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "For details of the inclusion and exclusion criteria of the study, please see the online version of this article.",
+        "bbox": [
+            510,
+            908,
+            934,
+            934
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "page_number",
+        "text": "1588",
+        "bbox": [
+            65,
+            40,
+            98,
+            52
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "header",
+        "text": "Seyfarth LVAD Versus IABP in Cardiogenic Shock",
+        "bbox": [
+            126,
+            40,
+            354,
+            67
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "header",
+        "text": "JACC Vol. 52, No. 19, 2008 November 4, 2008:1584–8",
+        "bbox": [
+            800,
+            40,
+            935,
+            65
+        ],
+        "page_idx": 4
+    }
+]
