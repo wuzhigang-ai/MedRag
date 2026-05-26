@@ -242,38 +242,37 @@ class MedicalRAGPipeline:
                 elif t in ("image", "chart"):
                     captions = item.get("image_caption", [])
                     cap = " ".join(captions) if captions else ""
-                    if cap and len(cap) > 20:
-                        # Try VLM analysis for clinical charts
-                        img_path = item.get("img_path", "")
-                        vlm_result = None
-                        if img_path:
-                            vlm_result = self._analyze_chart_image(img_path, cap)
-                        if vlm_result:
-                            chart_type = vlm_result.get('chart_type','?')
-                            kw_map = {"flowchart":"流程图 图表 图 诊断", "classification_diagram":"分型 分类 示意图 图表 图",
-                                      "baseline_table":"基线 表格 表", "outcome_table":"结局 表格 表",
-                                      "forest_plot":"森林图 图表 图", "km_curve":"生存曲线 图表 图"}
-                            keywords = kw_map.get(chart_type, "图表 图 表格")
-                            text = f"[图表-VLM分析] {keywords} 类型:{chart_type}\n{vlm_result.get('summary','')}\n{vlm_result.get('description','')}"
-                            # For tables: VLM→structured data→text model serializes→natural language
-                            if chart_type in ("baseline_table", "outcome_table") and vlm_result.get("_vlm_analyzed"):
-                                text = self._serialize_vlm_table(vlm_result, chart_type, text)
-                        else:
-                            text = f"[图片] {cap}"
-                        h = hashlib.md5(text.encode()).hexdigest()
-                        if h in self._seen_hashes:
-                            continue
-                        self._seen_hashes.add(h)
-                        self.all_chunks.append(text)
-                        self.sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}, image]")
-                        # Store image URL for frontend rendering
-                        img_filename = os.path.basename(img_path) if img_path else ""
-                        self.chunk_meta.append({
-                            "type": "image", "page_idx": item.get("page_idx", 0),
-                            "doc_name": doc_name, "vlm_analyzed": bool(vlm_result),
-                            "img_path": img_path,
-                            "image_url": f"/images/{img_filename}" if img_filename else None,
-                        })
+                    img_path = item.get("img_path", "")
+                    vlm_result = None
+                    if img_path:
+                        vlm_result = self._analyze_chart_image(img_path, cap)
+                    if vlm_result:
+                        chart_type = vlm_result.get('chart_type','?')
+                        kw_map = {"flowchart":"流程图 图表 图 诊断", "classification_diagram":"分型 分类 示意图 图表 图",
+                                  "baseline_table":"基线 表格 表", "outcome_table":"结局 表格 表",
+                                  "forest_plot":"森林图 图表 图", "km_curve":"生存曲线 图表 图"}
+                        keywords = kw_map.get(chart_type, "图表 图 表格")
+                        text = f"[图表-VLM分析] {keywords} 类型:{chart_type}\n{vlm_result.get('summary','')}\n{vlm_result.get('description','')}"
+                        if chart_type in ("baseline_table", "outcome_table") and vlm_result.get("_vlm_analyzed"):
+                            text = self._serialize_vlm_table(vlm_result, chart_type, text)
+                    elif cap and len(cap) > 10:
+                        text = f"[图片] {cap}"
+                    else:
+                        continue  # 无VLM结果且无有效标题 → 不可检索
+                    h = hashlib.md5(text.encode()).hexdigest()
+                    if h in self._seen_hashes:
+                        continue
+                    self._seen_hashes.add(h)
+                    self.all_chunks.append(text)
+                    self.sources.append(f"{doc_name} [p.{item.get('page_idx', '?')}, image]")
+                    # Store image URL for frontend rendering
+                    img_filename = os.path.basename(img_path) if img_path else ""
+                    self.chunk_meta.append({
+                        "type": "image", "page_idx": item.get("page_idx", 0),
+                        "doc_name": doc_name, "vlm_analyzed": bool(vlm_result),
+                        "img_path": img_path,
+                        "image_url": f"/images/{img_filename}" if img_filename else None,
+                    })
                 elif t == "table":
                     body = item.get("table_body", "")
                     if not body or not body.strip():
@@ -1509,29 +1508,30 @@ HTML数据:
             elif t in ("image", "chart"):
                 captions = item.get("image_caption", [])
                 cap = " ".join(captions) if captions else ""
-                if cap and len(cap) > 20:
-                    img_path = item.get("img_path", "")
-                    vlm_result = self._analyze_chart_image(img_path, cap) if img_path else None
-                    if vlm_result:
-                        kw_map = {"flowchart":"流程图 图表 图 诊断", "classification_diagram":"分型 分类 示意图 图表 图",
-                                  "baseline_table":"基线 表格 表", "outcome_table":"结局 表格 表",
-                                  "forest_plot":"森林图 图表 图", "km_curve":"生存曲线 图表 图"}
-                        chart_type = vlm_result.get('chart_type','?')
-                        keywords = kw_map.get(chart_type, "图表 图 表格")
-                        text = f"[图表-VLM分析] {keywords} 类型:{chart_type}\n{vlm_result.get('summary','')}\n{vlm_result.get('description','')}"
-                        if chart_type in ("baseline_table", "outcome_table") and vlm_result.get("_vlm_analyzed"):
-                            text = self._serialize_vlm_table(vlm_result, chart_type, text)
-                    else:
-                        text = f"[图片] {cap}"
-                    h = hashlib.md5(text.encode()).hexdigest()
-                    candidates.append((text,
-                        f"{doc_name} [p.{item.get('page_idx', '?')}, image]",
-                        {"type": "image", "page_idx": item.get("page_idx", 0), "doc_name": doc_name,
-                         "vlm_analyzed": bool(vlm_result),
-                         "img_path": img_path,
-                         "image_url": f"/images/{os.path.basename(img_path)}" if img_path else None},
-                        h))
-                    new_hashes.add(h)
+                img_path = item.get("img_path", "")
+                vlm_result = self._analyze_chart_image(img_path, cap) if img_path else None
+                if vlm_result:
+                    kw_map = {"flowchart":"流程图 图表 图 诊断", "classification_diagram":"分型 分类 示意图 图表 图",
+                              "baseline_table":"基线 表格 表", "outcome_table":"结局 表格 表",
+                              "forest_plot":"森林图 图表 图", "km_curve":"生存曲线 图表 图"}
+                    chart_type = vlm_result.get('chart_type','?')
+                    keywords = kw_map.get(chart_type, "图表 图 表格")
+                    text = f"[图表-VLM分析] {keywords} 类型:{chart_type}\n{vlm_result.get('summary','')}\n{vlm_result.get('description','')}"
+                    if chart_type in ("baseline_table", "outcome_table") and vlm_result.get("_vlm_analyzed"):
+                        text = self._serialize_vlm_table(vlm_result, chart_type, text)
+                elif cap and len(cap) > 10:
+                    text = f"[图片] {cap}"
+                else:
+                    continue  # 无VLM结果且无有效标题 → 不可检索
+                h = hashlib.md5(text.encode()).hexdigest()
+                candidates.append((text,
+                    f"{doc_name} [p.{item.get('page_idx', '?')}, image]",
+                    {"type": "image", "page_idx": item.get("page_idx", 0), "doc_name": doc_name,
+                     "vlm_analyzed": bool(vlm_result),
+                     "img_path": img_path,
+                     "image_url": f"/images/{os.path.basename(img_path)}" if img_path else None},
+                    h))
+                new_hashes.add(h)
             elif t == "table":
                 body = item.get("table_body", "")
                 if not body or not body.strip():
