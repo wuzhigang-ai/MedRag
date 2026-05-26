@@ -275,7 +275,9 @@ class MedicalRAGPipeline:
                     })
                 elif t == "table":
                     body = item.get("table_body", "")
-                    if not body or not body.strip():
+                    if isinstance(body, dict):
+                        body = self._table_dict_to_html(body)
+                    if not body or (isinstance(body, str) and not body.strip()):
                         continue  # 空表格: 无结构化数据可索引
                     cap = " ".join(item.get("table_caption", []))
                     text = f"[表格] {cap}\n{body}" if body else f"[表格] {cap}"
@@ -1005,15 +1007,13 @@ class MedicalRAGPipeline:
         paddleocr_path = None
         if not docling_path and not mineru_path:
             try:
-                from raganything.parser import Parser
-                from raganything.config import RAGAnythingConfig
-                config = RAGAnythingConfig(parser="paddleocr", parse_method="auto")
-                parser = Parser(config)
-                result = parser.parse_pdf(str(pdf_path_obj))
-                if result and result.get("content_list"):
+                from raganything.parser import PaddleOCRParser
+                parser = PaddleOCRParser()
+                pd_result = parser.parse_pdf(str(pdf_path_obj))
+                if pd_result:
                     paddleocr_path = self.content_dir / f"{pdf_path_obj.stem}_content_list.json"
                     with open(paddleocr_path, "w", encoding="utf-8") as f:
-                        json.dump(result["content_list"], f, ensure_ascii=False, indent=2)
+                        json.dump(pd_result, f, ensure_ascii=False, indent=2)
                     logger.info(f"PaddleOCR fallback: {paddleocr_path}")
             except Exception as e:
                 logger.warning(f"PaddleOCR also failed: {e}")
@@ -1083,17 +1083,15 @@ class MedicalRAGPipeline:
                             if score_a < 7 and score_b < 7:
                                 logger.warning(f"Both parsers scored low (A={score_a}, B={score_b}) — trying PaddleOCR")
                                 try:
-                                    from raganything.parser import Parser
-                                    from raganything.config import RAGAnythingConfig
-                                    config = RAGAnythingConfig(parser="paddleocr", parse_method="auto")
-                                    parser = Parser(config)
-                                    result = parser.parse_pdf(str(pdf_path_obj))
-                                    if result and result.get("content_list"):
+                                    from raganything.parser import PaddleOCRParser
+                                    parser = PaddleOCRParser()
+                                    pd_result = parser.parse_pdf(str(pdf_path_obj))
+                                    if pd_result:
                                         paddleocr_path = self.content_dir / f"{pdf_path_obj.stem}_content_list.json"
                                         with open(paddleocr_path, "w", encoding="utf-8") as f:
-                                            json.dump(result["content_list"], f, ensure_ascii=False, indent=2)
+                                            json.dump(pd_result, f, ensure_ascii=False, indent=2)
                                         # Score PaddleOCR too
-                                        pd_texts = [i for i in result["content_list"] if i.get("type") == "text"]
+                                        pd_texts = [i for i in pd_result if i.get("type") == "text"]
                                         pd_sample = [t.get("text", "")[:200] for t in pd_texts[:8]]
                                         pd_prompt = f"""评估此PDF解析器输出质量(1-10分)。
 {chr(10).join(f'{i+1}. {t}' for i, t in enumerate(pd_sample))}
@@ -1191,12 +1189,32 @@ class MedicalRAGPipeline:
         self._upload_state["state"] = "done"
         return final_path
 
+    @staticmethod
+    def _table_dict_to_html(tbl: dict) -> str:
+        """Convert Docling structured table dict to HTML for backward compatibility."""
+        cells = tbl.get("table_cells", [])
+        n_rows = tbl.get("num_rows", 0)
+        n_cols = tbl.get("num_cols", 0)
+        if not cells or not n_rows:
+            return ""
+        # Build grid: cell -> (row, col, rowspan, colspan)
+        grid = [["" for _ in range(n_cols)] for _ in range(n_rows)]
+        for cell in cells:
+            r = cell.get("row", 0)
+            c = cell.get("col", 0)
+            if 0 <= r < n_rows and 0 <= c < n_cols:
+                grid[r][c] = cell.get("text", "")
+        html = ["<table>"]
+        for row in grid:
+            html.append("<tr>" + "".join(f"<td>{c}</td>" for c in row) + "</tr>")
+        html.append("</table>")
+        return "\n".join(html)
+
     def _parse_local_docling(self, pdf_path: str) -> str | None:
         """Parse PDF locally using RAG-Anything's built-in Docling parser.
-        Returns path to saved content_list.json in content_dir."""
-        from raganything.parser import Parser
-        from raganything.config import RAGAnythingConfig
-        import shutil
+        Returns path to saved content_list.json in content_dir.
+        Persists extracted images to content_dir/images/ for VLM analysis."""
+        import shutil, glob as _glob
 
         pdf_path = Path(pdf_path)
         if not pdf_path.exists():
@@ -1205,16 +1223,49 @@ class MedicalRAGPipeline:
 
         doc_name = pdf_path.stem
         out_path = self.content_dir / f"{doc_name}_content_list.json"
+        images_dir = self.content_dir / "images"
+        images_dir.mkdir(parents=True, exist_ok=True)
 
         try:
-            config = RAGAnythingConfig(parser="docling", parse_method="auto")
-            parser = Parser(config)
-            result = parser.parse_pdf(str(pdf_path))
-            if not result or not result.get("content_list"):
+            from raganything.parser import DoclingParser
+            parser = DoclingParser()
+            # Pass output_dir so Docling saves images to a persistent location
+            content_list = parser.parse_pdf(str(pdf_path), output_dir=str(self.content_dir))
+            if not content_list:
                 logger.warning("Docling returned empty content_list")
                 return None
+            images_copied = 0
 
-            content_list = result["content_list"]
+            # Copy extracted images to persistent images/ directory
+            for item in content_list:
+                img_path = item.get("img_path", "")
+                if img_path and os.path.isfile(img_path):
+                    img_name = os.path.basename(img_path)
+                    dest = images_dir / img_name
+                    if not dest.exists():
+                        shutil.copy2(img_path, dest)
+                        images_copied += 1
+                    # Update to relative path from content_dir
+                    item["img_path"] = str(dest)
+
+            # Also scan Docling output dir for any images not referenced in content_list
+            try:
+                scan_dir = self.content_dir / f"{doc_name}_"
+                for candidate in self.content_dir.iterdir():
+                    if candidate.is_dir() and candidate.name.startswith(f"{doc_name}_"):
+                        for img_file in candidate.rglob("*"):
+                            if img_file.suffix.lower() in (".png", ".jpg", ".jpeg", ".bmp") and img_file.is_file():
+                                dest = images_dir / img_file.name
+                                if not dest.exists():
+                                    shutil.copy2(img_file, dest)
+                                    images_copied += 1
+                        break
+            except Exception:
+                pass
+
+            if images_copied:
+                logger.info(f"Docling: copied {images_copied} images to {images_dir}")
+
             # Save to content_dir
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(content_list, f, ensure_ascii=False, indent=2)
@@ -1534,7 +1585,9 @@ HTML数据:
                 new_hashes.add(h)
             elif t == "table":
                 body = item.get("table_body", "")
-                if not body or not body.strip():
+                if isinstance(body, dict):
+                    body = self._table_dict_to_html(body)
+                if not body or (isinstance(body, str) and not body.strip()):
                     continue  # 空表格: 无结构化数据可索引
                 cap = " ".join(item.get("table_caption", []))
                 text = f"[表格] {cap}\n{body}" if body else f"[表格] {cap}"
