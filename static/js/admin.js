@@ -347,7 +347,8 @@
                 renderGraphLegend(data.groups);
 
                 // Search handler
-                document.getElementById('graphSearch').addEventListener('input', function () {
+                var graphSearch = document.getElementById('graphSearch');
+                if (graphSearch) { graphSearch.addEventListener('input', function () {
                     var q = this.value.toLowerCase();
                     var cy = graphCanvas._cy;
                     if (!cy) return;
@@ -360,7 +361,7 @@
                             n.removeClass('neighbor');
                         }
                     });
-                });
+                }); }
             } catch (err) {
                 document.getElementById('graphStats').textContent =
                     '加载失败: ' + (err.message || '未知错误');
