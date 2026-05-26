@@ -448,18 +448,27 @@
         }
     }
 
-    document.getElementById('sidebarGraphBtn').addEventListener('click', function (e) {
-        e.preventDefault();
-        openGraphModal();
-    });
+    var sidebarGraphBtn = document.getElementById('sidebarGraphBtn');
+    if (sidebarGraphBtn) {
+        sidebarGraphBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            openGraphModal();
+        });
+    }
 
-    document.getElementById('openGraphBtn').addEventListener('click', function () {
-        openGraphModal();
-    });
+    var openGraphBtn = document.getElementById('openGraphBtn');
+    if (openGraphBtn) {
+        openGraphBtn.addEventListener('click', function () {
+            openGraphModal();
+        });
+    }
 
-    document.getElementById('closeGraphBtn').addEventListener('click', function () {
-        closeGraphModal();
-    });
+    var closeGraphBtn = document.getElementById('closeGraphBtn');
+    if (closeGraphBtn) {
+        closeGraphBtn.addEventListener('click', function () {
+            closeGraphModal();
+        });
+    }
 
     /* ── Periodic Refresh ───────────────────────────────── */
     fetchStats();
