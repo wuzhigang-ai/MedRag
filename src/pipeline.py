@@ -964,32 +964,43 @@ class MedicalRAGPipeline:
             "replaced_doc": None,
         }
 
-        # ── Engine 1: Docling local (primary, zero network) ──
-        docling_path = self._parse_local_docling(str(pdf_path_obj))
+        # ── Engine 1+2: Docling local + MinerU remote — concurrent ──
+        # Both engines are independent: Docling is CPU-bound (local), MinerU is I/O-bound (SSH).
+        # Running them concurrently cuts parsing time to max(Docling, MinerU) instead of sum.
+        from concurrent.futures import ThreadPoolExecutor
 
-        # ── Engine 2: MinerU remote (validator, best for Chinese) ──
-        mineru_path = None
-        try:
-            rp.REMOTE_HOST = os.getenv("REMOTE_HOST", "")
-            rp.REMOTE_PORT = int(os.getenv("REMOTE_PORT", "22"))
-            rp.REMOTE_USER = os.getenv("REMOTE_USER", "root")
-            rp.REMOTE_PASSWORD = os.getenv("REMOTE_PASSWORD") or ""
-            if rp.REMOTE_HOST:
+        def _parse_mineru():
+            try:
+                rp.REMOTE_HOST = os.getenv("REMOTE_HOST", "")
+                rp.REMOTE_PORT = int(os.getenv("REMOTE_PORT", "22"))
+                rp.REMOTE_USER = os.getenv("REMOTE_USER", "root")
+                rp.REMOTE_PASSWORD = os.getenv("REMOTE_PASSWORD") or ""
+                if not rp.REMOTE_HOST:
+                    return None
                 remote = rp.RemoteMinerUParser()
                 remote.connect()
                 remote.ensure_dirs()
                 remote_pdf = remote.upload_pdf(str(pdf_path_obj))
                 self._upload_state["state"] = "parsing"
                 remote_cl = remote.parse_pdf(remote_pdf)
-                if remote_cl:
-                    self._upload_state["state"] = "downloading"
-                    local_name = Path(remote_cl).name
-                    mineru_path = self.content_dir / f"mineru_{local_name}"
-                    self.content_dir.mkdir(parents=True, exist_ok=True)
-                    remote.sftp.get(remote_cl, str(mineru_path))
-                    logger.info(f"MinerU validator output: {mineru_path}")
-        except Exception as e:
-            logger.warning(f"MinerU remote unavailable, using Docling only: {e}")
+                if not remote_cl:
+                    return None
+                self._upload_state["state"] = "downloading"
+                local_name = Path(remote_cl).name
+                mineru_path = self.content_dir / f"mineru_{local_name}"
+                self.content_dir.mkdir(parents=True, exist_ok=True)
+                remote.sftp.get(remote_cl, str(mineru_path))
+                logger.info(f"MinerU validator output: {mineru_path}")
+                return str(mineru_path)
+            except Exception as e:
+                logger.warning(f"MinerU remote unavailable, using Docling only: {e}")
+                return None
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            dl_future = executor.submit(self._parse_local_docling, str(pdf_path_obj))
+            mu_future = executor.submit(_parse_mineru)
+            docling_path = dl_future.result()
+            mineru_path = mu_future.result()
 
         # ── Engine 3: PaddleOCR emergency fallback ──
         paddleocr_path = None
