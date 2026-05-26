@@ -1180,6 +1180,7 @@ class MedicalRAGPipeline:
                         final_path = mineru_path
                         self._upload_state["engine"] = "mineru"
             except Exception:
+                logger.debug("CJK quality check failed, keeping current engine choice")
                 pass
 
         # ── Post-processing quality layer ──
@@ -1526,7 +1527,9 @@ HTML数据:
                     candidates.append((text,
                         f"{doc_name} [p.{item.get('page_idx', '?')}, image]",
                         {"type": "image", "page_idx": item.get("page_idx", 0), "doc_name": doc_name,
-                         "vlm_analyzed": bool(vlm_result)},
+                         "vlm_analyzed": bool(vlm_result),
+                         "img_path": img_path,
+                         "image_url": f"/images/{os.path.basename(img_path)}" if img_path else None},
                         h))
                     new_hashes.add(h)
             elif t == "table":
@@ -1663,6 +1666,7 @@ HTML数据:
         self.chunk_meta.extend(new_meta)
 
         # ─── Global semantic merge on new document ───
+        _merged = False
         try:
             client = self.clients.get("baidu_pro")
             model = PROVIDERS.get("baidu_pro", {}).get("model", "deepseek-v4-pro")
@@ -1682,18 +1686,24 @@ HTML数据:
                     self._doc_map.setdefault(doc, []).append(idx)
                     self._seen_hashes.add(hashlib.md5(self.all_chunks[idx].encode()).hexdigest())
                 self.doc_count = len(self._doc_map)
+                _merged = True
         except Exception as e:
             logger.warning(f"Semantic merge failed for new doc, continuing: {e}")
 
-        # Record which chunks belong to this document
-        if is_update and replace_existing:
-            # Merge with any kept indices
-            if doc_name in self._doc_map:
-                self._doc_map[doc_name].extend(range(_pre_start, len(self.all_chunks)))
+        # Record which chunks belong to this document.
+        # If merge ran, _doc_map was already rebuilt correctly → skip stale _pre_start logic.
+        if not _merged:
+            if is_update and replace_existing:
+                if doc_name in self._doc_map:
+                    self._doc_map[doc_name].extend(range(_pre_start, len(self.all_chunks)))
+                else:
+                    self._doc_map[doc_name] = list(range(_pre_start, len(self.all_chunks)))
             else:
                 self._doc_map[doc_name] = list(range(_pre_start, len(self.all_chunks)))
         else:
-            self._doc_map[doc_name] = list(range(_pre_start, len(self.all_chunks)))
+            # After merge, _pre_start is stale. Recalculate for FAISS ID mapping.
+            doc_indices = self._doc_map.get(doc_name, [])
+            _pre_start = min(doc_indices) if doc_indices else len(self.all_chunks)
 
         # Add to FAISS index incrementally with stable IDs (rollback-protected)
         if self.faiss_index is not None:

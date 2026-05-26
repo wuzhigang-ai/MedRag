@@ -70,6 +70,7 @@ def get_pipeline() -> MedicalRAGPipeline:
 class QueryRequest(BaseModel):
     question: str
     top_k: int = 8
+    lightrag_query: str = None  # Agent-generated natural language query for LightRAG
 
 
 class QueryResponse(BaseModel):
@@ -166,63 +167,69 @@ async def query(req: QueryRequest):
 
 @app.post("/api/search")
 async def search_only(req: QueryRequest):
-    """Agent检索专用 — FAISS+LightRAG双引擎搜索，不调LLM，直接返回原文sources+image_url"""
+    """Agent检索 — FAISS(微观, 用关键词query) + LightRAG(宏观, 用原始问题) 并列返回"""
+    import asyncio
     p = get_pipeline()
+
+    # FAISS: uses Agent's keyword query (dense keywords → better vector retrieval)
     results = p._doc_aware_retrieve(req.question, top_k=req.top_k)
-    sources_out = []
-
-    # LightRAG parallel: FAISS results first, LightRAG graph reasoning supplements
-    engine = "faiss"
-    if p._lightrag_ready:
-        try:
-            lr = await asyncio.wait_for(
-                p._lightrag_query(req.question, mode="hybrid"), timeout=25.0
-            )
-            if lr and lr.get("answer"):
-                sources_out.insert(0, {
-                    "ref": 0, "source": "LightRAG-Knowledge-Graph",
-                    "doc": "知识图谱", "section": "entity-relation",
-                    "score": 1.0, "text": lr["answer"][:500],
-                })
-                engine = "hybrid"
-        except asyncio.TimeoutError:
-            pass  # LightRAG LLM too slow
-        except Exception:
-            pass
-
+    text_snippets = []
     for i, r in enumerate(results):
         meta = r.get("meta", {})
         src = {
-            "ref": len(sources_out) + 1,
-            "source": r["source"],
-            "score": round(r["score"], 3),
-            "text": r["text"][:500],
+            "ref": i + 1, "source": r["source"],
+            "score": round(r["score"], 3), "text": r["text"][:500],
             "doc": r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"],
             "section": meta.get("section_tag", ""),
         }
         if meta.get("image_url"):
             src["image_url"] = meta["image_url"]
-        sources_out.append(src)
-    return {"question": req.question, "sources": sources_out,
-            "source_count": len(sources_out), "engine": engine}
+        text_snippets.append(src)
+
+    # LightRAG: uses original user question (full context → better entity extraction)
+    graph_context = None
+    engine = "faiss"
+    lr_query = req.lightrag_query or req.question  # Agent's natural language query, fallback to keywords
+    if p._lightrag_ready:
+        try:
+            lr = await asyncio.wait_for(
+                p._lightrag_query(lr_query, mode="hybrid"), timeout=25.0
+            )
+            if lr and lr.get("answer"):
+                graph_context = {
+                    "summary": lr["answer"][:600],
+                    "source": "LightRAG-Knowledge-Graph",
+                }
+                engine = "hybrid"
+        except asyncio.TimeoutError:
+            pass
+        except Exception:
+            pass
+
+    return {
+        "question": req.question,
+        "graph_context": graph_context,      # 宏观: 知识图谱推理 (可能为 null)
+        "text_snippets": text_snippets,      # 微观: FAISS 原文 (永远有值)
+        "source_count": len(text_snippets),
+        "engine": engine,
+    }
 
 
 @app.post("/api/agent")
 async def agent_query(req: QueryRequest):
-    """Smart-routing Agent endpoint: simple extraction → FAISS, complex reasoning → Agent."""
+    """Agent-first: always goes through Agent multi-hop reasoning.
+    If Agent LLM fails, falls back to FAISS direct retrieval."""
     import asyncio
     p = get_pipeline()
+    agent = MedicalAgent(p)
 
-    # Smart routing: detect if this is a simple extraction question
-    extraction_keywords = ["提取", "列出", "表格", "Table", "数据", "数值", "基线",
-                           "多少", "什么是", "定义", "诊断标准", "适应证", "禁忌证"]
-    is_extraction = any(kw in req.question for kw in extraction_keywords)
-    is_complex = any(kw in req.question for kw in ["比较", "一致性", "矛盾", "综合",
-                       "跨文献", "对比", "差异", "多个", "不同文献", "evidence", "PICO"])
-    # Complex reasoning always goes to Agent; simple extraction uses FAISS for speed
-    use_faiss = is_extraction and not is_complex
-
-    if use_faiss:
+    try:
+        result = await asyncio.wait_for(
+            asyncio.to_thread(agent.run, req.question, 20),
+            timeout=180.0,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Agent timed out after 180s — falling back to FAISS")
         try:
             result = await asyncio.to_thread(p.answer_with_sources, req.question, req.top_k)
             return {
@@ -230,25 +237,34 @@ async def agent_query(req: QueryRequest):
                 "answer": result["answer"],
                 "reasoning_trace": [],
                 "steps": 0,
-                "model": "FAISS-routed",
+                "model": "FAISS-fallback",
+                "confidence": "fallback",
+                "critique": ["Agent推理超时(>180s), 自动降级为FAISS直接检索"],
                 "sources": result.get("sources", []),
                 "engine": result.get("engine", "faiss"),
                 "timestamp": datetime.now().isoformat(),
             }
-        except Exception as e:
-            logger.warning(f"FAISS routing failed, falling back to Agent: {e}")
-
-    # Agent for complex reasoning
-    agent = MedicalAgent(p)
-    try:
-        result = await asyncio.wait_for(
-            asyncio.to_thread(agent.run, req.question, 8),
-            timeout=120.0,
-        )
-    except asyncio.TimeoutError:
-        raise HTTPException(504, "Agent推理超时（超过120秒），请简化问题重试")
+        except Exception as e2:
+            raise HTTPException(500, f"Agent超时且FAISS降级失败: {str(e2)[:200]}")
     except Exception as e:
-        raise HTTPException(500, f"Agent推理失败: {str(e)[:200]}")
+        logger.warning(f"Agent failed ({e}), falling back to FAISS direct retrieval")
+        try:
+            result = await asyncio.to_thread(p.answer_with_sources, req.question, req.top_k)
+            return {
+                "question": req.question,
+                "answer": result["answer"],
+                "reasoning_trace": [],
+                "steps": 0,
+                "model": "FAISS-fallback",
+                "confidence": "fallback",
+                "critique": [f"Agent LLM unavailable: {str(e)[:100]}"],
+                "sources": result.get("sources", []),
+                "engine": result.get("engine", "faiss"),
+                "timestamp": datetime.now().isoformat(),
+            }
+        except Exception as e2:
+            raise HTTPException(500, f"Agent和FAISS均失败: {str(e2)[:200]}")
+
     return {
         "question": req.question,
         "answer": result["answer"],
@@ -274,7 +290,10 @@ async def agent_stream(question: str):
             yield f"data: {json.dumps({'type': 'start', 'message': '开始分析...', 'ts': t0.isoformat()})}\n\n"
             await asyncio.sleep(0.1)
 
-            result = agent.run(question, max_steps=8)
+            result = await asyncio.wait_for(
+                asyncio.to_thread(agent.run, question, 20),
+                timeout=180.0,
+            )
 
             for step in result.get("reasoning_trace", []):
                 elapsed = (datetime.now() - t0).total_seconds()
@@ -289,6 +308,63 @@ async def agent_stream(question: str):
             yield "data: [DONE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+@app.get("/api/ask")
+async def ask_agent(question: str, top_k: int = 8):
+    """Simple agent Q&A — GET /api/ask?question=xxx&top_k=8.
+    Agent LLM failure → automatic FAISS fallback."""
+    import asyncio
+    p = get_pipeline()
+    agent = MedicalAgent(p)
+    try:
+        result = await asyncio.wait_for(
+            asyncio.to_thread(agent.run, question, 20),
+            timeout=180.0,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("/api/ask Agent timed out after 180s — falling back to FAISS")
+        try:
+            result = await asyncio.to_thread(p.answer_with_sources, question, top_k)
+            return {
+                "question": question,
+                "answer": result["answer"],
+                "confidence": "fallback",
+                "steps": 0,
+                "model": "FAISS-fallback",
+                "sources": result.get("sources", []),
+                "engine": result.get("engine", "faiss"),
+                "timestamp": datetime.now().isoformat(),
+            }
+        except Exception as e2:
+            raise HTTPException(500, f"Agent超时且FAISS降级失败: {str(e2)[:200]}")
+    except Exception as e:
+        logger.warning(f"/api/ask Agent failed ({e}), falling back to FAISS")
+        try:
+            result = await asyncio.to_thread(p.answer_with_sources, question, top_k)
+            return {
+                "question": question,
+                "answer": result["answer"],
+                "confidence": "fallback",
+                "steps": 0,
+                "model": "FAISS-fallback",
+                "sources": result.get("sources", []),
+                "engine": result.get("engine", "faiss"),
+                "timestamp": datetime.now().isoformat(),
+            }
+        except Exception as e2:
+            raise HTTPException(500, f"Agent和FAISS均失败: {str(e2)[:200]}")
+    return {
+        "question": question,
+        "answer": result["answer"],
+        "reasoning_trace": result.get("reasoning_trace", []),
+        "steps": result["steps"],
+        "model": result.get("model", ""),
+        "confidence": result.get("confidence", "unknown"),
+        "critique": result.get("critique", []),
+        "sources": result.get("sources", []),
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
 @app.get("/api/status", response_model=KBStatusResponse)
@@ -348,8 +424,26 @@ async def upload_pdf(file: UploadFile = File(...)):
             p._upload_state["state"] = "error"
             p._upload_state["error"] = str(e)[:500]
             logger.error(f"Background upload failed: {e}")
-        finally:
-            p.graph_manager.build()
+            return  # Don't proceed to LightRAG or graph rebuild if FAISS failed
+
+        # FAISS succeeded — rebuild graph for frontend, then LightRAG in same task for ordering.
+        p.graph_manager.build()
+        if p._lightrag_ready:
+            try:
+                if p._lightrag_dirty:
+                    logger.info("LightRAG reset+rebuild (post-FAISS)")
+                    await asyncio.wait_for(
+                        p._lightrag_reset_and_rebuild(), timeout=120.0
+                    )
+                else:
+                    logger.info("LightRAG insert (post-FAISS)")
+                    await asyncio.wait_for(
+                        p._lightrag_insert_documents(), timeout=60.0
+                    )
+            except asyncio.TimeoutError:
+                logger.warning("LightRAG update timed out (non-blocking)")
+            except Exception as e:
+                logger.warning(f"LightRAG update failed (non-blocking): {e}")
 
     asyncio.create_task(_background_upload())
 
@@ -462,6 +556,16 @@ async def build_lightrag():
 
 # ─── Smart Chunk Preview + Doctor Review ───────────────
 
+@app.get("/api/preview/check-doc")
+async def check_doc_exists(filename: str):
+    """Check if a document with this filename already exists in the index."""
+    p = get_pipeline()
+    doc_name = filename.replace(".pdf", "")
+    exists = doc_name in p._doc_map
+    return {"exists": exists, "doc_name": doc_name,
+            "chunk_count": len(p._doc_map.get(doc_name, [])) if exists else 0}
+
+
 @app.post("/api/preview")
 async def preview_chunks(file: UploadFile = File(...)):
     """解析PDF并返回智能切分预览（不入库）"""
@@ -569,6 +673,15 @@ async def get_preview_doc(doc_id: int):
     import json as _json
     return _json.loads(chunks_json)
 
+
+@app.get("/api/debug/env")
+async def debug_env():
+    import os
+    return {
+        "baidu_key_set": bool(os.getenv("BAIDU_API_KEY")),
+        "baidu_url": os.getenv("BAIDU_BASE_URL", "NOT SET")[:60],
+        "cwd": os.getcwd(),
+    }
 
 @app.get("/health")
 async def health():

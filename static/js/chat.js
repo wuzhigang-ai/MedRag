@@ -220,7 +220,7 @@
                         svgIcon('search-icon') + ' ' + escapeHtml(chartType) + ' — ' + escapeHtml(src.source || '') +
                     '</div>' +
                     '<img src="' + imgUrl + '" class="chart-img" loading="lazy" ' +
-                        'onerror="this.parentElement.style.display=\'none\'" ' +
+                        'onerror="var img=this;img.style.display=\'none\';img.parentElement.querySelector(\'.chart-card-header\').style.color=\'#999\'" ' +
                         'onclick="window.open(\'' + imgUrl + '\',\'_blank\')" ' +
                         'title="点击查看大图"/>' +
                     (caption ? '<div class="chart-caption">' + escapeHtml(caption.substring(0, 160)) + '</div>' : '');
@@ -518,16 +518,34 @@
         var label = getStepLabel(data.tool || '');
         var elapsed = data.elapsed || ((Date.now() - startTime) / 1000).toFixed(1);
 
+        // Enhanced details per tool type
+        var extraHtml = '';
+        if (data.tool === 'search_rag' && data.preview) {
+            try {
+                var items = JSON.parse(String(data.preview).replace(/\.\.\.$/,''));
+                if (Array.isArray(items) && items.length > 0) {
+                    extraHtml = '<div class="wb-step-badge">📄 命中 ' + items.length + ' 条文献</div>';
+                }
+            } catch(e) {}
+        }
+        if (data.tool === 'analyze_image' && data.args) {
+            extraHtml = '<div class="wb-step-badge">🔬 VLM 图表分析</div>';
+        }
+        if (data.tool === 'cross_check') {
+            extraHtml = '<div class="wb-step-badge">🔍 证据一致性验证</div>';
+        }
+
         card.innerHTML =
             '<div class="wb-step-head">' +
                 '<span class="wb-step-icon">' + icon + '</span>' +
                 '<span class="wb-step-name">' + escapeHtml(label) + '</span>' +
                 '<span class="wb-step-time">' + elapsed + 's</span>' +
             '</div>' +
+            extraHtml +
             '<div class="wb-step-args">' + escapeHtml(
-                (typeof data.args === 'object' ? JSON.stringify(data.args) : String(data.args || '')).substring(0, 120)
+                (typeof data.args === 'object' ? JSON.stringify(data.args) : String(data.args || '')).substring(0, 100)
             ) + '</div>' +
-            (data.preview ? '<div class="wb-step-preview">' + escapeHtml(String(data.preview).substring(0, 180)) + '</div>' : '');
+            (data.preview && data.tool !== 'search_rag' ? '<div class="wb-step-preview">' + escapeHtml(String(data.preview).substring(0, 150)) + '</div>' : '');
 
         stepsEl.appendChild(card);
         scrollToBottom();
@@ -618,7 +636,10 @@
         return new Promise(function (resolve, reject) {
             var url = '/api/agent/stream?question=' + encodeURIComponent(question);
 
-            fetch(url).then(function (response) {
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function () { controller.abort(); }, 180000);
+
+            fetch(url, { signal: controller.signal }).then(function (response) {
                 if (!response.ok) throw new Error('HTTP ' + response.status);
 
                 var reader = response.body.getReader();
@@ -628,6 +649,7 @@
                 function processChunk() {
                     reader.read().then(function (result) {
                         if (result.done) {
+                            clearTimeout(timeoutId);
                             finishWorkbench(agentMsg);
                             resolve();
                             return;
@@ -651,6 +673,7 @@
                         // Yield to browser render loop for real-time animation
                         setTimeout(processChunk, 0);
                     }).catch(function (err) {
+                        clearTimeout(timeoutId);
                         finishWorkbench(agentMsg);
                         reject(err);
                     });
@@ -658,6 +681,7 @@
 
                 processChunk();
             }).catch(function (err) {
+                clearTimeout(timeoutId);
                 finishWorkbench(agentMsg);
                 reject(err);
             });
@@ -750,7 +774,7 @@
             agentMsg.answer = '抱歉，请求处理失败: ' + (e.message || '未知错误');
         }
         // Append agent message
-        conv = conversations.find(function (c) { return c.id === activeConvId; });
+        let conv = conversations.find(function (c) { return c.id === activeConvId; });
         if (conv) {
             appendMessageBubble({ role: 'agent', answer: agentMsg.answer, reasoningTrace: agentMsg.reasoningTrace, sources: agentMsg.sources }, true);
         }

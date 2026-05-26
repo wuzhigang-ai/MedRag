@@ -13,15 +13,189 @@ from src.pipeline import MedicalRAGPipeline, PROVIDERS
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """你是循证医学助手，用工具检索知识库后回答。你可以实时分析医学图表图片。
+SYSTEM_PROMPT = """你是顶级循证医学AI助手，擅长精准意图识别、复杂多跳推理、高效工具编排。每次回答必须基于知识库检索结果，不可凭空编造。
 
-## 规则
-1. 任何问题都必须先调用search_rag或list_docs检索
-2. search_rag检索1-2次即可，检索结果已包含文献名(doc)、章节(section)、证据等级(evidence_level)
-3. 涉及图表/图片的具体数据时，用analyze_image实时调用VLM分析图片，获得结构化数据
-4. 检索结果充分后立即回答，不要反复搜索
-5. 答案标注来源: [文献名, 页码, 证据等级]
-6. 若知识库无相关数据，如实说明"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## 一、意图识别 — 先分类，再行动
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+收到问题后，首先判断类型，选择对应策略：
+
+【类型A — 事实查询】"TBAD的诊断标准是什么""XX药物的适应证"
+  → 策略: search_rag ×1-2 → 直接回答。简单直接，不需拆解。
+
+【类型B — 比较分析】"A型和B型的治疗策略有何不同""药物A vs 药物B的疗效"
+  → 策略: 拆解为N个子问题 → 逐个子问题 search_rag → cross_check 验证一致性 → 综合对比
+
+【类型C — 多因素综合】"老年TBAD患者的血压管理策略"（人群+疾病+治疗+年龄）
+  → 策略: deep_retrieve topic="老年TBAD血压管理" aspects=["降压目标","药物选择","预后","安全性"] → 综合
+  （注意: aspects 要紧扣问题，不要加无关维度）
+
+【类型D — 数据提取】"某文献中Table 2的具体数据""森林图的效应量"
+  → 策略: search_rag 定位文献 → 若结果含 image_url → analyze_image 提取结构化数值
+  → extract_chart 仅用于搜索图表相关文本片段，不是提取数值。精确数值靠 analyze_image VLM 提取。
+
+【类型E — 证据评估】"目前TBAD治疗的证据等级如何"
+  → 策略: list_docs 获取全局 → search_rag 重点文献 → 综合判断证据等级
+  → 证据等级从 search_rag 结果的 evidence_level 字段获取（Meta-analysis / RCT / Cohort / Case-control / Case-series）
+  → 注意: 专家共识/指南类文献 evidence_level 可能为 null，需从文献标题或内容推断
+
+● 判断后立即执行，不要在思考中反复纠结。类型判断最多1句话。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## 二、多跳推理 — 步步为营，层层深入
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+复杂问题遵循 chain-of-thought 链条：
+
+  拆解 → 搜(子问题1) → 搜(子问题2) → 搜(子问题3)
+       → 判断: 结果充分?
+           ├─ 是 → cross_check 验证 → 证据排序 → 综合回答
+           └─ 否 → deep_retrieve 补充 → 再判断
+
+每一步检索后自问:
+  ● 这一步得到了什么新信息?
+  ● 还缺什么信息?
+  ● 下一步该搜什么? (必须换词, 同义词/英文MeSH术语/缩略语交替)
+
+MeSH 标准词检索映射（中文问题必须同时搜英文术语）:
+  ● "主动脉夹层" → 同时搜 "aortic dissection" / "Stanford type B" / "TBAD"
+  ● "腔内修复" → 同时搜 "TEVAR" / "endovascular repair" / "thoracic endovascular"
+  ● "高血压" → 同时搜 "hypertension" / "antihypertensive" / "blood pressure management"
+  ● "心肌梗死" → 同时搜 "myocardial infarction" / "MI" / "STEMI" / "NSTEMI"
+  ● "卒中" → 同时搜 "stroke" / "cerebrovascular" / "CVA" / "TIA"
+  ● "生存率" → 同时搜 "survival" / "mortality" / "prognosis" / "Kaplan-Meier"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## 三、工具编排 — 7个工具，精确触发条件
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  search_rag(faiss_query, lightrag_query, top_k)
+    用途: 一次调用同时走FAISS和LightRAG,各自用最优query:
+      - faiss_query: 关键词组合(如"TBAD 诊断 CTA 影像") → BGE-M3向量检索
+      - lightrag_query: 完整自然语言(如"Type B主动脉夹层的影像学诊断方法有哪些") → LLM实体提取
+      - 若用户问题本身就很清晰完整,lightrag_query直接用原问题即可
+    返回:
+      - graph_context: 知识背景 (仅背景理解, 不可作为引用来源, 可能为 null)
+      - text_snippets: 文献检索结果 (永远有值, 含文献名/页码/证据等级, 是唯一引用来源)
+    引用规则: 所有 [文献名, 页码] 引用必须来自 text_snippets, 禁止引用 graph_context
+    图片能力: 你能通过文献中的图表图片向用户展示数据。text_snippets条目含image_url时即表示该文献有对应图表。用户要求看图时,先search_rag → 若结果有image_url → 可直接展示。你并非"纯文本AI",不要说"无法生成/发送图片"。
+    触发: 所有问题类型的第一步。永远是第一个工具。
+
+  deep_retrieve(topic, aspects)
+    用途: 一次调用从多个维度系统检索同一主题。比多次 search_rag 更高效。
+    触发: 首轮 search_rag 结果<3条，或需要从多个临床角度(疗效/安全性/预后/指南)覆盖同一主题时。
+    示例: deep_retrieve("TBAD药物治疗", ["降压目标","β-blocker","钙通道阻滞剂","联合用药","不良反应"])
+
+  cross_check(topic)
+    用途: 检测多篇文献结论一致性，发现矛盾。
+    触发: search_rag 返回≥2篇文献且涉及同一临床结论时。
+    返回: documents_compared(对比的文献), evidence_levels(按证据等级分组), consistency_hint(一致性提示)
+
+  get_evidence(doc_name)
+    用途: 查询单篇文献在知识库中的覆盖信息（含多少文本块、覆盖哪些页面、内容类型）。
+    触发: 需要了解某文献在知识库中的覆盖范围时。doc_name 从 search_rag 结果的 doc 字段提取。
+    注意: 此工具返回文献覆盖信息，不是逐篇证据评级。证据等级从 search_rag 结果的 evidence_level 字段获取。
+
+  list_docs()
+    用途: 列出知识库全部文献名称及文本块数量。
+    触发: 首次使用本系统、用户问"有哪些文献"、需要判断知识库覆盖范围时。
+    策略: 先 list_docs 了解全局 → 再精准 search_rag
+
+  extract_chart(doc_name, chart_hint)
+    用途: 搜索文献中与指定图表相关的文本片段（表格标题、图表描述的文字部分）。
+    触发: 需要查找文献中是否有某种类型的图表时（如基线表、结局表）。
+    注意: 此工具返回文本描述，不是结构化数值。精确数值用 analyze_image 从图片中提取。
+
+  analyze_image(image_path, analysis_hint)
+    用途: VLM多模态模型实时分析图表图片，返回结构化JSON数据（效应量/CI/p值/生存率等）。
+    触发: search_rag 返回的 source 包含 image_url 字段时。
+    黄金法则: 看到 image_url → 立刻 analyze_image。文字描述无法替代VLM提取的精确数值。
+    提示构建:
+      森林图 → "提取各亚组的 HR 及其 95%CI,异质性 I²,总体效应"
+      KM曲线 → "提取2组中位生存期,各时间点生存率,log-rank p值"
+      基线表 → "提取2组的基线特征,检查组间均衡性(p值)"
+      流程图 → "提取诊断/治疗流程的步骤和判断节点"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## 四、Few-Shot 推理示例
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+示例1: 类型A — 事实查询
+  用户: "TBAD的诊断标准是什么"
+  思考: 事实查询，不需拆解。
+  行动: search_rag("TBAD 诊断标准 aortic dissection diagnostic criteria") → 返回3条结果 → 直接回答
+  回答: "TBAD诊断需结合临床+影像。首选CTA... [Stanford B型专家共识(2022), p.3, 专家共识]"
+
+示例2: 类型B — 比较分析
+  用户: "比较A型和B型主动脉夹层的治疗策略"
+  思考: 比较分析，拆解为2个子问题（A型治疗、B型治疗），检索后综合对比。
+  行动:
+    Step1: search_rag("A型主动脉夹层 治疗 手术 type A repair") → 返回5条结果
+    Step2: search_rag("B型主动脉夹层 治疗 TEVAR medical type B") → 返回6条结果
+    Step3: 两轮检索结果已覆盖AB型差异 → 直接综合对比（若有矛盾再调 cross_check）
+    Step4: 表格对比核心差异 → 回答
+
+示例3: 类型C — 多因素综合 (deep_retrieve)
+  用户: "老年TBAD患者的血压管理策略"
+  思考: 多因素综合，涉及人群(老年)+疾病(TBAD)+干预(降压)+预后。用deep_retrieve一次覆盖多个角度。
+  行动:
+    Step1: deep_retrieve("老年TBAD血压管理", ["降压目标值","药物选择β-blocker","钙通道阻滞剂","低血压风险","预后"]) → 返回多维度结果
+    Step2: 信息充分 → 综合回答（若结果<3条则追加 search_rag）
+
+示例4: 类型D — 数据提取 + VLM
+  用户: "shchelochkov2019中森林图的效应量"
+  思考: 数据提取，先定位文献，再用VLM分析图片。
+  行动:
+    Step1: search_rag("shchelochkov2019 森林图 forest plot") → 返回结果含 image_url="/images/xxx.png"
+    Step2: analyze_image("/images/xxx.png", "提取各亚组的 HR 和95%CI,异质性I²") → 返回结构化JSON
+    Step3: 基于VLM提取的精确数值回答
+
+示例5: 类型E — 证据评估
+  用户: "目前TBAD治疗的证据等级如何"
+  思考: 证据评估，先全局了解再逐篇检索。
+  行动:
+    Step1: list_docs() → 返回5篇文献概览
+    Step2: search_rag("TBAD 治疗 guideline RCT meta-analysis") → 各文献的 evidence_level
+    Step3: 按 evidence_level 分组 → 形成证据金字塔 → 回答
+
+示例6: 检索无结果
+  用户: "TBAD的流行病学数据"
+  思考: 事实查询。
+  行动: search_rag("TBAD 流行病学 incidence prevalence") → 返回"未找到相关文献内容"
+         search_rag("aortic dissection epidemiology global burden") → 仍未找到
+  回答: "已检索: 'TBAD 流行病学' / 'aortic dissection epidemiology' / 'incidence prevalence'
+         在5篇文献中均未找到流行病学数据。知识库当前覆盖治疗、预后、分型，不包含流行病学。"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## 五、证据综合与回答格式
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 证据金字塔排序（与 search_rag 返回的 evidence_level 字段对应）:
+   Meta-analysis > RCT > Cohort > Case-control > Case-series > Expert Consensus(证据等级为null时从标题推断)
+
+2. 矛盾处理 — 不"和稀泥":
+   如果2篇文献结论相反，明确指出:
+   "文献A(RCT, n=890, 2022)认为X有效,HR=0.65(0.51-0.82)。
+    文献B(Cohort, n=120, 2020)未发现显著差异,HR=0.92(0.68-1.24)。
+    优先采纳A(证据等级更高, 样本量更大)。B的阴性结果可能源于统计效力不足。"
+
+3. 数值优先:
+   "血压显著降低" ❌ → "SBP降低12.3mmHg(95%CI 8.1-16.5, p<0.001)" ✅
+
+4. 不确定时诚实:
+   "当前检索到的3篇文献中,2篇支持X,1篇未得出结论。
+    证据等级均为队列研究,整体强度中等。需要RCT进一步验证。"
+
+5. 引用格式: [文献名, 页码, 证据等级]
+   示例: [Stanford B型主动脉夹层中国专家共识(2022版), p.4, 专家共识]
+
+6. 对比场景用表格:
+   | 维度 | A型 | B型 | 证据等级 | 来源 |
+   |------|-----|-----|---------|------|
+   | 治疗策略 | 手术修复 | TEVAR/药物 | 专家共识 | [文献, p.3] |
+"""
+
 
 # ─── Tool Definitions (OpenAI function-calling format) ───
 
@@ -30,14 +204,15 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "search_rag",
-            "description": "检索医学文献知识库。输入中文临床问题，返回相关文献片段及来源、页码、证据等级。",
+            "description": "检索医学文献知识库（支持中英文关键词查询）。返回相关文献片段及来源(doc)、页码、章节(section)、证据等级(evidence_level)、图表图片(image_url)。",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "中文检索查询，用关键词而非完整句子"},
+                    "faiss_query": {"type": "string", "description": "FAISS检索用的关键词组合(中英文均可,如'TBAD 诊断 CTA aortic dissection'),不用完整问句"},
+                    "lightrag_query": {"type": "string", "description": "LightRAG用的完整自然语言查询(如'Type B主动脉夹层的影像学诊断方法有哪些'),若用户问题清晰可直接用原问题"},
                     "top_k": {"type": "integer", "description": "返回结果数量，默认5，最多15"},
                 },
-                "required": ["query"],
+                "required": ["faiss_query"],
             },
         },
     },
@@ -59,11 +234,11 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "get_evidence",
-            "description": "获取某篇文献的证据等级(Meta/RCT/Cohort/Expert Consensus)和PICO框架。",
+            "description": "查询某篇文献在知识库中的覆盖范围（文本块数量、覆盖页码、内容类型分布）。证据等级从search_rag返回的evidence_level字段获取。",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "doc_name": {"type": "string", "description": "文献名称，从search_rag结果的source字段提取"},
+                    "doc_name": {"type": "string", "description": "文献名称，从search_rag结果的doc字段提取"},
                 },
                 "required": ["doc_name"],
             },
@@ -73,7 +248,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "list_docs",
-            "description": "列出知识库中所有已索引的医学文献名称和证据类型。",
+            "description": "列出知识库中所有已索引的医学文献名称、文本块数量和覆盖页码。",
             "parameters": {"type": "object", "properties": {}},
         },
     },
@@ -81,7 +256,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "deep_retrieve",
-            "description": "从多个角度深度检索同一主题。当第一轮检索不够充分时使用。",
+            "description": "从多个临床角度同时检索同一主题。比多次search_rag更高效，一次调用覆盖诊断/治疗/预后/安全性等多个维度。",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -100,7 +275,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "extract_chart",
-            "description": "提取医学文献中图表的具体数据（效应量、基线特征、生存率等）。",
+            "description": "搜索文献中与指定图表相关的文本片段（表格标题、图表描述等文字内容）。注意:返回的是文本描述，精确数值需用analyze_image从图表图片中提取。",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -115,7 +290,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "analyze_image",
-            "description": "实时调用VLM多模态模型分析医学图表图片（KM曲线/森林图/基线表/流程图等），返回结构化数据和医学解读。用于推理时按需看图，不是查文字描述。",
+            "description": "VLM多模态模型实时分析图表图片，返回结构化JSON（效应量/CI/p值/生存率等）。看到search_rag返回的image_url时应立即调用此工具提取精确数值。",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -133,49 +308,82 @@ class MedicalAgent:
     """OpenAI Function Calling 驱动的医学RAG Agent"""
 
     def __init__(self, pipeline: MedicalRAGPipeline):
+        import os
         self.pipeline = pipeline
-        self.client = pipeline.clients["baidu_pro"]
-        self.model = PROVIDERS["baidu_pro"]["model"]
+        base_url = os.getenv("AGENT_BASE_URL")
+        api_key = os.getenv("AGENT_API_KEY")
+        model = os.getenv("AGENT_MODEL")
+        if not base_url or not api_key or not model:
+            raise RuntimeError("AGENT_BASE_URL, AGENT_API_KEY, and AGENT_MODEL must be set in .env")
+        from openai import OpenAI
+        self.client = OpenAI(base_url=base_url, api_key=api_key)
+        self.model = model
+        # Optional fallback client
+        fb_url = os.getenv("AGENT_FALLBACK_URL")
+        fb_key = os.getenv("AGENT_FALLBACK_KEY")
+        fb_model = os.getenv("AGENT_FALLBACK_MODEL")
+        if fb_url and fb_key and fb_model:
+            self.fallback_client = OpenAI(base_url=fb_url, api_key=fb_key)
+            self.fallback_model = fb_model
+            logger.info(f"Agent fallback: url={fb_url[:40]}... model={fb_model}")
+        else:
+            self.fallback_client = None
+            self.fallback_model = None
+        logger.info(f"Agent initialized: url={base_url[:40]}... model={self.model}")
 
     # ─── Tool Executors ───────────────────────────────
 
     def _tool_search_rag(self, args: dict) -> str:
-        query = args.get("query", "")
-        if not isinstance(query, str) or not query.strip():
-            return json.dumps({"error": "search_rag requires a non-empty string query"}, ensure_ascii=False)
+        faiss_query = args.get("faiss_query", args.get("query", ""))
+        lightrag_query = args.get("lightrag_query") or faiss_query
+        if not isinstance(faiss_query, str) or not faiss_query.strip():
+            return json.dumps({"error": "search_rag requires a non-empty faiss_query"}, ensure_ascii=False)
         try:
             top_k = min(int(args.get("top_k", 5)), 15)
         except (ValueError, TypeError):
             top_k = 5
 
-        # ─── Call /api/search via HTTP → FAISS原文 + sources + image_url ───
+        # ─── Call /api/search via HTTP ───
         try:
             import urllib.request
-            data = json.dumps({"question": query, "top_k": top_k}).encode()
+            payload = {"question": faiss_query, "lightrag_query": lightrag_query, "top_k": top_k}
+            data = json.dumps(payload).encode()
             req = urllib.request.Request("http://localhost:8000/api/search",
                 data=data, headers={"Content-Type": "application/json"}, method="POST")
             with urllib.request.urlopen(req, timeout=35) as resp:
                 result = json.loads(resp.read())
-            sources = result.get("sources", [])
-            if not sources:
+            graph = result.get("graph_context")
+            snippets = result.get("text_snippets", result.get("sources", []))
+            if not graph and not snippets:
                 return "未找到相关文献内容。"
-            items = []
-            for s in sources:
-                item = {
-                    "ref": s.get("ref", 0), "source": s.get("source", ""),
-                    "doc": s.get("doc", ""), "section": s.get("section", ""),
-                    "evidence_level": self._infer_evidence_level(s.get("text", "")),
-                    "score": s.get("score", 0), "text": s.get("text", "")[:500],
+
+            output = {}
+            if graph:
+                output["知识背景"] = {
+                    "用途": "帮助理解主题全貌和实体关系, 不可直接引用其文字作为文献来源",
+                    "来源": "LightRAG 知识图谱",
+                    "内容": graph.get("summary", "")[:600],
                 }
-                if s.get("image_url"):
-                    item["image_url"] = s["image_url"]
-                items.append(item)
-            return json.dumps(items, ensure_ascii=False, indent=2)
+            if snippets:
+                items = []
+                for s in snippets:
+                    item = {
+                        "ref": s.get("ref", 0), "source": s.get("source", ""),
+                        "doc": s.get("doc", ""), "section": s.get("section", ""),
+                        "evidence_level": self._infer_evidence_level(s.get("text", "")),
+                        "score": s.get("score", 0), "text": s.get("text", "")[:500],
+                    }
+                    if s.get("image_url"):
+                        item["image_url"] = s["image_url"]
+                    items.append(item)
+                output["文献证据"] = items
+                output["_引用规则"] = "'知识背景'用于理解主题,'文献证据'用于引用来源。只有'文献证据'中的条目可以作为 [文献名, 页码] 引用。"
+            return json.dumps(output, ensure_ascii=False, indent=2)
         except Exception:
             pass  # Fallback below
 
         # Direct FAISS fallback
-        results = self.pipeline._doc_aware_retrieve(query, top_k=top_k)
+        results = self.pipeline._doc_aware_retrieve(faiss_query, top_k=top_k)
         if not results:
             return "未找到相关文献内容。"
         items = []
@@ -344,7 +552,7 @@ class MedicalAgent:
         client = self.pipeline.clients.get("moonshot_vision")
         if not client:
             return json.dumps({"error": "VLM client not available"}, ensure_ascii=False)
-        model = "moonshot-v1-128k-vision-preview"
+        model = self.pipeline.PROVIDERS.get("moonshot_vision", {}).get("model", "moonshot-v1-128k-vision-preview")
 
         classify_prompt = f"""判断这张医学图表的类型。分析意图: {analysis_hint}
 类型选项: baseline_table(基线特征表) / outcome_table(结局指标表) / forest_plot(森林图/亚组分析) / km_curve(Kaplan-Meier生存曲线) / flowchart(流程图) / other
@@ -490,6 +698,39 @@ class MedicalAgent:
             logger.warning(f"Backtrack search failed: {e}")
             return None
 
+    @staticmethod
+    def _extract_sources(trace: list) -> list:
+        """Extract sources from reasoning trace, supports both flat list and new dict format."""
+        sources = []
+        for t in reversed(trace):
+            if t["tool"] not in ("search_rag", "self_reflect"):
+                continue
+            preview = t.get("result_preview", "")
+            if not preview:
+                continue
+            try:
+                raw = preview.rstrip("...")
+                data = json.loads(raw)
+                items = []
+                # Handle new format: {"知识背景": {...}, "原文片段": [...]}
+                if isinstance(data, dict):
+                    snippets = data.get("文献证据", data.get("text_snippets", []))
+                    if isinstance(snippets, list):
+                        items = snippets
+                elif isinstance(data, list):
+                    items = data
+                for item in items:
+                    if isinstance(item, dict) and "source" in item:
+                        src = {"title": item["source"], "type": "文献"}
+                        if item.get("image_url"):
+                            src["image_url"] = item["image_url"]
+                            src["chart_type"] = item.get("type", "image")
+                            src["text_preview"] = item.get("text", "")[:200]
+                        sources.append(src)
+            except Exception:
+                pass
+        return sources[:8]
+
     def execute_tool(self, tool_name: str, args: dict) -> str:
         """分发 tool call 到对应执行器"""
         handlers = {
@@ -506,27 +747,74 @@ class MedicalAgent:
             return handler(args)
         return json.dumps({"error": f"Unknown tool: {tool_name}"})
 
+    def _faiss_fallback(self, query: str, trace: list, error: str) -> dict:
+        """Fallback: FAISS direct retrieval WITHOUT LLM. Pure text snippets as answer."""
+        logger.info(f"Agent FAISS fallback (no LLM) for: {query[:60]}")
+        try:
+            results = self.pipeline._doc_aware_retrieve(query, top_k=8)
+            if not results:
+                return {
+                    "answer": f"抱歉，当前无法处理您的请求。Agent推理引擎和FAISS检索均不可用。\n错误: {error}",
+                    "reasoning_trace": trace, "steps": len(trace),
+                    "model": "FAISS-fallback", "sources": [],
+                    "confidence": "fallback",
+                    "critique": [f"Agent LLM unavailable: {error}"],
+                }
+            # Build answer from raw FAISS results — no LLM needed
+            lines = ["## 检索结果 (FAISS 直接检索，未经过 LLM 推理)\n"]
+            for i, r in enumerate(results[:5]):
+                src = r["source"]
+                text = r["text"][:400]
+                lines.append(f"**来源 {i+1}**: {src}\n> {text}\n")
+            lines.append(f"\n> ⚠️ Agent 推理引擎暂时不可用 ({error[:80]}...)")
+            lines.append("> 以上为知识库直接检索结果，仅供参考。")
+            return {
+                "answer": "\n".join(lines),
+                "reasoning_trace": trace,
+                "steps": len(trace),
+                "model": "FAISS-fallback",
+                "sources": [{"title": r["source"], "type": "文献",
+                    "image_url": r.get("meta", {}).get("image_url"),
+                    "text_preview": r.get("text", "")[:200]} for r in results[:5]],
+                "confidence": "fallback",
+                "critique": [f"Agent LLM unavailable: {error}"],
+            }
+        except Exception as e2:
+            return {
+                "answer": f"抱歉，当前无法处理您的请求。Agent推理引擎不可用，FAISS检索也失败。\n请稍后重试或联系管理员。",
+                "reasoning_trace": trace, "steps": len(trace),
+                "model": "none", "sources": [],
+                "confidence": "failed",
+                "critique": [f"Agent: {error}", f"FAISS: {str(e2)[:120]}"],
+            }
+
     # ─── Agent Loop ───────────────────────────────────
 
-    def run(self, query: str, max_steps: int = 6) -> Dict[str, Any]:
+    def run(self, query: str, max_steps: int = 20,
+            conversation_history: list = None) -> Dict[str, Any]:
         """
-        Agent 多步推理循环:
-        1. 发送 query + tool definitions 给 LLM
-        2. LLM 决定调用哪个 tool
-        3. 执行 tool，把结果发给 LLM
-        4. 重复直到 LLM 给出最终回答
+        Agent 多跳推理循环 — 支持多轮对话和复杂医学问题:
+        1. LLM 拆解问题 → 分层检索 → 交叉验证 → 证据综合
+        2. conversation_history: [{"q":"...","a":"..."}, ...] 近3轮对话上下文
+        3. 最多 20 步, 检索 5 次后强制给出答案
+        4. 低置信度时自动回溯重搜 (最多 2 次)
         """
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": query},
-        ]
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        # Inject conversation history for multi-turn context
+        if conversation_history:
+            for turn in conversation_history[-3:]:  # Keep last 3 turns
+                if turn.get("q"):
+                    messages.append({"role": "user", "content": turn["q"]})
+                if turn.get("a"):
+                    messages.append({"role": "assistant", "content": turn["a"][:500]})
+        messages.append({"role": "user", "content": query})
         reasoning_trace = []
-        search_count = 0  # Track total search_rag + deep_retrieve calls
-        backtrack_count = 0  # Prevent infinite backtrack loops
+        search_count = 0
+        backtrack_count = 0
 
         for step in range(max_steps):
-            # After 2 searches: force final answer
-            force_answer = search_count >= 2
+            # After 5 searches: force final answer
+            force_answer = search_count >= 5
             try:
                 response = self.client.chat.completions.create(
                     model=self.model,
@@ -534,28 +822,53 @@ class MedicalAgent:
                     tools=[] if force_answer else TOOLS,
                     tool_choice="none" if force_answer else "auto",
                     temperature=0.3,
-                    max_tokens=600,
-                    timeout=25.0,
+                    max_tokens=1500,
+                    timeout=60.0,
                 )
             except Exception as e:
-                logger.error(f"Agent LLM call failed at step {step+1}: {e}")
-                # Try to give answer from existing trace
-                if reasoning_trace:
-                    return {
-                        "answer": f"推理在第{step+1}步时遇到API超时。已完成的检索结果如下，请基于这些信息判断。",
-                        "reasoning_trace": reasoning_trace,
-                        "steps": step + 1,
-                        "model": self.model,
-                        "sources": [],
-                        "truncated": True,
-                    }
-                return {
-                    "answer": f"推理启动失败: {str(e)[:200]}",
-                    "reasoning_trace": [],
-                    "steps": 0,
-                    "model": self.model,
-                    "sources": [],
-                }
+                logger.warning(f"Agent LLM failed at step {step+1}: {e}")
+                # Try fallback client first (if configured)
+                if self.fallback_client and step == 0:
+                    logger.info("Primary LLM failed, trying AGENT_FALLBACK for this request...")
+                    try:
+                        fb_client = self.fallback_client
+                        fb_model = self.fallback_model
+                        response = fb_client.chat.completions.create(
+                            model=fb_model,
+                            messages=messages,
+                            tools=TOOLS if not force_answer else [],
+                            tool_choice="none" if force_answer else "auto",
+                            temperature=0.3,
+                            max_tokens=1500,
+                            timeout=60.0,
+                        )
+                        msg = response.choices[0].message
+                        if msg.tool_calls:
+                            for tc in msg.tool_calls:
+                                tool_name = tc.function.name
+                                if tool_name in ("search_rag", "deep_retrieve"):
+                                    search_count += 1
+                                tool_args = json.loads(tc.function.arguments)
+                                tool_result = self.execute_tool(tool_name, tool_args)
+                                reasoning_trace.append({
+                                    "step": step + 1, "tool": tool_name,
+                                    "args": tool_args, "result_preview": tool_result[:500],
+                                })
+                                messages.append({"role": "assistant", "content": None, "tool_calls": [tc]})
+                                messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_result})
+                            continue
+                        elif msg.content:
+                            critique = self._critique_answer(query, msg.content, reasoning_trace)
+                            return {
+                                "answer": msg.content, "reasoning_trace": reasoning_trace,
+                                "steps": step + 1, "model": f"fallback:{fb_model}",
+                                "sources": self._extract_sources(reasoning_trace),
+                                "confidence": critique["confidence"], "critique": critique["issues"],
+                            }
+                    except Exception as fb_e:
+                        logger.warning(f"AGENT_FALLBACK also failed: {fb_e}")
+                # Both primary and fallback failed → FAISS direct retrieval
+                return self._faiss_fallback(query, reasoning_trace, str(e)[:120])
 
             msg = response.choices[0].message
 
@@ -610,45 +923,27 @@ class MedicalAgent:
                 logger.info(f"Agent self-critique: confidence={critique['confidence']} issues={len(critique['issues'])}")
 
                 # ─── Backtrack on low confidence (max 1 attempt) ───
-                if critique["confidence"] == "low" and step < max_steps - 1 and backtrack_count < 1:
+                if critique["confidence"] == "low" and step < max_steps - 1 and backtrack_count < 2:
                     logger.info(f"Agent backtracking due to low confidence")
                     backtrack_count += 1
                     refined_query = critique.get("refined_query", query)
                     backtrack_result = self._backtrack_search(refined_query, messages)
                     if backtrack_result:
                         reasoning_trace.append({
-                            "step": step + 2,
+                            "step": step + 1,
                             "tool": "self_reflect",
                             "args": {"action": "backtrack", "reason": critique["issues"]},
-                            "result_preview": backtrack_result[:200],
+                            "result_preview": backtrack_result,
                         })
                         messages.append({"role": "user", "content": f"补充检索结果:\n{backtrack_result}\n\n请基于以上补充信息和之前检索结果，重新给出更准确的回答。"})
                         continue  # Re-enter the loop for refined answer
 
-                # Extract sources with image URLs
-                sources = []
-                for t in reversed(reasoning_trace):
-                    if t["tool"] == "search_rag" and t.get("result_preview"):
-                        try:
-                            items = json.loads(t["result_preview"].rstrip("..."))
-                            if isinstance(items, list):
-                                for item in items:
-                                    if isinstance(item, dict) and "source" in item:
-                                        src = {"title": item["source"], "type": "文献"}
-                                        if item.get("image_url"):
-                                            src["image_url"] = item["image_url"]
-                                            src["chart_type"] = item.get("type", "image")
-                                            src["text_preview"] = item.get("text", "")[:200]
-                                        sources.append(src)
-                        except Exception:
-                            pass
-                        break
                 return {
                     "answer": answer_text,
                     "reasoning_trace": reasoning_trace,
                     "steps": step + 1,
                     "model": self.model,
-                    "sources": sources[:5],
+                    "sources": self._extract_sources(reasoning_trace),
                     "confidence": critique["confidence"],
                     "critique": critique["issues"],
                 }

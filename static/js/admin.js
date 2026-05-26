@@ -64,20 +64,20 @@
             uploadZone.classList.remove('drag-over');
         });
 
-        uploadZone.addEventListener('drop', function (e) {
+        uploadZone.addEventListener('drop', async function (e) {
             e.preventDefault();
             uploadZone.classList.remove('drag-over');
             var files = e.dataTransfer.files;
             if (files.length > 0) {
-                handleFileUpload(files[0]);
+                for (var i = 0; i < files.length; i++) { await handleFileUpload(files[i]); }
             }
         });
     }
 
     if (fileInput) {
-        fileInput.addEventListener('change', function () {
+        fileInput.addEventListener('change', async function () {
             if (fileInput.files.length > 0) {
-                handleFileUpload(fileInput.files[0]);
+                for (var i = 0; i < fileInput.files.length; i++) { await handleFileUpload(fileInput.files[i]); }
             }
         });
     }
@@ -106,10 +106,8 @@
             addFileRow(file.name, 'received');
             fileInput.value = '';
 
-            // Start polling for parser/indexing progress
+            // Auto-index: polling → done → auto refresh. No manual confirm needed.
             startProgressPolling(file);
-            // Show chunk preview after upload (doctor review before index)
-            setTimeout(function () { startChunkPreview(file); }, 2000);
         } catch (err) {
             Toast.show('上传失败: ' + err.message, 'error');
             if (uploadStatus) {
@@ -135,10 +133,16 @@
                 if (up.state === 'done') {
                     clearInterval(pollInterval);
                     fetchStats();
+                    fetchDocumentLibrary();
+                    updateGraphPanelStats();
                     var filename = up.filename || file.name;
                     fetchUploadHistory();
                     addFileRow(filename, 'indexed');
-                    Toast.show('解析完成！新文献已加入知识库', 'success');
+                    var added = up.chunks_added || 0;
+                    var toastMsg = up.is_update
+                        ? '文档已更新！' + filename + ' (' + added + ' 新文本块,旧版已替换)'
+                        : '✅ 自动入库: ' + filename + ' (' + added + ' 文本块)';
+                    Toast.show(toastMsg, 'success');
                     setTimeout(function () {
                         if (progressEl) progressEl.classList.add('hidden');
                     }, 4000);
@@ -316,27 +320,18 @@
 
     async function openGraphModal() {
         graphModal.classList.remove('hidden');
-        var loader = document.getElementById('graphLoader');
-        if (loader) loader.style.display = 'flex';
 
         if (!graph3d) {
             try {
                 var data = await API.get('/api/graph');
-                if (loader) loader.style.display = 'none';
 
                 if (data.error) {
                     document.getElementById('graphStats').textContent = '知识图谱数据不可用';
                     return;
                 }
 
-                // Wait for Graph3D module to load
-                var attempts = 0;
-                while (!window.Graph3D && attempts < 50) {
-                    await new Promise(function (r) { setTimeout(r, 100); });
-                    attempts++;
-                }
                 if (!window.Graph3D) {
-                    document.getElementById('graphStats').textContent = '3D 渲染模块加载失败';
+                    document.getElementById('graphStats').textContent = '图谱模块加载失败';
                     return;
                 }
 
@@ -346,11 +341,27 @@
                 document.getElementById('graphStats').textContent =
                     '节点: ' + data.stats.total_nodes +
                     ' | 边: ' + data.stats.total_edges +
-                    ' | 文献: ' + data.stats.total_docs;
+                    ' | 文献: ' + data.stats.total_docs +
+                    ' | 实体类型: ' + (data.stats.total_entity_types || data.groups.length);
 
                 renderGraphLegend(data.groups);
+
+                // Search handler
+                document.getElementById('graphSearch').addEventListener('input', function () {
+                    var q = this.value.toLowerCase();
+                    var cy = graphCanvas._cy;
+                    if (!cy) return;
+                    if (!q) { cy.elements().removeClass('neighbor neighbor-edge'); return; }
+                    cy.nodes().forEach(function (n) {
+                        if (n.data('fullLabel').toLowerCase().indexOf(q) >= 0) {
+                            n.addClass('neighbor');
+                            n.connectedEdges().addClass('neighbor-edge');
+                        } else {
+                            n.removeClass('neighbor');
+                        }
+                    });
+                });
             } catch (err) {
-                if (loader) loader.style.display = 'none';
                 document.getElementById('graphStats').textContent =
                     '加载失败: ' + (err.message || '未知错误');
                 Toast.show('图谱加载失败', 'error');
@@ -364,13 +375,31 @@
     }
 
     function renderGraphLegend(groups) {
-        var colors = ['#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6',
-                       '#ec4899','#06b6d4','#f97316','#84cc16','#6366f1'];
+        var palette = {'疾病':'#ef4444','药物':'#10b981','治疗':'#3b82f6','检查':'#f59e0b','症状':'#ec4899','解剖':'#8b5cf6','指标':'#06b6d4','指南':'#6366f1','基因':'#f97316'};
+        var shapes = {'疾病':'◆','药物':'▣','治疗':'⬬','检查':'⬡','症状':'▲','default':'●'};
         var html = '';
-        (groups || []).forEach(function (g, i) {
-            html += '<span style="color:' + colors[i % colors.length] + '">● ' + g + '</span>';
+        (groups || []).forEach(function (g) {
+            var c = palette[g] || '#94a3b8';
+            var s = shapes[g] || '●';
+            html += '<span class="legend-item" style="color:' + c + '" data-group="' + g + '">' + s + ' ' + g + '</span>';
         });
-        document.getElementById('graphLegend').innerHTML = html || '<span>暂无数据</span>';
+        var legendEl = document.getElementById('graphLegend');
+        legendEl.innerHTML = html || '<span>暂无数据</span>';
+
+        // Click legend to highlight group
+        legendEl.querySelectorAll('.legend-item').forEach(function (el) {
+            el.addEventListener('click', function () {
+                var group = el.getAttribute('data-group');
+                var cy = document.getElementById('graphCanvas')._cy;
+                if (!cy) return;
+                cy.elements().removeClass('neighbor neighbor-edge');
+                cy.nodes().forEach(function (n) {
+                    if (n.data('group') === group) {
+                        n.addClass('neighbor');
+                    }
+                });
+            });
+        });
     }
 
     async function updateGraphPanelStats() {

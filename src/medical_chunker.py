@@ -126,7 +126,7 @@ class MedicalChunker:
                 if kw.lower() in text_lower:
                     return tag
 
-        return "results"
+        return "unknown"
 
     def classify_section_llm(self, text: str) -> str:
         """LLM精准分类（用于语义关键文本块）"""
@@ -379,3 +379,160 @@ statistical / methods / results / discussion / conclusion / background
             })
 
         return enhanced
+
+    def global_merge_chunks(self, chunks: List[str], sources: List[str],
+                            metas: List[Dict], llm_client=None, llm_model: str = "") -> tuple:
+        """Quality-first global semantic merge. Uses baidu_pro to judge which
+        adjacent chunks belong to the same medical substructure. One LLM call
+        handles the entire document — no per-pair overhead.
+
+        Returns (merged_chunks, merged_sources, merged_metas)."""
+        if len(chunks) < 2:
+            return chunks, sources, metas
+
+        n = len(chunks)
+        # ── Step 1: Rule-based pre-merge (same tag + same page = high confidence) ──
+        merged_chunks, merged_sources, merged_metas = [], [], []
+        i = 0
+        rule_merged = 0
+        while i < n:
+            combined_text = chunks[i]
+            combined_source = sources[i]
+            combined_meta = dict(metas[i])
+            start_page = combined_meta.get("page_idx", 0)
+            end_page = start_page
+            tags_seen = [combined_meta.get("section_tag", "unknown")]
+            j = i + 1
+            while j < n:
+                same_tag = metas[j].get("section_tag") == metas[i].get("section_tag")
+                same_page = metas[j].get("page_idx") == metas[i].get("page_idx")
+                if same_tag and same_page:
+                    combined_text += "\n" + chunks[j]
+                    combined_source = f"{combined_source.split(' [p.')[0]} [p.{start_page}-{metas[j].get('page_idx', end_page)}]"
+                    end_page = metas[j].get("page_idx", end_page)
+                    tags_seen.append(metas[j].get("section_tag", "unknown"))
+                    rule_merged += 1
+                    j += 1
+                else:
+                    break
+            combined_meta["page_idx"] = start_page
+            combined_meta["_page_range"] = [start_page, end_page]
+            combined_meta["_rule_merged"] = (j - i) if j > i + 1 else False
+            merged_chunks.append(combined_text)
+            merged_sources.append(combined_source)
+            merged_metas.append(combined_meta)
+            i = j
+
+        if len(merged_chunks) < 2 or not llm_client:
+            logger.info(f"Global merge: {n}→{len(merged_chunks)} ({rule_merged} rule-merged, 0 LLM)")
+            return merged_chunks, merged_sources, merged_metas
+
+        # ── Step 2: LLM全文语义判断 (仅对跨页或跨标签的相邻对) ──
+        candidates = []
+        for k in range(len(merged_chunks) - 1):
+            a_tag = merged_metas[k].get("section_tag", "unknown")
+            a_page = merged_metas[k].get("_page_range", [merged_metas[k].get("page_idx",0)])[-1]
+            b_tag = merged_metas[k+1].get("section_tag", "unknown")
+            b_page = merged_metas[k+1].get("_page_range", [merged_metas[k+1].get("page_idx",0)])[0]
+            # Only LLM-judge cross-page or cross-tag pairs
+            if a_tag == b_tag and a_page != b_page:
+                candidates.append((k, "cross_page"))
+            elif a_tag != b_tag and a_page == b_page:
+                candidates.append((k, "cross_tag"))
+
+        if not candidates:
+            logger.info(f"Global merge: {n}→{len(merged_chunks)} ({rule_merged} rule-merged, no LLM needed)")
+            return merged_chunks, merged_sources, merged_metas
+
+        # Build LLM prompt with full context
+        pairs_text = ""
+        for k, reason in candidates[:15]:  # Cap at 15 pairs
+            a_text = merged_chunks[k][-200:] if len(merged_chunks[k]) > 200 else merged_chunks[k]
+            b_text = merged_chunks[k+1][:200] if len(merged_chunks[k+1]) > 200 else merged_chunks[k+1]
+            a_tag = merged_metas[k].get("section_tag", "?")
+            b_tag = merged_metas[k+1].get("section_tag", "?")
+            pairs_text += f"--- 第{k+1}对 ({reason}, {a_tag}→{b_tag}) ---\n"
+            pairs_text += f"A末: {a_text[-150:]}\nB首: {b_text[:150]}\n"
+
+        prompt = f"""判断以下医学文献的相邻文本块是否应合并为同一语义单元。
+
+合并标准:
+1. 属于同一医学子结构(如同一个Primary Outcome的不同描述)
+2. 讨论同一主题且被PDF物理分页截断
+3. 内容语义连续,阅读时不需跳转
+
+不合并标准:
+1. 章节边界明显(如Methods结束→Results开始)
+2. 讨论不同主题(如安全性→疗效)
+3. 一个完整表格/图片与其说明文字
+
+候选合并对:
+{pairs_text}
+
+输出格式(JSON):
+{{"merge_decisions":[{{"pair": 1, "merge": true/false, "reason": "一句话理由"}}],
+ "confidence": "high/medium/low"}}
+
+只输出JSON,不要其他文字。"""
+
+        import time as _time
+        last_error = None
+        for retry in range(3):
+            try:
+                import json as _json
+                resp = llm_client.chat.completions.create(
+                    model=llm_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.2, max_tokens=1000, timeout=45.0,
+                )
+                raw = resp.choices[0].message.content.strip()
+                break
+            except Exception as e:
+                last_error = e
+                if retry < 2:
+                    _time.sleep(2 ** retry)
+        else:
+            logger.warning(f"LLM global merge failed after 3 retries: {last_error}")
+            return merged_chunks, merged_sources, merged_metas
+
+        try:
+            if "```json" in raw: raw = raw[raw.find("```json")+7:]
+            if "```" in raw: raw = raw[:raw.rfind("```")]
+            result = _json.loads(raw.strip())
+            decisions = {d["pair"]-1: d["merge"] for d in result.get("merge_decisions", [])}
+            confidence = result.get("confidence", "medium")
+            logger.info(f"LLM global merge: {len(candidates)} candidates, confidence={confidence}")
+
+            # Apply LLM decisions (only if high/medium confidence)
+            if confidence in ("high", "medium"):
+                final_chunks, final_sources, final_metas = [], [], []
+                skip_next = False
+                merge_idx = 0
+                llm_merged = 0
+                for k in range(len(merged_chunks)):
+                    if skip_next:
+                        skip_next = False
+                        continue
+                    if k in decisions and decisions[k]:
+                        # Merge this pair
+                        combined_text = merged_chunks[k] + "\n" + merged_chunks[k+1]
+                        combined_source = f"{merged_sources[k].split(' [p.')[0]} [p.{merged_metas[k].get('_page_range',[0,0])[0]}-{merged_metas[k+1].get('_page_range',[0,0])[-1]}]"
+                        combined_meta = dict(merged_metas[k])
+                        combined_meta["_llm_merged"] = True
+                        combined_meta["_page_range"] = [merged_metas[k].get("_page_range",[0,0])[0],
+                                                        merged_metas[k+1].get("_page_range",[0,0])[-1]]
+                        final_chunks.append(combined_text)
+                        final_sources.append(combined_source)
+                        final_metas.append(combined_meta)
+                        skip_next = True
+                        llm_merged += 1
+                    else:
+                        final_chunks.append(merged_chunks[k])
+                        final_sources.append(merged_sources[k])
+                        final_metas.append(merged_metas[k])
+                logger.info(f"Global merge: {n}→{len(final_chunks)} ({rule_merged} rule, {llm_merged} LLM)")
+                return final_chunks, final_sources, final_metas
+        except Exception as e:
+            logger.warning(f"LLM global merge failed, using rule-only merge: {e}")
+
+        return merged_chunks, merged_sources, merged_metas
