@@ -179,25 +179,25 @@ class MedicalRAGPipeline:
 
     def _llm_entity_extract(self, prompt: str, system_prompt: str = None) -> str:
         """
-        实体提取专用: 百度 DeepSeek-V4-Pro 主 → 讯飞 GLM-5.1 兜底
+        实体提取专用: 讯飞 GLM-5.1 主 → 百度 DeepSeek-V4-Pro 兜底
         使用 resilience 模块的指数退避重试
         """
-        # 尝试百度 DeepSeek-V4-Pro with retry
+        # 讯飞 GLM-5.1 主引擎 (更稳定)
+        result = self.resilience_xunfei.call_text_sync(
+            prompt, system_prompt, model=PROVIDERS["xunfei"]["model"]
+        )
+        if result.success and result.data and len(result.data.strip()) > 10:
+            return result.data
+        if not result.success:
+            logger.warning(f"讯飞 entity extract failed: {result.error[:120] if result.error else 'unknown'}")
+
+        # 兜底: 百度 DeepSeek-V4-Pro
         result = self.resilience_baidu_pro.call_text_sync(
             prompt, system_prompt, model=PROVIDERS["baidu_pro"]["model"]
         )
         if result.success and result.data and len(result.data.strip()) > 10:
             return result.data
-        if not result.success:
-            logger.warning(f"百度Pro entity extract failed: {result.error[:120] if result.error else 'unknown'}")
-
-        # 兜底: 讯飞 GLM-5.1 with retry
-        result = self.resilience_xunfei.call_text_sync(
-            prompt, system_prompt, model=PROVIDERS["xunfei"]["model"]
-        )
-        if result.success:
-            return result.data
-        logger.error(f"讯飞 fallback also failed: {result.error[:120] if result.error else 'unknown'}")
+        logger.error(f"百度 fallback also failed: {result.error[:120] if result.error else 'unknown'}")
         raise RuntimeError(f"Entity extraction failed: {result.error}")
 
     # ═══════════════════════════════════════════════════════

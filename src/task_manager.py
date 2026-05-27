@@ -178,7 +178,8 @@ class UploadTaskManager:
                 graph = self._pipeline.graph_manager.get_graph()
                 stats = graph.get("stats", {})
 
-                update_task_status(task_uuid, "done",
+                final_status = "done" if lightrag_ok else "partial"
+                update_task_status(task_uuid, final_status,
                     lightrag_status="success" if lightrag_ok else "failed",
                     lightrag_duration_ms=lightrag_ms,
                     lightrag_mode=lightrag_mode,
@@ -186,8 +187,10 @@ class UploadTaskManager:
                     lightrag_relations=stats.get("total_edges", 0),
                     lightrag_error=lightrag_error,
                 )
-
-                mark_task_completed(task_uuid)
+                if final_status == "done":
+                    mark_task_completed(task_uuid)
+                else:
+                    mark_task_failed(task_uuid, lightrag_error or "LightRAG update failed")
                 logger.info(f"Task {task_uuid[:8]} completed: {chunks_added} chunks, "
                             f"{stats.get('total_nodes', 0)} entities")
 
