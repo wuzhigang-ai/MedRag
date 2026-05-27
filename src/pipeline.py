@@ -1029,9 +1029,11 @@ class MedicalRAGPipeline:
         if docling_path:
             final_path = docling_path
             self._upload_state["engine"] = "docling"
+            self._upload_state["engine_reason"] = "Docling primary (first choice)"
         elif mineru_path:
             final_path = mineru_path
             self._upload_state["engine"] = "mineru"
+            self._upload_state["engine_reason"] = "Docling failed, MinerU fallback"
         elif paddleocr_path:
             final_path = paddleocr_path
             self._upload_state["engine"] = "paddleocr"
@@ -1624,6 +1626,11 @@ HTML数据:
                         {"type": "table", "page_idx": item.get("page_idx", 0), "doc_name": doc_name},
                         h))
                     new_hashes.add(h)
+
+        # ── Track image stats for upload task reporting ──
+        img_candidates = [m for _, _, m, _ in candidates if m.get("type") == "image"]
+        self._upload_state["images_total"] = len(img_candidates)
+        self._upload_state["images_vlm"] = sum(1 for m in img_candidates if m.get("vlm_analyzed"))
 
         # ── Phase 2: MD5 exact diff (precision 100%, zero pollution) ──
         # MD5 guarantees content integrity: two chunks either are byte-for-byte

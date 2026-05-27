@@ -56,6 +56,12 @@
                 </svg>
                 关系图谱
             </a>
+            <a href="#tasks-section" id="sidebarTasksBtn">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                任务中心
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -240,6 +246,46 @@
                 </div>
             </div>
         </div>
+
+    <!-- Task Center Section -->
+    <div class="files-section animate-on-load" id="tasks-section" style="display:none;">
+        <div class="section-header">
+            <h2>&#x1f4cb; 任务中心</h2>
+            <div class="task-stats-cards">
+                <span class="task-stat" id="taskStatProcessing" style="cursor:pointer;color:var(--accent-glow)">&#x1f535; 处理中: --</span>
+                <span class="task-stat" id="taskStatDone" style="cursor:pointer;color:var(--medical-green)">&#x2705; 成功: --</span>
+                <span class="task-stat" id="taskStatFailed" style="cursor:pointer;color:#f87171">&#x274c; 失败: --</span>
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="files-table">
+                <thead>
+                    <tr>
+                        <th>文件名</th>
+                        <th>状态</th>
+                        <th>引擎</th>
+                        <th>FAISS</th>
+                        <th>LightRAG</th>
+                        <th>耗时</th>
+                        <th>时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="taskTableBody"></tbody>
+            </table>
+            <div id="taskEmpty" style="text-align:center;padding:40px;color:var(--text-muted);display:none;">暂无上传任务</div>
+        </div>
+    </div>
+
+    <!-- Task Detail Panel -->
+    <div id="taskDetail" class="chunk-preview" style="display:none;">
+        <div class="cp-header">
+            <span id="taskDetailTitle" style="font-weight:600;font-size:16px;"></span>
+            <button id="taskDetailClose" class="btn btn-ghost btn-sm" style="margin-left:auto;">关闭</button>
+        </div>
+        <div id="taskDetailBody" style="padding:16px;max-height:60vh;overflow-y:auto;"></div>
+    </div>
+
     </main>
 
     <!-- Knowledge Graph Modal -->

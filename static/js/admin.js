@@ -479,6 +479,184 @@
     setInterval(fetchStats, 30000);
     setInterval(fetchDocumentLibrary, 60000);
 
+    /* ── Task Center ──────────────────────────────────── */
+    var taskFilter = null;
+    var taskDetailOpen = null;
+    var taskPollInterval = null;
+
+    var tasksSection = document.getElementById('tasks-section');
+    var taskTableBody = document.getElementById('taskTableBody');
+    var taskEmpty = document.getElementById('taskEmpty');
+    var sidebarTasksBtn = document.getElementById('sidebarTasksBtn');
+    var taskDetail = document.getElementById('taskDetail');
+    var taskDetailTitle = document.getElementById('taskDetailTitle');
+    var taskDetailBody = document.getElementById('taskDetailBody');
+    var taskDetailClose = document.getElementById('taskDetailClose');
+
+    // Sidebar nav
+    if (sidebarTasksBtn) {
+        sidebarTasksBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showTaskCenter();
+        });
+    }
+    if (taskDetailClose) {
+        taskDetailClose.addEventListener('click', function() {
+            taskDetail.style.display = 'none';
+            taskDetailOpen = null;
+        });
+    }
+
+    // Stat card click → filter
+    ['Processing','Done','Failed'].forEach(function(s) {
+        var el = document.getElementById('taskStat' + s);
+        if (el) {
+            el.addEventListener('click', function() {
+                var map = {Processing:'parsing,cross_validating,postprocessing,indexing_faiss,indexing_lightrag',Done:'done',Failed:'failed,partial'};
+                taskFilter = map[s] || null;
+                fetchTasks();
+            });
+        }
+    });
+
+    function showTaskCenter() {
+        // Hide other sections
+        var sections = document.querySelectorAll('.files-section');
+        sections.forEach(function(s) { s.style.display = 'none'; });
+        if (tasksSection) {
+            tasksSection.style.display = 'block';
+            fetchTasks();
+            startTaskPolling();
+        }
+    }
+
+    async function fetchTasks() {
+        if (!taskTableBody) return;
+        try {
+            var url = '/api/upload/history?limit=100';
+            if (taskFilter) url += '&status=' + encodeURIComponent(taskFilter);
+            var data = await API.get(url);
+            var tasks = data.tasks || [];
+            renderTaskStats(tasks);
+            if (tasks.length === 0) {
+                taskTableBody.innerHTML = '';
+                if (taskEmpty) taskEmpty.style.display = 'block';
+            } else {
+                if (taskEmpty) taskEmpty.style.display = 'none';
+                taskTableBody.innerHTML = tasks.map(renderTaskRow).join('');
+            }
+        } catch (e) {
+            console.error('Fetch tasks failed:', e);
+        }
+    }
+
+    function renderTaskStats(tasks) {
+        var processing = 0, done = 0, failed = 0;
+        tasks.forEach(function(t) {
+            if (t.status === 'done') done++;
+            else if (t.status === 'failed' || t.status === 'partial') failed++;
+            else processing++;
+        });
+        ['Processing','Done','Failed'].forEach(function(s) {
+            var el = document.getElementById('taskStat' + s);
+            if (el) el.textContent = (s==='Processing'?'🔵 处理中: ':(s==='Done'?'✅ 成功: ':'❌ 失败: ')) + arguments[0][s.toLowerCase()];
+        });
+    }
+
+    function renderTaskRow(t) {
+        var statusClass = t.status === 'done' ? 'badge-success' : (t.status === 'failed' || t.status === 'partial' ? 'badge-error' : 'badge-warning');
+        var statusLabel = {'received':'等待','parsing':'解析中','cross_validating':'交叉验证','postprocessing':'后处理','indexing_faiss':'FAISS入库','indexing_lightrag':'LightRAG入库','done':'完成','failed':'失败','partial':'部分成功'}[t.status] || t.status;
+        var faissIcon = t.faiss_status === 'success' ? '✅' : (t.faiss_status === 'processing' ? '🔵' : (t.faiss_status === 'failed' ? '❌' : '⬜'));
+        var lrIcon = t.lightrag_status === 'success' ? '✅' : (t.lightrag_status === 'processing' ? '🔵' : (t.lightrag_status === 'failed' ? '❌' : (t.lightrag_status === 'skipped' ? '⬜' : '⬜')));
+        var engine = t.engine_selected || '?';
+        var faissInfo = t.faiss_chunks_added ? ('+' + t.faiss_chunks_added) : '';
+        var createdAt = t.created_at ? t.created_at.substring(0,16).replace('T',' ') : '';
+        var retryBtn = (t.status === 'failed' || t.status === 'partial') ? '<button class=\"btn btn-ghost btn-sm\" onclick=\"event.stopPropagation();retryTask(\''+t.task_uuid+'\')\" title=\"重试\">🔄</button>' : '';
+        return '<tr class=\"task-row\" data-uuid=\"'+t.task_uuid+'\" style=\"cursor:pointer\" onclick=\"openTaskDetail(\''+t.task_uuid+'\')\">' +
+            '<td>' + escapeHtml(t.filename) + '</td>' +
+            '<td><span class=\"badge '+statusClass+'\">'+statusLabel+'</span></td>' +
+            '<td>'+engine+'</td>' +
+            '<td>'+faissIcon+' '+faissInfo+'</td>' +
+            '<td>'+lrIcon+'</td>' +
+            '<td>'+(t.parsing?t.parsing:0)+(t.faiss?t.faiss:0)+(t.lightrag?t.lightrag:0)+'</td>' +
+            '<td>'+createdAt+'</td>' +
+            '<td>'+retryBtn+'</td>' +
+            '</tr>';
+    }
+
+    async function openTaskDetail(taskUuid) {
+        try {
+            var task = await API.get('/api/upload/' + taskUuid + '/status');
+            taskDetailOpen = taskUuid;
+            taskDetailTitle.textContent = '任务详情: ' + task.filename + ' (' + taskUuid.substring(0,8) + '...)';
+            var statusLabel = {'received':'等待','parsing':'解析中','cross_validating':'交叉验证','postprocessing':'后处理','indexing_faiss':'FAISS入库','indexing_lightrag':'LightRAG入库','done':'完成','failed':'失败','partial':'部分成功'}[task.status] || task.status;
+
+            var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">' +
+                '<div><strong>状态:</strong> ' + statusLabel + '</div>' +
+                '<div><strong>引擎:</strong> ' + (task.engine_selected || '?') + (task.engine_reason ? ' (' + task.engine_reason + ')' : '') + '</div>' +
+                '<div><strong>上传者:</strong> ' + (task.uploaded_by || '?') + '</div>' +
+                '<div><strong>文件MD5:</strong> ' + (task.file_md5 || '').substring(0,16) + '</div>' +
+                '<div><strong>文件大小:</strong> ' + formatBytes(task.file_size_bytes || 0) + '</div>' +
+                '<div><strong>重试次数:</strong> ' + (task.retry_count || 0) + '/' + (task.max_retries || 3) + '</div>' +
+                '</div>';
+
+            if (task.quality_warning) {
+                html += '<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);padding:8px;border-radius:6px;margin-bottom:12px;color:#f59e0b;">⚠ ' + task.quality_warning + '</div>';
+            }
+            if (task.error_message) {
+                html += '<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);padding:8px;border-radius:6px;margin-bottom:12px;color:#f87171;">❌ ' + task.error_message + '</div>';
+            }
+
+            // Stage timeline
+            var stages = [
+                {name:'接收', status: task.status === 'received' ? 'active' : 'done', time: task.created_at, detail: ''},
+                {name:'解析', status: task.status === 'parsing' ? 'active' : (['cross_validating','postprocessing','indexing_faiss','indexing_lightrag','done'].indexOf(task.status)>=0?'done':'pending'), time: task.parsing_started_at, detail: 'Docling:'+(task.docling_items||0)+' MinerU:'+(task.mineru_items||0)+' ('+(task.parsing_duration_ms||0)+'ms)'},
+                {name:'交叉验证', status: task.status === 'cross_validating' ? 'active' : (['postprocessing','indexing_faiss','indexing_lightrag','done'].indexOf(task.status)>=0?'done':'pending'), time: task.parsing_started_at, detail: (task.cross_validation_duration_ms||0)+'ms'},
+                {name:'后处理', status: task.status === 'postprocessing' ? 'active' : (['indexing_faiss','indexing_lightrag','done'].indexOf(task.status)>=0?'done':'pending'), time: task.parsing_started_at, detail: '清理:'+(task.postprocess_cleaned||0)+' 合并:'+(task.postprocess_merged||0)+' 序列化:'+(task.postprocess_tables_serialized||0)},
+                {name:'FAISS入库', status: task.faiss_status === 'processing' ? 'active' : (task.faiss_status==='success'?'done':(task.faiss_status==='failed'?'error':'pending')), time: task.faiss_started_at, detail: (task.faiss_is_update?'更新':'新增')+' +'+(task.faiss_chunks_added||0)+'块 VLM:'+(task.faiss_images_vlm||0)+'/'+(task.faiss_images_total||0)+' ('+(task.faiss_duration_ms||0)+'ms)'},
+                {name:'LightRAG', status: task.lightrag_status === 'processing' ? 'active' : (task.lightrag_status==='success'?'done':(task.lightrag_status==='failed'?'error':(task.lightrag_status==='skipped'?'skipped':'pending'))), time: task.lightrag_started_at, detail: (task.lightrag_mode||'')+' '+(task.lightrag_entities||0)+'实体/'+(task.lightrag_relations||0)+'关系 ('+(task.lightrag_duration_ms||0)+'ms)'}
+            ];
+
+            html += '<div style="border-left:2px solid var(--border);padding-left:16px;">';
+            stages.forEach(function(s) {
+                var dot = s.status === 'done' ? '🟢' : (s.status === 'active' ? '🔵' : (s.status === 'error' ? '🔴' : (s.status === 'skipped' ? '⚪' : '⚫')));
+                html += '<div style="padding:6px 0;">' + dot + ' <strong>' + s.name + '</strong> <span style="color:var(--text-muted);font-size:13px;">' + s.detail + '</span></div>';
+            });
+            html += '</div>';
+
+            taskDetailBody.innerHTML = html;
+            taskDetail.style.display = 'block';
+
+        } catch(e) {
+            Toast.show('加载任务详情失败', 'error');
+        }
+    }
+
+    async function retryTask(taskUuid) {
+        try {
+            var resp = await fetch('/api/upload/' + taskUuid + '/retry', {method:'POST'});
+            if (resp.ok) {
+                Toast.show('任务已重新入队', 'success');
+                fetchTasks();
+            } else {
+                var err = await resp.json();
+                Toast.show('重试失败: ' + (err.detail || '未知错误'), 'error');
+            }
+        } catch(e) {
+            Toast.show('重试请求失败', 'error');
+        }
+    }
+
+    function startTaskPolling() {
+        if (taskPollInterval) clearInterval(taskPollInterval);
+        taskPollInterval = setInterval(function() {
+            if (tasksSection && tasksSection.style.display !== 'none') {
+                fetchTasks();
+                if (taskDetailOpen) openTaskDetail(taskDetailOpen);
+            }
+        }, 5000);
+    }
+
     /* ── Smart Chunk Preview ──────────────────────────── */
     var chunkPreview = document.getElementById('chunkPreview');
     var cpContent = document.getElementById('cpContent');

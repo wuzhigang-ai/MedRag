@@ -42,6 +42,21 @@ app.add_middleware(
 UPLOAD_DIR = Path("./uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize upload task table and worker on server start."""
+    from src.auth import ensure_upload_tasks_table
+    from src.task_manager import get_task_manager
+    try:
+        ensure_upload_tasks_table()
+        tm = get_task_manager()
+        tm.set_pipeline(get_pipeline())
+        await tm.start()
+        logger.info("Upload task manager started")
+    except Exception as e:
+        logger.warning(f"Task manager startup failed (non-blocking): {e}")
+
 pipeline: MedicalRAGPipeline = None
 
 
@@ -399,59 +414,100 @@ async def get_graph_delta():
 
 @app.post("/api/upload")
 async def upload_pdf(file: UploadFile = File(...)):
-    """上传PDF并在后台异步完成: 远程解析 -> 去重 -> 嵌入 -> 索引"""
+    """上传PDF → 入队串行处理 (MySQL状态机驱动)"""
+    import uuid as _uuid
+    import hashlib as _hashlib
+    from src.auth import create_upload_task, ensure_upload_tasks_table
+    from src.task_manager import get_task_manager
+
     if not file.filename.endswith('.pdf'):
         raise HTTPException(400, "仅支持PDF文件")
+
+    ensure_upload_tasks_table()
 
     file_path = UPLOAD_DIR / file.filename
     content = await file.read()
     file_path.write_bytes(content)
+    file_md5 = _hashlib.md5(content).hexdigest()
+    file_size = len(content)
 
-    p = get_pipeline()
+    task_uuid = str(_uuid.uuid4())
+    task_id = create_upload_task(
+        task_uuid=task_uuid,
+        filename=file.filename,
+        uploaded_by="admin",
+        pdf_path=str(file_path),
+        file_md5=file_md5,
+        file_size=file_size,
+    )
 
-    async def _background_upload():
-        p.graph_manager.snapshot()
-        try:
-            content_list_path = await asyncio.to_thread(
-                p.parse_remote_pdf, str(file_path)
-            )
-            if content_list_path is None:
-                return
-            await asyncio.to_thread(
-                p.add_parsed_document, content_list_path
-            )
-        except Exception as e:
-            p._upload_state["state"] = "error"
-            p._upload_state["error"] = str(e)[:500]
-            logger.error(f"Background upload failed: {e}")
-            return  # Don't proceed to LightRAG or graph rebuild if FAISS failed
-
-        # FAISS succeeded — rebuild graph for frontend, then LightRAG in same task for ordering.
-        p.graph_manager.build()
-        if p._lightrag_ready:
-            try:
-                if p._lightrag_dirty:
-                    logger.info("LightRAG reset+rebuild (post-FAISS)")
-                    await asyncio.wait_for(
-                        p._lightrag_reset_and_rebuild(), timeout=120.0
-                    )
-                else:
-                    logger.info("LightRAG insert (post-FAISS)")
-                    await asyncio.wait_for(
-                        p._lightrag_insert_documents(), timeout=60.0
-                    )
-            except asyncio.TimeoutError:
-                logger.warning("LightRAG update timed out (non-blocking)")
-            except Exception as e:
-                logger.warning(f"LightRAG update failed (non-blocking): {e}")
-
-    asyncio.create_task(_background_upload())
+    tm = get_task_manager()
+    tm.set_pipeline(get_pipeline())
+    await tm.enqueue(task_uuid)
 
     return {
-        "status": "processing",
+        "status": "received",
+        "task_uuid": task_uuid,
+        "task_id": task_id,
         "file": file.filename,
-        "message": "PDF已接收，后台正在: 远程连接 -> 上传 -> MinerU解析 -> 下载 -> 去重 -> 嵌入 -> 索引",
+        "message": "PDF已接收，已加入处理队列",
     }
+
+
+@app.get("/api/upload/{task_uuid}/status")
+async def get_upload_task_status(task_uuid: str):
+    """查询单个上传任务的完整状态"""
+    from src.auth import get_task
+    task = get_task(task_uuid)
+    if not task:
+        raise HTTPException(404, "任务不存在")
+    # Convert datetime/timedelta to string for JSON
+    for k in list(task.keys()):
+        v = task[k]
+        if hasattr(v, 'isoformat'):
+            task[k] = v.isoformat() if v else None
+    return task
+
+
+@app.get("/api/upload/history")
+async def get_upload_history(limit: int = 50, status: str = None):
+    """上传任务历史列表"""
+    from src.auth import list_tasks
+    tasks = list_tasks(limit=limit, status_filter=status)
+    for task in tasks:
+        for k in list(task.keys()):
+            v = task[k]
+            if hasattr(v, 'isoformat'):
+                task[k] = v.isoformat() if v else None
+    return {"tasks": tasks, "total": len(tasks)}
+
+
+@app.post("/api/upload/{task_uuid}/retry")
+async def retry_upload_task(task_uuid: str):
+    """重新入队失败的任务"""
+    from src.auth import get_task, update_task_status
+    from src.task_manager import get_task_manager
+
+    task = get_task(task_uuid)
+    if not task:
+        raise HTTPException(404, "任务不存在")
+    if task["status"] not in ("failed", "partial"):
+        raise HTTPException(400, "仅失败或部分成功的任务可以重试")
+
+    new_retry = (task["retry_count"] or 0) + 1
+    if new_retry > (task["max_retries"] or 3):
+        raise HTTPException(400, "已达最大重试次数")
+
+    update_task_status(task_uuid, "received",
+                       retry_count=new_retry,
+                       faiss_status="pending",
+                       lightrag_status="pending")
+
+    tm = get_task_manager()
+    tm.set_pipeline(get_pipeline())
+    await tm.enqueue(task_uuid)
+
+    return {"status": "re-enqueued", "task_uuid": task_uuid, "retry": new_retry}
 
 
 @app.get("/api/documents")
