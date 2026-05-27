@@ -819,6 +819,8 @@ class MedicalRAGPipeline:
                         continue
                     lightrag_seen_hashes.add(h)
 
+                    # Bypass parser check — we feed pre-parsed content_list, no parsing needed
+                    rag._parser_installation_checked = True
                     # Use RAG-Anything's full multimodal pipeline:
                     # separate_content → insert_text_content + _process_multimodal_content
                     # Images → VLM → Image entities → belongs_to relations
