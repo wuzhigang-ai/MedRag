@@ -223,6 +223,13 @@ class MedicalRAGPipeline:
                 continue
 
             doc_name = f.name.replace("_content_list.json", "")
+            # Cross-engine dedup: skip mineru_* if the original (non-prefixed) exists
+            if doc_name.startswith("mineru_"):
+                original_name = doc_name.replace("mineru_", "", 1)
+                original_file = self.content_dir / f"{original_name}_content_list.json"
+                if original_file.exists():
+                    logger.info(f"Skipping cross-engine duplicate: {f.name} (original {original_file.name} exists)")
+                    continue
             _start = len(self.all_chunks)
             for item in data:
                 t = item.get("type", "text")
@@ -1185,6 +1192,23 @@ class MedicalRAGPipeline:
             final_path = self._postprocess_content_list(final_path)
         except Exception as e:
             logger.warning(f"Post-processing failed, using raw output: {e}")
+
+        # ── Cleanup: delete stale cross-engine output files to prevent duplicates ──
+        doc_stem = pdf_path_obj.stem
+        for candidate in [mineru_path, paddleocr_path]:
+            if candidate and Path(candidate) != Path(final_path) and Path(candidate).exists():
+                try:
+                    Path(candidate).unlink()
+                    logger.info(f"Deleted stale cross-engine output: {Path(candidate).name}")
+                except Exception:
+                    pass
+        # Also clean up any orphaned mineru_* files from previous runs
+        for stale in self.content_dir.glob(f"mineru_{doc_stem}_content_list.json"):
+            try:
+                stale.unlink()
+                logger.info(f"Deleted orphaned mineru output: {stale.name}")
+            except Exception:
+                pass
 
         self._upload_state["state"] = "done"
         return final_path
