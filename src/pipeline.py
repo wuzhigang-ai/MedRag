@@ -644,36 +644,40 @@ class MedicalRAGPipeline:
             )
 
         # VLM: Moonshot 视觉
-        def vision_model_func(prompt, system_prompt=None, history_messages=[],
-                              image_data=None, messages=None, **kwargs):
+        async def vision_model_func(prompt, system_prompt=None, history_messages=[],
+                                     image_data=None, messages=None, **kwargs):
             client = self.clients["moonshot_vision"]
             model = PROVIDERS["moonshot_vision"]["model"]
 
             if messages:
-                resp = client.chat.completions.create(
-                    model=model, messages=messages,
-                    temperature=0.3, max_tokens=600,
+                resp = await asyncio.to_thread(
+                    lambda: client.chat.completions.create(
+                        model=model, messages=messages,
+                        temperature=0.3, max_tokens=600, timeout=30.0,
+                    )
                 )
                 return resp.choices[0].message.content
 
             if image_data:
-                resp = client.chat.completions.create(
-                    model=model,
-                    messages=[{
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt or "请描述这张医学图片。"},
-                            {"type": "image_url", "image_url": {
-                                "url": f"data:image/jpeg;base64,{image_data}"
-                            }},
-                        ],
-                    }],
-                    temperature=0.3, max_tokens=600,
+                resp = await asyncio.to_thread(
+                    lambda: client.chat.completions.create(
+                        model=model,
+                        messages=[{
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": prompt or "请描述这张医学图片。"},
+                                {"type": "image_url", "image_url": {
+                                    "url": f"data:image/jpeg;base64,{image_data}"
+                                }},
+                            ],
+                        }],
+                        temperature=0.3, max_tokens=600, timeout=30.0,
+                    )
                 )
                 return resp.choices[0].message.content
 
             # 纯文本回退
-            return llm_model_func(prompt, system_prompt, history_messages, **kwargs)
+            return await llm_model_func(prompt, system_prompt, history_messages, **kwargs)
 
         # Embedding: 本地 BGE-M3
         async def embedding_func(texts: list[str]) -> np.ndarray:
