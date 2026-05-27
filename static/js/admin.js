@@ -493,12 +493,27 @@
     var taskDetailBody = document.getElementById('taskDetailBody');
     var taskDetailClose = document.getElementById('taskDetailClose');
 
-    // Sidebar nav
+    // Sidebar nav — show/hide sections
+    function showSection(sectionId) {
+        var sections = document.querySelectorAll('.files-section');
+        sections.forEach(function(s) { s.style.display = 'none'; });
+        var target = document.getElementById(sectionId);
+        if (target) target.style.display = 'block';
+        if (sectionId === 'tasks-section') { fetchTasks(); startTaskPolling(); }
+        if (sectionId === 'graph-section') updateGraphPanelStats();
+        if (taskPollInterval && sectionId !== 'tasks-section') { clearInterval(taskPollInterval); taskPollInterval = null; }
+    }
+
     if (sidebarTasksBtn) {
-        sidebarTasksBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showTaskCenter();
-        });
+        sidebarTasksBtn.addEventListener('click', function(e) { e.preventDefault(); showSection('tasks-section'); });
+    }
+    var sidebarDocsBtn = document.getElementById('sidebarDocsBtn');
+    if (sidebarDocsBtn) {
+        sidebarDocsBtn.addEventListener('click', function(e) { e.preventDefault(); showSection('documents-section'); fetchDocumentLibrary(); });
+    }
+    var sidebarGraphNavBtn = document.getElementById('sidebarGraphNavBtn');
+    if (sidebarGraphNavBtn) {
+        sidebarGraphNavBtn.addEventListener('click', function(e) { e.preventDefault(); showSection('graph-section'); updateGraphPanelStats(); });
     }
     if (taskDetailClose) {
         taskDetailClose.addEventListener('click', function() {
@@ -518,17 +533,6 @@
             });
         }
     });
-
-    function showTaskCenter() {
-        // Hide other sections
-        var sections = document.querySelectorAll('.files-section');
-        sections.forEach(function(s) { s.style.display = 'none'; });
-        if (tasksSection) {
-            tasksSection.style.display = 'block';
-            fetchTasks();
-            startTaskPolling();
-        }
-    }
 
     async function fetchTasks() {
         if (!taskTableBody) return;
