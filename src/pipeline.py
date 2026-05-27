@@ -1195,20 +1195,22 @@ class MedicalRAGPipeline:
 
         # ── Cleanup: delete stale cross-engine output files to prevent duplicates ──
         doc_stem = pdf_path_obj.stem
+        final_path_obj = Path(final_path)
         for candidate in [mineru_path, paddleocr_path]:
-            if candidate and Path(candidate) != Path(final_path) and Path(candidate).exists():
+            if candidate and Path(candidate) != final_path_obj and Path(candidate).exists():
                 try:
                     Path(candidate).unlink()
                     logger.info(f"Deleted stale cross-engine output: {Path(candidate).name}")
                 except Exception:
                     pass
-        # Also clean up any orphaned mineru_* files from previous runs
+        # Also clean up any orphaned mineru_* files from previous runs (only if not the winner)
         for stale in self.content_dir.glob(f"mineru_{doc_stem}_content_list.json"):
-            try:
-                stale.unlink()
-                logger.info(f"Deleted orphaned mineru output: {stale.name}")
-            except Exception:
-                pass
+            if stale != final_path_obj:
+                try:
+                    stale.unlink()
+                    logger.info(f"Deleted orphaned mineru output: {stale.name}")
+                except Exception:
+                    pass
 
         self._upload_state["state"] = "done"
         return final_path
