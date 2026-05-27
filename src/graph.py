@@ -83,34 +83,45 @@ class GraphManager:
         nl = name.lower()
         if any(k in nl for k in ['disease','dysfunction','failure','stenosis',
             'regurgitation','syndrome','infarction','ischemia','thrombosis','embolism',
-            'aneurysm','dissection','atherosclerosis','calcification','病','症','癌',
-            '瘤','衰竭','梗死','栓塞','夹层','狭窄','关闭不全']):
+            'aneurysm','dissection','atherosclerosis','calcification','endometriosis',
+            'adenomyosis','hyperplasia','necrosis','fibrosis','cirrhosis','carcinoma',
+            'adenoma','sarcoma','melanoma','lymphoma','病','症','癌','瘤','衰竭',
+            '梗死','栓塞','夹层','狭窄','关闭不全']):
             return '疾病'
         if any(k in nl for k in ['drug','medication','inhibitor','blocker',
             'antagonist','agonist','statin','antibiotic','aspirin','heparin',
-            'warfarin','metformin','insulin','药','剂','素','洛尔','地平','普利',
-            '沙坦','他汀','nitroglycerin','adenosine']):
+            'warfarin','metformin','insulin','corticosteroid','opioid','analgesic',
+            'diuretic','vasodilator','vasopressor','inotrope','anticoagulant',
+            '药','剂','素','洛尔','地平','普利','沙坦','他汀','nitroglycerin',
+            'adenosine']):
             return '药物'
         if any(k in nl for k in ['surgery','repair','replacement','graft',
             'stent','angioplasty','catheter','ablation','resection','transplant',
-            'TEVAR','EVAR','CPB','CABG','PCI','ECMO','CRRT','手术','治疗','修复',
-            '移植','支架','导管','消融','切除','置换','搭桥','介入','管理']):
+            'TEVAR','EVAR','CPB','CABG','PCI','ECMO','CRRT','balloon pump',
+            'impella','ventricular assist','pacemaker','defibrillator','bypass',
+            'embolization','anastomosis','thoracotomy',' laparotomy','endoscopy',
+            '手术','治疗','修复','移植','支架','导管','消融','切除','置换','搭桥',
+            '介入','管理']):
             return '治疗'
         if any(k in nl for k in ['CT','MRI','ultrasound','echocardiograph',
             'angiograph','X-ray','PET','SPECT','ECG','EEG','EMG','lab','assay',
             'biomarker','troponin','creatinine','GFR','eGFR','BUN','ALT','AST',
-            'HbA1c','glucose','cholesterol','LDL','HDL','检查','检测','超声',
+            'HbA1c','glucose','cholesterol','LDL','HDL','biopsy','endoscopy',
+            'colonoscopy','bronchoscopy','cystoscopy','检查','检测','超声',
             '造影','图','试验','评分','量表','Cystatin','Equation']):
             return '检查'
         if any(k in nl for k in ['pain','fever','edema','dyspnea','fatigue',
             'nausea','vomiting','bleeding','hemorrhage','hypertension','hypotension',
-            'tachycardia','bradycardia','arrhythmia','晕','痛','发热','水肿',
+            'tachycardia','bradycardia','arrhythmia','shock','sepsis','hypoxia',
+            'cyanosis','ascites','jaundice',' effusion','晕','痛','发热','水肿',
             '困难','急促','高压','低压','症状','体征']):
             return '症状'
         if any(k in nl for k in ['artery','vein','valve','ventricle','atrium',
             'myocardium','endocardium','pericardium','aorta','coronary','pulmonary',
-            'mitral','tricuspid','renal','hepatic','cerebral','血管','心脏','肾脏',
-            '肝脏','脑','肺','动脉','静脉','瓣膜','Gene','Cohort']):
+            'mitral','tricuspid','renal','hepatic','cerebral','carotid','femoral',
+            'brachial','radial','axillary','popliteal','tibial','mesenteric',
+            '血管','心脏','肾脏','肝脏','脑','肺','动脉','静脉','瓣膜','Gene',
+            'Cohort']):
             return '解剖'
         if any(k in nl for k in ['guideline','consensus','recommendation',
             'trial','RCT','meta-analysis','systematic review','cohort','registry',
