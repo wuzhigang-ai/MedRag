@@ -706,20 +706,42 @@ class MedicalRAGPipeline:
         logger.info(f"LightRAG engine initialized ({backend} backend, 百度DeepSeek-V4-Pro + 讯飞GLM-5.1兜底)")
         return self._lightrag
 
+    def _load_persisted_md5s(self) -> dict:
+        """Load persisted document content hashes for dedup."""
+        md5_file = Path(self.lightrag_working_dir) / "_doc_md5s.json"
+        if not md5_file.exists():
+            return {}
+        try:
+            import json as _json
+            return _json.loads(md5_file.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+
+    def _save_persisted_md5s(self) -> None:
+        """Persist current document content hashes for future dedup."""
+        import json as _json
+        from hashlib import md5 as _md5
+        md5_file = Path(self.lightrag_working_dir) / "_doc_md5s.json"
+        new_md5s = {}
+        for f in sorted(Path(self.content_dir).glob("*_content_list.json")):
+            try:
+                with open(f, encoding="utf-8") as fh:
+                    data = _json.load(fh)
+                texts = [it.get("text","").strip() for it in data
+                         if it.get("type")=="text" and it.get("text","").strip()]
+                if texts:
+                    new_md5s[f.name] = _md5("\n\n".join(texts).encode()).hexdigest()
+            except Exception:
+                pass
+        md5_file.parent.mkdir(parents=True, exist_ok=True)
+        md5_file.write_text(_json.dumps(new_md5s, ensure_ascii=False), encoding="utf-8")
+
     async def _lightrag_reset_and_rebuild(self):
         """Atomic LightRAG rebuild: backup → rebuild → replace on success.
         On failure, restore backup and clear dirty flag."""
         import shutil
         wd = Path(self.lightrag_working_dir)
         backup_dir = wd.parent / f"{wd.name}_backup"
-        md5_file = wd / "_doc_md5s.json"
-        persisted_md5s = {}
-        if md5_file.exists():
-            try:
-                import json as _json
-                persisted_md5s = _json.loads(md5_file.read_text(encoding="utf-8"))
-            except Exception:
-                persisted_md5s = {}
 
         # Atomic: move old storage to backup, not delete
         if backup_dir.exists():
@@ -727,34 +749,19 @@ class MedicalRAGPipeline:
         if wd.exists():
             shutil.move(str(wd), str(backup_dir))
             wd.mkdir(parents=True, exist_ok=True)
-            # Restore MD5 file to new dir
+            # Restore MD5 file to new dir so incremental inserts see existing hashes
             old_md5 = backup_dir / "_doc_md5s.json"
             if old_md5.exists():
-                shutil.copy2(str(old_md5), str(md5_file))
+                shutil.copy2(str(old_md5), str(wd / "_doc_md5s.json"))
 
         try:
             self._lightrag = None
             self._lightrag_ready = False
             rag = self._init_lightrag()
             await rag._ensure_lightrag_initialized()
-            inserted = await self._lightrag_insert_documents(persisted_md5s=persisted_md5s)
+            inserted = await self._lightrag_insert_documents()
             self._lightrag_ready = True
             self._lightrag_dirty = False
-            # Persist MD5s
-            try:
-                import json as _json
-                from hashlib import md5 as _md5
-                new_md5s = {}
-                for f in sorted(Path(self.content_dir).glob("*_content_list.json")):
-                    with open(f, encoding="utf-8") as fh:
-                        data = _json.load(fh)
-                    texts = [it.get("text","").strip() for it in data
-                             if it.get("type")=="text" and it.get("text","").strip()]
-                    if texts:
-                        new_md5s[f.name] = _md5("\n\n".join(texts).encode()).hexdigest()
-                md5_file.write_text(_json.dumps(new_md5s, ensure_ascii=False), encoding="utf-8")
-            except Exception:
-                pass
             # Success → remove backup
             if backup_dir.exists():
                 shutil.rmtree(backup_dir)
@@ -771,18 +778,21 @@ class MedicalRAGPipeline:
                 shutil.move(str(backup_dir), str(wd))
             raise
 
-    async def _lightrag_insert_documents(self, content_dir: str = None,
-                                          persisted_md5s: dict = None) -> bool:
+    async def _lightrag_insert_documents(self, content_dir: str = None) -> bool:
+        """Insert/re-sync documents into LightRAG. Skips unchanged docs via MD5 dedup.
+        Auto-loads persisted hashes from _doc_md5s.json and saves after insert."""
         try:
             rag = self._init_lightrag()
-            await rag._ensure_lightrag_initialized()  # LightRAG instance is lazily created
+            await rag._ensure_lightrag_initialized()
             cdir = Path(content_dir or self.content_dir)
 
-            inserted = 0
-            lightrag_seen_hashes = set()
-            if persisted_md5s:
-                lightrag_seen_hashes.update(persisted_md5s.values())
+            # Always load persisted hashes — not just during rebuild
+            persisted_md5s = self._load_persisted_md5s()
+            lightrag_seen_hashes = set(persisted_md5s.values())
+            if lightrag_seen_hashes:
                 logger.info(f"LightRAG dedup: loaded {len(persisted_md5s)} persisted doc hashes")
+
+            inserted = 0
             for f in sorted(cdir.glob("*_content_list.json")):
                 try:
                     with open(f, encoding="utf-8") as fh:
@@ -807,7 +817,6 @@ class MedicalRAGPipeline:
                     lightrag_seen_hashes.add(h)
 
                     logger.info(f"LightRAG inserting: {doc_name} ({len(text_entries)} entries, {len(full_text)} chars)...")
-                    # Use LightRAG's ainsert directly, bypassing RAG-Anything's insert_content_list
                     await rag.lightrag.ainsert(
                         input=full_text,
                         file_paths=f"{doc_name}.pdf",
@@ -819,8 +828,11 @@ class MedicalRAGPipeline:
 
             if inserted > 0:
                 self._lightrag_ready = True
-                logger.info(f"LightRAG: {inserted}/{len(list(cdir.glob('*_content_list.json')))} unique docs inserted")
+                # Persist updated hashes so subsequent inserts skip processed docs
+                self._save_persisted_md5s()
+                logger.info(f"LightRAG: {inserted} new docs inserted, MD5s persisted")
                 return True
+            logger.info(f"LightRAG: all {len(persisted_md5s)} docs unchanged, nothing to insert")
             return False
         except Exception as e:
             logger.error(f"LightRAG init/insert failed: {str(e)[:300]}")
