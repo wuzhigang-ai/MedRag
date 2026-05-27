@@ -81,6 +81,7 @@ class APIResilience:
                         messages=messages,
                         temperature=temperature,
                         max_tokens=max_tokens,
+                        timeout=30.0,
                     )
                 )
                 return ResilienceResult(
@@ -154,6 +155,7 @@ class APIResilience:
             try:
                 response = self.client.chat.completions.create(
                     model=model, messages=messages, temperature=0.3, max_tokens=800,
+                    timeout=30.0,
                 )
                 return ResilienceResult(
                     success=True,
