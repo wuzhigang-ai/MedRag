@@ -1010,6 +1010,26 @@ class MedicalRAGPipeline:
                 mineru_path = self.content_dir / f"mineru_{local_name}"
                 self.content_dir.mkdir(parents=True, exist_ok=True)
                 remote.sftp.get(remote_cl, str(mineru_path))
+
+                # Download images from remote MinerU output directory
+                remote_dir = str(Path(remote_cl).parent)
+                local_images = self.content_dir / "images"
+                local_images.mkdir(parents=True, exist_ok=True)
+                try:
+                    _, img_out, _ = remote.exec(
+                        f"find {remote_dir} -type f \\( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \\) 2>/dev/null | head -100"
+                    )
+                    for remote_img in [f.strip() for f in img_out.split("\n") if f.strip()]:
+                        try:
+                            img_name = Path(remote_img).name
+                            local_img = local_images / img_name
+                            if not local_img.exists():
+                                remote.sftp.get(remote_img, str(local_img))
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
                 logger.info(f"MinerU validator output: {mineru_path}")
                 return str(mineru_path)
             except Exception as e:

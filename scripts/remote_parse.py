@@ -108,7 +108,7 @@ class RemoteMinerUParser:
         return content_list_files[0]
 
     def download_results(self, remote_dir: str, local_dir: str = "./output/remote_test"):
-        """Download all parsing results from remote"""
+        """Download all parsing results and images from remote"""
         os.makedirs(local_dir, exist_ok=True)
 
         # List all content_list.json files
@@ -122,7 +122,6 @@ class RemoteMinerUParser:
         downloaded = []
         for remote_path in files:
             fname = Path(remote_path).name
-            # Use parent dir name as prefix to avoid conflicts
             parent = Path(remote_path).parent.name
             local_name = f"{parent}_{fname}" if parent != "output" else fname
             local_path = os.path.join(local_dir, local_name)
@@ -131,7 +130,27 @@ class RemoteMinerUParser:
             self.sftp.get(remote_path, local_path)
             downloaded.append(local_path)
 
-        print(f"Downloaded {len(downloaded)} files to {local_dir}")
+        # Download images from remote MinerU output directories
+        local_images = os.path.join(local_dir, "images")
+        os.makedirs(local_images, exist_ok=True)
+        _, img_find, _ = self.exec(
+            f"find {REMOTE_OUTPUT_DIR} -type f \\( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \\) | head -200"
+        )
+        img_files = [f.strip() for f in img_find.split("\n") if f.strip()]
+        img_downloaded = 0
+        for remote_img in img_files:
+            try:
+                img_name = Path(remote_img).name
+                local_img = os.path.join(local_images, img_name)
+                if not os.path.exists(local_img):
+                    self.sftp.get(remote_img, local_img)
+                    img_downloaded += 1
+            except Exception as e:
+                print(f"  (skip image {Path(remote_img).name}: {e})")
+        if img_downloaded:
+            print(f"Downloaded {img_downloaded} images to {local_images}")
+
+        print(f"Downloaded {len(downloaded)} files + {img_downloaded} images to {local_dir}")
         return downloaded
 
     def list_remote_results(self) -> list:
