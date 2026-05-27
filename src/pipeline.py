@@ -819,16 +819,37 @@ class MedicalRAGPipeline:
                         continue
                     lightrag_seen_hashes.add(h)
 
-                    # Bypass parser check — we feed pre-parsed content_list, no parsing needed
-                    rag._parser_installation_checked = True
-                    # Use RAG-Anything's full multimodal pipeline:
-                    # separate_content → insert_text_content + _process_multimodal_content
-                    # Images → VLM → Image entities → belongs_to relations
-                    # Tables → LLM → Table entities → belongs_to relations
-                    logger.info(f"LightRAG insert_content_list: {doc_name} ({len(data)} items)...")
-                    await rag.insert_content_list(
-                        content_list=data,
-                        file_path=f"{doc_name}.pdf",
+                    # Collect all content types for LightRAG entity extraction
+                    text_entries = []
+                    for item in data:
+                        t = item.get("type", "text")
+                        if t == "text":
+                            txt = item.get("text", "").strip()
+                            if txt:
+                                text_entries.append(txt)
+                        elif t in ("image", "chart"):
+                            cap = " ".join(item.get("image_caption", [])) if item.get("image_caption") else ""
+                            if cap:
+                                text_entries.append(f"[图表标注] {cap}")
+                        elif t == "table":
+                            body = item.get("table_body", "")
+                            if isinstance(body, dict):
+                                body = self._table_dict_to_html(body)
+                            cap = " ".join(item.get("table_caption", [])) if item.get("table_caption") else ""
+                            parts = [p for p in [cap, body] if p]
+                            if parts:
+                                text_entries.append("[表格] " + "\n".join(parts))
+
+                    if not text_entries:
+                        continue
+
+                    doc_name = f.name.replace("_content_list.json", "")
+
+                    full_text = "\n\n".join(text_entries)
+                    logger.info(f"LightRAG inserting: {doc_name} ({len(text_entries)} entries, {len(full_text)} chars)...")
+                    await rag.lightrag.ainsert(
+                        input=full_text,
+                        file_paths=f"{doc_name}.pdf",
                     )
                     inserted += 1
                     logger.info(f"  ✓ {doc_name} inserted")
