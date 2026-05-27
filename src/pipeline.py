@@ -798,11 +798,27 @@ class MedicalRAGPipeline:
                     with open(f, encoding="utf-8") as fh:
                         data = json.load(fh)
 
-                    text_entries = [
-                        item.get("text", "").strip()
-                        for item in data
-                        if item.get("type") == "text" and item.get("text", "").strip()
-                    ]
+                    # Collect all content types for LightRAG (text + image captions + table bodies)
+                    text_entries = []
+                    for item in data:
+                        t = item.get("type", "text")
+                        if t == "text":
+                            txt = item.get("text", "").strip()
+                            if txt:
+                                text_entries.append(txt)
+                        elif t in ("image", "chart"):
+                            cap = " ".join(item.get("image_caption", [])) if item.get("image_caption") else ""
+                            if cap:
+                                text_entries.append(f"[图表标注] {cap}")
+                        elif t == "table":
+                            body = item.get("table_body", "")
+                            if isinstance(body, dict):
+                                body = self._table_dict_to_html(body)
+                            cap = " ".join(item.get("table_caption", [])) if item.get("table_caption") else ""
+                            parts = [p for p in [cap, body] if p]
+                            if parts:
+                                text_entries.append("[表格] " + "\n".join(parts))
+
                     if not text_entries:
                         continue
 
