@@ -471,6 +471,9 @@
         });
     }
 
+    /* ── Initial Section State: hide all tabs, show dashboard ── */
+    hideAllSections();
+
     /* ── Periodic Refresh ───────────────────────────────── */
     fetchStats();
     fetchUploadHistory();
