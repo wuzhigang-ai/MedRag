@@ -528,7 +528,6 @@
     if (sidebarGraphNavBtn) {
         sidebarGraphNavBtn.addEventListener('click', function(e) { e.preventDefault(); showSection('graph-section'); updateGraphPanelStats(); });
     }
-    }
     if (taskDetailClose) {
         taskDetailClose.addEventListener('click', function() {
             taskDetail.style.display = 'none';
