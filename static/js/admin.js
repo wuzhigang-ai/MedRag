@@ -494,6 +494,10 @@
     var taskDetailClose = document.getElementById('taskDetailClose');
 
     // Sidebar nav — show/hide sections
+    function hideAllSections() {
+        var sections = document.querySelectorAll('.files-section');
+        sections.forEach(function(s) { s.style.display = 'none'; });
+    }
     function showSection(sectionId) {
         var sections = document.querySelectorAll('.files-section');
         sections.forEach(function(s) { s.style.display = 'none'; });
@@ -511,9 +515,14 @@
     if (sidebarDocsBtn) {
         sidebarDocsBtn.addEventListener('click', function(e) { e.preventDefault(); showSection('documents-section'); fetchDocumentLibrary(); });
     }
+    var sidebarDashBtn = document.getElementById('sidebarDashBtn');
+    if (sidebarDashBtn) {
+        sidebarDashBtn.addEventListener('click', function(e) { e.preventDefault(); hideAllSections(); fetchStats(); updateGraphPanelStats(); });
+    }
     var sidebarGraphNavBtn = document.getElementById('sidebarGraphNavBtn');
     if (sidebarGraphNavBtn) {
         sidebarGraphNavBtn.addEventListener('click', function(e) { e.preventDefault(); showSection('graph-section'); updateGraphPanelStats(); });
+    }
     }
     if (taskDetailClose) {
         taskDetailClose.addEventListener('click', function() {
