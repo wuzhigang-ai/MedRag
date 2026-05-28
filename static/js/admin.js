@@ -471,8 +471,10 @@
         });
     }
 
+    window.__adminInit = 'start';
     /* ── Initial Section State: hide all tabs, show dashboard ── */
     hideAllSections();
+    window.__adminInit = 'afterHide';
 
     /* ── Periodic Refresh ───────────────────────────────── */
     fetchStats();
@@ -813,14 +815,14 @@
         return d.innerHTML;
     }
 
+    // Global tab switcher for inline onclick handlers
+    window.showTab = function(tab) {
+        var sections = document.querySelectorAll('.files-section');
+        sections.forEach(function(s) { s.style.display = 'none'; });
+        var target = document.getElementById(tab + '-section');
+        if (target) target.style.display = 'block';
+    };
+
     /* ── Init Animations ────────────────────────────────── */
     Anim.initPageLoad();
 })();
-
-// Global tab switcher for inline onclick handlers
-window.showTab = function(tab) {
-    var sections = document.querySelectorAll('.files-section');
-    sections.forEach(function(s) { s.style.display = 'none'; });
-    var target = document.getElementById(tab + '-section');
-    if (target) target.style.display = 'block';
-};
