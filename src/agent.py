@@ -67,8 +67,66 @@ MeSH 标准词检索映射（中文问题必须同时搜英文术语）:
   ● "生存率" → 同时搜 "survival" / "mortality" / "prognosis" / "Kaplan-Meier"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-## 三、工具编排 — 7个工具，精确触发条件
+## 三、工具编排 — 9个工具，精确触发条件
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  search_rag(faiss_query, lightrag_query, top_k)
+    用途: 一次调用同时走FAISS和LightRAG,各自用最优query:
+      - faiss_query: 关键词组合(如"TBAD 诊断 CTA 影像") → BGE-M3向量检索
+      - lightrag_query: 完整自然语言(如"Type B主动脉夹层的影像学诊断方法有哪些") → LLM实体提取
+      - 若用户问题本身就很清晰完整,lightrag_query直接用原问题即可
+    返回:
+      - graph_context: 知识背景 (仅背景理解, 不可作为引用来源, 可能为 null)
+      - text_snippets: 文献检索结果 (永远有值, 含文献名/页码/证据等级, 是唯一引用来源)
+    引用规则: 所有 [文献名, 页码] 引用必须来自 text_snippets, 禁止引用 graph_context
+    图片能力: 你能通过文献中的图表图片向用户展示数据。text_snippets条目含image_url时即表示该文献有对应图表。用户要求看图时,先search_rag → 若结果有image_url → 可直接展示。你并非"纯文本AI",不要说"无法生成/发送图片"。
+    触发: 所有问题类型的第一步。永远是第一个工具。
+
+  deep_retrieve(topic, aspects)
+    用途: 一次调用从多个维度系统检索同一主题。比多次 search_rag 更高效。
+    触发: 首轮 search_rag 结果<3条，或需要从多个临床角度(疗效/安全性/预后/指南)覆盖同一主题时。
+    示例: deep_retrieve("TBAD药物治疗", ["降压目标","β-blocker","钙通道阻滞剂","联合用药","不良反应"])
+
+  cross_check(topic)
+    用途: 检测多篇文献结论一致性，发现矛盾。
+    触发: search_rag 返回≥2篇文献且涉及同一临床结论时。
+    返回: documents_compared(对比的文献), evidence_levels(按证据等级分组), consistency_hint(一致性提示)
+
+  get_evidence(doc_name)
+    用途: 查询单篇文献在知识库中的覆盖信息（含多少文本块、覆盖哪些页面、内容类型）。
+    触发: 需要了解某文献在知识库中的覆盖范围时。doc_name 从 search_rag 结果的 doc 字段提取。
+    注意: 此工具返回文献覆盖信息，不是逐篇证据评级。证据等级从 search_rag 结果的 evidence_level 字段获取。
+
+  list_docs()
+    用途: 列出知识库全部文献名称及文本块数量。
+    触发: 首次使用本系统、用户问"有哪些文献"、需要判断知识库覆盖范围时。
+    策略: 先 list_docs 了解全局 → 再精准 search_rag
+
+  extract_chart(doc_name, chart_hint)
+    用途: 搜索文献中与指定图表相关的文本片段（表格标题、图表描述的文字部分）。
+    触发: 需要查找文献中是否有某种类型的图表时（如基线表、结局表）。
+    注意: 此工具返回文本描述，不是结构化数值。精确数值用 analyze_image 从图片中提取。
+
+  analyze_image(image_path, analysis_hint)
+    用途: VLM多模态模型实时分析图表图片，返回结构化JSON数据（效应量/CI/p值/生存率等）。
+    触发: search_rag 返回的 source 包含 image_url 字段时。
+    黄金法则: 看到 image_url → 立刻 analyze_image。文字描述无法替代VLM提取的精确数值。
+    提示构建:
+      森林图 → "提取各亚组的 HR 及其 95%CI,异质性 I²,总体效应"
+      KM曲线 → "提取2组中位生存期,各时间点生存率,log-rank p值"
+      基线表 → "提取2组的基线特征,检查组间均衡性(p值)"
+      流程图 → "提取诊断/治疗流程的步骤和判断节点"
+
+  estimate_grade(topic, doc_names)  ← 新增
+    用途: 对检索到的医学证据进行GRADE证据质量评级(高/中/低/极低)。
+    触发: 类型E(证据评估)问题时必须调用。用户问"证据质量如何"/"GRADE评级"时调用。
+    返回: GRADE等级、降级因素(偏倚风险/不一致性/不精确性)、推荐强度(强/弱推荐)。
+    注: GRADE是全球医学界公认的证据质量评估标准，比简单的7级分类更科学。
+
+  build_consistency_matrix(topic, findings_summary)  ← 新增
+    用途: 构建多文献一致性分析矩阵，自动识别结论方向一致性、矛盾点。
+    触发: 多篇文献涉及同一临床结论需要一致性判断时。可替代手动 cross_check 的详细版。
+    返回: 一致性判定(高度一致/部分一致/存在矛盾)、各文献结论方向、矛盾分析、证据分布。
 
   search_rag(faiss_query, lightrag_query, top_k)
     用途: 一次调用同时走FAISS和LightRAG,各自用最优query:
@@ -301,6 +359,36 @@ TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "estimate_grade",
+            "description": "对检索到的医学证据进行GRADE证据质量评级（高/中/低/极低），输出降级因素和推荐强度。用于证据评估类问题。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "topic": {"type": "string", "description": "评估的临床主题"},
+                    "doc_names": {"type": "array", "items": {"type": "string"}, "description": "要评估的文献名（从search_rag的doc字段取）"},
+                },
+                "required": ["topic"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_consistency_matrix",
+            "description": "构建多篇文献关于特定临床结论的一致性分析矩阵，识别一致方向、矛盾点和原因。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "topic": {"type": "string", "description": "临床主题"},
+                    "findings_summary": {"type": "string", "description": "各文献关键结论(从search_rag提取), 格式: 文献名: 结论"},
+                },
+                "required": ["topic", "findings_summary"],
+            },
+        },
+    },
 ]
 
 
@@ -523,6 +611,56 @@ class MedicalAgent:
             })
         return json.dumps(items, ensure_ascii=False, indent=2)
 
+    def _tool_estimate_grade(self, args: dict) -> str:
+        """GRADE证据质量评级"""
+        from src.grade_evaluator import GRADEEvaluator
+        topic = args.get("topic", "")
+        doc_names = args.get("doc_names", [])
+        evaluator = GRADEEvaluator()
+        assessments = {}
+        if doc_names:
+            for doc_name in doc_names:
+                ret = self.pipeline._faiss_retrieve(doc_name, top_k=3)
+                if ret:
+                    combined = " ".join([r["text"][:1000] for r in ret])
+                    ev_type = self._infer_evidence_level(combined) or "unknown"
+                    a = evaluator.assess_single(doc_name, doc_name, ev_type, [combined], {}, [])
+                    assessments[doc_name] = a
+        if not assessments:
+            ret = self.pipeline._faiss_retrieve(topic, top_k=5)
+            all_text = " ".join([r["text"][:600] for r in ret])
+            ev_type = self._infer_evidence_level(all_text) or "mixed"
+            a = evaluator.assess_single("综合", "知识库综合证据", ev_type, [all_text], {}, [])
+            assessments["综合"] = a
+        profile = GRADEEvaluator.generate_evidence_profile(assessments)
+        details = {}
+        for doc_id, a in assessments.items():
+            details[doc_id] = {
+                "GRADE等级": a.final_label,
+                "初始设计": a.study_design,
+                "降级原因": [
+                    f"偏倚风险({a.downgrades.risk_of_bias}): {', '.join(a.downgrades.bias_details) or '无'}",
+                    f"不一致性({a.downgrades.inconsistency}): {', '.join(a.downgrades.inconsistency_details) or '无'}",
+                    f"不精确性({a.downgrades.imprecision}): {', '.join(a.downgrades.imprecision_details) or '无'}",
+                ],
+                "推荐强度": a.recommendation_strength,
+            }
+        return json.dumps({
+            "topic": topic, "documents_assessed": len(assessments),
+            "evidence_profile": profile, "individual": details,
+            "GRADE说明": "高(4级)=进一步研究极不可能改变确信度 | 中(3级)=可能改变 | 低(2级)=很可能改变 | 极低(1级)=非常不确定",
+        }, ensure_ascii=False, indent=2)
+
+    def _tool_build_consistency_matrix(self, args: dict) -> str:
+        """多文献一致性矩阵"""
+        from src.grade_evaluator import ConsistencyMatrixBuilder
+        topic = args.get("topic", "")
+        ret = self.pipeline._faiss_retrieve(topic, top_k=8)
+        if not ret:
+            return json.dumps({"error": "未检索到相关文献"}, ensure_ascii=False)
+        matrix = ConsistencyMatrixBuilder.build_matrix(ret, topic)
+        return json.dumps(matrix, ensure_ascii=False, indent=2)
+
     def _tool_analyze_image(self, args: dict) -> str:
         """实时调用 Moonshot VLM 提取医学图表结构化数据（效应量+CI+p值）"""
         import base64, os
@@ -741,6 +879,8 @@ class MedicalAgent:
             "deep_retrieve": self._tool_deep_retrieve,
             "extract_chart": self._tool_extract_chart,
             "analyze_image": self._tool_analyze_image,
+            "estimate_grade": self._tool_estimate_grade,
+            "build_consistency_matrix": self._tool_build_consistency_matrix,
         }
         handler = handlers.get(tool_name)
         if handler:
