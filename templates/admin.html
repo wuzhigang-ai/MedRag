@@ -30,7 +30,7 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a href="#" class="active" id="sidebarDashBtn">
+            <a href="#" onclick="showTab('dashboard');fetchStats();updateGraphPanelStats();return false" id="sidebarDashBtn">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="3" width="7" height="9"/>
                     <rect x="14" y="3" width="7" height="5"/>
@@ -39,7 +39,7 @@
                 </svg>
                 仪表盘
             </a>
-            <a href="#documents-section" id="sidebarDocsBtn">
+            <a href="#documents-section" onclick="showTab('documents');fetchDocumentLibrary();return false" id="sidebarDocsBtn">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <ellipse cx="12" cy="5" rx="9" ry="3"/>
                     <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
@@ -47,7 +47,7 @@
                 </svg>
                 文献库
             </a>
-            <a href="#graph-section" id="sidebarGraphNavBtn">
+            <a href="#graph-section" onclick="showTab('graph');updateGraphPanelStats();return false" id="sidebarGraphNavBtn">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M12 2v4"/><path d="M12 18v4"/>
@@ -56,7 +56,7 @@
                 </svg>
                 关系图谱
             </a>
-            <a href="#tasks-section" id="sidebarTasksBtn">
+            <a href="#tasks-section" onclick="showTab('tasks');fetchTasks();startTaskPolling();return false" id="sidebarTasksBtn">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                 </svg>

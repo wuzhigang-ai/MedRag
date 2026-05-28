@@ -1,0 +1,131 @@
+{
+  "doc-712e357b8951dd1931e741292cce9cba": {
+    "status": "processed",
+    "chunks_count": 4,
+    "chunks_list": [
+      "chunk-40ef920a3d882cbe9feb69d377f883e2",
+      "chunk-ace3263be796f5db327b5d6d816ddea2",
+      "chunk-7d070016888b87e5d8407655292c6a98",
+      "chunk-ca971059e15553c9f065f9d48ca96130"
+    ],
+    "content_summary": "WORKS IN PROGRESS\n\nA Randomized Clinical Trial to Evaluate the Safety and Efficacy of a Percutaneous Left Ventricular Assist Device Versus Intra-Aortic Balloon Pumping for Treatment of Cardiogenic Shock Caused by Myocardial Infarction\n\nMelchior Seyfa...",
+    "content_length": 15533,
+    "created_at": "2026-05-26T22:13:05.524126+00:00",
+    "updated_at": "2026-05-26T23:05:48.098720+00:00",
+    "file_path": "mineru_seyfarth2008.pdf",
+    "track_id": "insert_20260527_061305_587c263f",
+    "metadata": {
+      "processing_start_time": 1779836615,
+      "processing_end_time": 1779836748
+    }
+  },
+  "doc-2c63cacf0073cf02a7718c32ef2adbbe": {
+    "status": "processed",
+    "chunks_count": 3,
+    "chunks_list": [
+      "chunk-ddddbfb6fedaf71f162814741aeebf51",
+      "chunk-06febe8127a0fccc661f447996c2a367",
+      "chunk-d68295a29209c79daf4f790b7e23aa59"
+    ],
+    "content_summary": "Orthotopic Liver Transplantation for Urea Cycle Enzyme Deficiency SAToRu ToDO,1, 2 THomAs E. STARzL,1, 2 ANDREAs TzAkIs,1, 2 KEITH J. BENKov,3 FRANTISEK KALoUSEK,4 TaKEYoRI SAHEKI,5 KYuICHI TANiKAWA,6 AND WAYNE A. FENToN4\n\n1Department of Surgery, Uni...",
+    "content_length": 12423,
+    "created_at": "2026-05-26T22:19:09.813678+00:00",
+    "updated_at": "2026-05-26T23:05:44.454057+00:00",
+    "file_path": "mineru_todo1992.pdf",
+    "track_id": "insert_20260527_061909_6ca73865",
+    "metadata": {
+      "processing_start_time": 1779836615,
+      "processing_end_time": 1779836744
+    }
+  },
+  "doc-9bf0b8281618be495c6192038fe77a0f": {
+    "status": "processed",
+    "chunks_count": 4,
+    "chunks_list": [
+      "chunk-94e6c2d3a322064c0bedf6b639e576b4",
+      "chunk-b85f53c31ce42d37f83b5008e14bf203",
+      "chunk-98cbd727a53cb48f6ceb663b70bfe869",
+      "chunk-ecea5c0d8fe77f18274ef9e323deab43"
+    ],
+    "content_summary": "Chronic kidney disease in propionic acidemia\n\nOleg A. Shchelochkov, MD1 , Irini Manoli, MD, PhD 1 , Jennifer L. Sloan, PhD, MS Susan Ferry, BSN1 , Alexandra Pass, BA1 , Carol Van Ryzin, MS1 , Jennifer Myles, MS2 , Megan Schoenfeld, BS2 , Peter McGuir...",
+    "content_length": 17861,
+    "created_at": "2026-05-26T22:25:11.012413+00:00",
+    "updated_at": "2026-05-26T23:08:32.721456+00:00",
+    "file_path": "shchelochkov2019.pdf",
+    "track_id": "insert_20260527_062511_0ec01b6f",
+    "metadata": {
+      "processing_start_time": 1779836744,
+      "processing_end_time": 1779836912
+    }
+  },
+  "doc-6e6d2aa0b2299553de3319f99080ac37": {
+    "status": "processed",
+    "chunks_count": 13,
+    "chunks_list": [
+      "chunk-8bd659a5f64c634b63d799dfc186f28b",
+      "chunk-09fc3eadb498cd1f3a3ba55ebba9b9ef",
+      "chunk-4bdff5950e030006d07ec6e2731df6a7",
+      "chunk-64e4ac484241fa2935c4cb7924488a0b",
+      "chunk-1cfaf9e1c9e4a4c49d23e85f0cbdc90c",
+      "chunk-94cd3fdd49a94275f6f089e8593f1e2e",
+      "chunk-605ec9a012188bcab7dd557b160b0311",
+      "chunk-e562c0cde0c973324835a564611458a5",
+      "chunk-a9e9b35bcbdba3ac4b13dbf19b5e0877",
+      "chunk-5d7f57c2b991109e54368f11500570de",
+      "chunk-fab34d9740517cca09be688eae0a7dda",
+      "chunk-591716ddeca1a26bf837c5b70ca9d6db",
+      "chunk-4c6c2b152c9eaada554199a5037bc57d"
+    ],
+    "content_summary": "·指南与共识·\n\nStanford B 型主动脉夹层诊断和治疗中国专家共识 （ 2022 版 ）\n\n中华医学会外科学分会血管外科学组\n\nStanford B 型主动脉夹层 （type B aortic dissection ，TBAD）是一种严重危害生命健康的血管疾病 有较高的病死率 多数 TBAD 具有起病急 发展快的特点 自 1996 年首例 TBAD 腔内修复术成功实施以来 TBAD 的治疗由巨创转为微创 围术期病死率和并发症发生率均显著降低［1］ 2008 年 中华医学会外科学分会血管外...",
+    "content_length": 17619,
+    "created_at": "2026-05-26T22:43:10.485042+00:00",
+    "updated_at": "2026-05-26T23:03:35.439144+00:00",
+    "file_path": "Stanford+B+型主动脉夹层诊断和治疗中国专家共识（2022版）.pdf",
+    "track_id": "insert_20260527_064310_d9a5fe24",
+    "metadata": {
+      "processing_start_time": 1779835752,
+      "processing_end_time": 1779836615
+    }
+  },
+  "doc-f44dff950302b9216df0ec4d5cdba7d1": {
+    "status": "processed",
+    "chunks_count": 3,
+    "chunks_list": [
+      "chunk-c25934cda6bf6e1490ff5e083ac149ff",
+      "chunk-d261ff81dd6e7861a19f6ec0e7ba683d",
+      "chunk-f1325880215e7364fb40c4d244be7ba9"
+    ],
+    "content_summary": "Orthotopic Liver Transplantation for Urea Cycle Enzyme Deficiency\n\nSATORU TODO,1, 2 THOMAS E. STARZL,1, 2 ANDREAS TZAKIS,1, 2 KEITH J. BENKOV,3 FRANTISEK KALOUSEK,4 TAKEyORI SAHEKI,5 KYuiCHI TanikAWA,6 AND WayNE A. FEnTOn4\n\n1Department of Surgery, Un...",
+    "content_length": 12431,
+    "created_at": "2026-05-26T23:03:35.470307+00:00",
+    "updated_at": "2026-05-26T23:08:48.397093+00:00",
+    "file_path": "todo1992.pdf",
+    "track_id": "insert_20260527_070335_a615cf20",
+    "metadata": {
+      "processing_start_time": 1779836748,
+      "processing_end_time": 1779836928
+    }
+  },
+  "doc-7e70d209aea9e070da3f1bdd78884f34": {
+    "status": "processed",
+    "chunks_count": 6,
+    "chunks_list": [
+      "chunk-09381648ecd5917039e244d62da638ee",
+      "chunk-1afac1628b13e9e616403ae39f70ecbe",
+      "chunk-48130c78d9e3e6001f4b2909ff14d577",
+      "chunk-0dd3aace07e5e2f67f60579de0b36b76",
+      "chunk-61317a57efdf6bb9fc1bcf3ec62ff924",
+      "chunk-8cbe0f288d4aaea04ac19b92c24f1266"
+    ],
+    "content_summary": "标准与规范\n\n子宫内膜异位症超声评估中国专家共识\n\n中华医学会超声医学分会妇产超声学组\n\n通信作者:田家玮,Email:jwtian2004@163 com;吴青青,Email:wuqq2007@163 com;\n\n姜玉新, : 163\n\n:103760 1311482022080200532\n\nChineseexpertconsensusonsonographicevaluationofendometriosis\n\nObstetrics and Gynecology Ultrasound Gr...",
+    "content_length": 6624,
+    "created_at": "2026-05-26T23:08:48.439334+00:00",
+    "updated_at": "2026-05-26T23:12:34.662258+00:00",
+    "file_path": "子宫内膜异位症超声评估中国专家共识.pdf",
+    "track_id": "insert_20260527_070848_ab5da600",
+    "metadata": {
+      "processing_start_time": 1779836928,
+      "processing_end_time": 1779837154
+    }
+  }
+}

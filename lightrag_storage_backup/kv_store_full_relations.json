@@ -1,0 +1,666 @@
+{
+  "doc-6e6d2aa0b2299553de3319f99080ac37": {
+    "relation_pairs": [
+      [
+        "SVS/STS Anatomic Classification",
+        "Society of Thoracic Surgeons (STS)"
+      ],
+      [
+        "Endovascular Treatment",
+        "Proximal Anchor Zone Extension"
+      ],
+      [
+        "Intramural Hematoma",
+        "TBAD"
+      ],
+      [
+        "General Anesthesia",
+        "TBAD"
+      ],
+      [
+        "Market Selloff",
+        "Rising Interest Rates"
+      ],
+      [
+        "Investor Concerns",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Analysts",
+        "Market Selloff"
+      ],
+      [
+        "Beta-blockers",
+        "TBAD"
+      ],
+      [
+        "Gold Futures",
+        "Investors"
+      ],
+      [
+        "Global Tech Index",
+        "Tech Giants"
+      ],
+      [
+        "Jordan",
+        "The Device"
+      ],
+      [
+        "Federal Reserve",
+        "Federal Reserve Policy Announcement"
+      ],
+      [
+        "2008 Guideline on Endovascular Treatment of Aortic Dissection",
+        "Endovascular Repair"
+      ],
+      [
+        "Investor Concerns",
+        "Rising Interest Rates"
+      ],
+      [
+        "D-Dimer",
+        "Intramural Hematoma"
+      ],
+      [
+        "D-Dimer",
+        "Penetrating Ulcer"
+      ],
+      [
+        "Jordan",
+        "Taylor"
+      ],
+      [
+        "MDT",
+        "Traumatic Dissection"
+      ],
+      [
+        "Cruz",
+        "Taylor"
+      ],
+      [
+        "2008 Guideline on Endovascular Treatment of Aortic Dissection",
+        "Chinese Medical Association Surgical Branch Vascular Surgery Group"
+      ],
+      [
+        "Alex",
+        "Taylor"
+      ],
+      [
+        "Market Selloff",
+        "Stock Markets"
+      ],
+      [
+        "Angiotensin Converting Enzyme Inhibitors",
+        "Beta-blockers"
+      ],
+      [
+        "Alex",
+        "Cruz"
+      ],
+      [
+        "Federal Reserve",
+        "Rising Interest Rates"
+      ],
+      [
+        "D-Dimer",
+        "Pulmonary Embolism"
+      ],
+      [
+        "Penetrating Ulcer",
+        "TBAD"
+      ],
+      [
+        "Commodity Markets",
+        "Crude Oil"
+      ],
+      [
+        "Taylor",
+        "The Device"
+      ],
+      [
+        "Crude Oil",
+        "Market Selloff"
+      ],
+      [
+        "Market Selloff",
+        "Tech Giants"
+      ],
+      [
+        "Crude Oil",
+        "Omega Energy"
+      ],
+      [
+        "2022 Chinese Expert Consensus on Diagnosis and Treatment of Stanford Type B Aortic Dissection",
+        "Chinese Medical Association Surgical Branch Vascular Surgery Group"
+      ],
+      [
+        "SVS/STS Anatomic Classification",
+        "Society for Vascular Surgery (SVS)"
+      ],
+      [
+        "Non-A Non-B Aortic Dissection",
+        "Stanford Classification"
+      ],
+      [
+        "Endovascular Repair",
+        "Stanford Type B Aortic Dissection (TBAD)"
+      ],
+      [
+        "Cruz",
+        "Jordan"
+      ],
+      [
+        "Market Selloff",
+        "Nexon Technologies"
+      ],
+      [
+        "AD",
+        "D-Dimer"
+      ],
+      [
+        "Federal Reserve Policy Announcement",
+        "Rising Interest Rates"
+      ],
+      [
+        "Alex",
+        "Jordan"
+      ],
+      [
+        "Investors",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Federal Reserve Policy Announcement",
+        "Investors"
+      ],
+      [
+        "Stanford Classification",
+        "Stanford Type B Aortic Dissection (TBAD)"
+      ],
+      [
+        "Crude Oil",
+        "Investors"
+      ],
+      [
+        "DeBakey Classification",
+        "Stanford Classification"
+      ],
+      [
+        "Commodity Markets",
+        "Gold Futures"
+      ],
+      [
+        "2022 Chinese Expert Consensus on Diagnosis and Treatment of Stanford Type B Aortic Dissection",
+        "Stanford Type B Aortic Dissection (TBAD)"
+      ],
+      [
+        "Investor Concerns",
+        "Market Selloff"
+      ],
+      [
+        "Investors",
+        "Rising Interest Rates"
+      ],
+      [
+        "Angiotensin II Receptor Antagonists",
+        "Beta-blockers"
+      ],
+      [
+        "Market Selloff",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Intramural Hematoma",
+        "Penetrating Ulcer"
+      ]
+    ],
+    "count": 53,
+    "create_time": 1779836615,
+    "update_time": 1779836615,
+    "_id": "doc-6e6d2aa0b2299553de3319f99080ac37"
+  },
+  "doc-2c63cacf0073cf02a7718c32ef2adbbe": {
+    "relation_pairs": [
+      [
+        "OKT3",
+        "Patient 1"
+      ],
+      [
+        "Taylor",
+        "The Device"
+      ],
+      [
+        "Alex",
+        "Jordan"
+      ],
+      [
+        "Crude Oil",
+        "Omega Energy"
+      ],
+      [
+        "Market Selloff",
+        "Rising Interest Rates"
+      ],
+      [
+        "Jordan",
+        "Taylor"
+      ],
+      [
+        "Alex",
+        "Taylor"
+      ],
+      [
+        "Aspergillus Brain Abscess",
+        "Patient 1"
+      ],
+      [
+        "ASS",
+        "Liver Homogenate"
+      ],
+      [
+        "Alex",
+        "Cruz"
+      ],
+      [
+        "Federal Reserve",
+        "Rising Interest Rates"
+      ],
+      [
+        "Market Selloff",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Jordan",
+        "The Device"
+      ],
+      [
+        "Federal Reserve",
+        "Federal Reserve Policy Announcement"
+      ],
+      [
+        "Cruz",
+        "Jordan"
+      ]
+    ],
+    "count": 15,
+    "create_time": 1779836744,
+    "update_time": 1779836744,
+    "_id": "doc-2c63cacf0073cf02a7718c32ef2adbbe"
+  },
+  "doc-712e357b8951dd1931e741292cce9cba": {
+    "relation_pairs": [
+      [
+        "MODS",
+        "Randomized Study"
+      ],
+      [
+        "Cardiac Index",
+        "Cardiac Power Index"
+      ],
+      [
+        "IABP",
+        "Impella LP2.5"
+      ],
+      [
+        "Jordan",
+        "The Device"
+      ],
+      [
+        "Hemodynamic Support",
+        "Impella LP2.5"
+      ],
+      [
+        "IABP",
+        "Impella"
+      ],
+      [
+        "Jordan",
+        "Taylor"
+      ],
+      [
+        "Alex",
+        "Taylor"
+      ],
+      [
+        "Deutsches Herzzentrum München",
+        "Melchior Seyfarth"
+      ],
+      [
+        "Alex",
+        "Cruz"
+      ],
+      [
+        "Randomized Study",
+        "SOFA"
+      ],
+      [
+        "Intra-Aortic Balloon Pump",
+        "Randomized Study"
+      ],
+      [
+        "Taylor",
+        "The Device"
+      ],
+      [
+        "Impella LP2.5",
+        "Serum Lactate"
+      ],
+      [
+        "Cardiogenic Shock",
+        "Randomized Study"
+      ],
+      [
+        "Cardiac Index",
+        "Impella LP2.5"
+      ],
+      [
+        "Hemolysis",
+        "Impella LP2.5"
+      ],
+      [
+        "30-Day Survival Curves",
+        "Randomized Study"
+      ],
+      [
+        "Alex",
+        "Jordan"
+      ],
+      [
+        "Cruz",
+        "Jordan"
+      ],
+      [
+        "Hemolysis",
+        "Impella"
+      ],
+      [
+        "Acute Myocardial Infarction",
+        "Randomized Study"
+      ],
+      [
+        "Hemodynamic Support",
+        "Intra-Aortic Balloon Pump"
+      ],
+      [
+        "Hemodynamic Derangement",
+        "MODS"
+      ],
+      [
+        "Hemodynamic Derangement",
+        "SOFA"
+      ],
+      [
+        "Impella LP2.5",
+        "Mean Arterial Pressure"
+      ],
+      [
+        "Impella",
+        "Impella LP2.5"
+      ],
+      [
+        "Diastolic Arterial Pressure",
+        "Impella LP2.5"
+      ],
+      [
+        "Impella LP2.5",
+        "Randomized Study"
+      ],
+      [
+        "Acute Limb Ischemia",
+        "Impella"
+      ]
+    ],
+    "count": 30,
+    "create_time": 1779836748,
+    "update_time": 1779836748,
+    "_id": "doc-712e357b8951dd1931e741292cce9cba"
+  },
+  "doc-9bf0b8281618be495c6192038fe77a0f": {
+    "relation_pairs": [
+      [
+        "Federal Reserve Policy Announcement",
+        "Stock Markets"
+      ],
+      [
+        "Market Selloff",
+        "Rising Interest Rates"
+      ],
+      [
+        "Creatinine eGFR",
+        "Schwartz Bedside Equation"
+      ],
+      [
+        "PA",
+        "PCCB"
+      ],
+      [
+        "Crude Oil",
+        "Supply Constraints"
+      ],
+      [
+        "Federal Reserve",
+        "Federal Reserve Policy Announcement"
+      ],
+      [
+        "Jordan",
+        "Taylor"
+      ],
+      [
+        "Alex",
+        "Taylor"
+      ],
+      [
+        "Market Selloff",
+        "Stock Markets"
+      ],
+      [
+        "Taylor",
+        "The Device"
+      ],
+      [
+        "Crude Oil",
+        "Omega Energy"
+      ],
+      [
+        "CKD",
+        "PA"
+      ],
+      [
+        "Cystatin C eGFR",
+        "Schwartz Cystatin C Equation"
+      ],
+      [
+        "Alex",
+        "Jordan"
+      ],
+      [
+        "Cruz",
+        "Jordan"
+      ],
+      [
+        "PA",
+        "PCCA"
+      ],
+      [
+        "PA",
+        "Serum Creatinine"
+      ],
+      [
+        "Market Selloff",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Creatinine Excretion",
+        "PA"
+      ],
+      [
+        "Crude Oil",
+        "Strong Demand"
+      ],
+      [
+        "Creatinine eGFR",
+        "Cystatin C eGFR"
+      ]
+    ],
+    "count": 21,
+    "create_time": 1779836912,
+    "update_time": 1779836912,
+    "_id": "doc-9bf0b8281618be495c6192038fe77a0f"
+  },
+  "doc-f44dff950302b9216df0ec4d5cdba7d1": {
+    "relation_pairs": [
+      [
+        "2-Wk-Old Infant",
+        "CPS-1"
+      ],
+      [
+        "Taylor",
+        "The Device"
+      ],
+      [
+        "CPS-I Deficiency",
+        "Patient 1"
+      ],
+      [
+        "36-Yr-Old Man",
+        "Liver Transplantation"
+      ],
+      [
+        "Cruz",
+        "Jordan"
+      ],
+      [
+        "2-Wk-Old Infant",
+        "Liver Transplantation"
+      ],
+      [
+        "Jordan",
+        "Taylor"
+      ],
+      [
+        "Alex",
+        "Taylor"
+      ],
+      [
+        "20-Mo-Old Boy",
+        "CPS-1"
+      ],
+      [
+        "Alex",
+        "Cruz"
+      ],
+      [
+        "36-Yr-Old Man",
+        "ASS"
+      ],
+      [
+        "Jordan",
+        "The Device"
+      ],
+      [
+        "Alex",
+        "Jordan"
+      ]
+    ],
+    "count": 13,
+    "create_time": 1779836928,
+    "update_time": 1779836928,
+    "_id": "doc-f44dff950302b9216df0ec4d5cdba7d1"
+  },
+  "doc-7e70d209aea9e070da3f1bdd78884f34": {
+    "relation_pairs": [
+      [
+        "Chinese Expert Consensus on Sonographic Evaluation of Endometriosis",
+        "Tian Jiawei"
+      ],
+      [
+        "Market Selloff",
+        "Rising Interest Rates"
+      ],
+      [
+        "Ground-Glass Echotexture",
+        "Ovarian Endometriotic Cyst"
+      ],
+      [
+        "Chinese Expert Consensus on Sonographic Evaluation of Endometriosis",
+        "Wu Qingqing"
+      ],
+      [
+        "Gold Futures",
+        "Rising Interest Rates"
+      ],
+      [
+        "Global Tech Index",
+        "Tech Giants"
+      ],
+      [
+        "Jordan",
+        "The Device"
+      ],
+      [
+        "Federal Reserve",
+        "Federal Reserve Policy Announcement"
+      ],
+      [
+        "Chinese Expert Consensus on Sonographic Evaluation of Endometriosis",
+        "Obstetrics and Gynecology Ultrasound Group, Ultrasound Medical Branch of Chinese Medical Association"
+      ],
+      [
+        "Endometriosis",
+        "Ovarian Endometriosis"
+      ],
+      [
+        "Chinese Expert Consensus on Sonographic Evaluation of Endometriosis",
+        "Jiang Yuxin"
+      ],
+      [
+        "Market Selloff",
+        "Stock Markets"
+      ],
+      [
+        "Alex",
+        "Cruz"
+      ],
+      [
+        "Federal Reserve",
+        "Rising Interest Rates"
+      ],
+      [
+        "Color Doppler Flow Imaging",
+        "Ovarian Endometriotic Cyst"
+      ],
+      [
+        "Pre-Examination Bowel Preparation",
+        "Transrectal Ultrasound"
+      ],
+      [
+        "Commodity Markets",
+        "Crude Oil"
+      ],
+      [
+        "Crude Oil",
+        "Omega Energy"
+      ],
+      [
+        "Deep Infiltrating Endometriosis",
+        "Rectovaginal Septum"
+      ],
+      [
+        "Deep Infiltrating Endometriosis",
+        "Intestine"
+      ],
+      [
+        "Market Selloff",
+        "Nexon Technologies"
+      ],
+      [
+        "Market Selloff",
+        "Regulatory Uncertainty"
+      ]
+    ],
+    "count": 22,
+    "create_time": 1779837154,
+    "update_time": 1779837154,
+    "_id": "doc-7e70d209aea9e070da3f1bdd78884f34"
+  }
+}
