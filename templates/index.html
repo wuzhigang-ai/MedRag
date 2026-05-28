@@ -156,10 +156,10 @@
             <a href="/chat" class="cta-secondary">在线体验 →</a>
         </div>
         <div class="stats">
-            <div class="stat"><div class="stat-num">7</div><div class="stat-label">AI 工具</div></div>
-            <div class="stat"><div class="stat-num">863</div><div class="stat-label">知识实体</div></div>
-            <div class="stat"><div class="stat-num">771</div><div class="stat-label">实体关系</div></div>
-            <div class="stat"><div class="stat-num">5</div><div class="stat-label">医学文献</div></div>
+            <div class="stat"><div class="stat-num" id="heroTools">7</div><div class="stat-label">AI 工具</div></div>
+            <div class="stat"><div class="stat-num" id="heroEntities">--</div><div class="stat-label">知识实体</div></div>
+            <div class="stat"><div class="stat-num" id="heroRelations">--</div><div class="stat-label">实体关系</div></div>
+            <div class="stat"><div class="stat-num" id="heroDocs">--</div><div class="stat-label">医学文献</div></div>
         </div>
     </section>
 
@@ -177,7 +177,7 @@
         <div class="feature-card">
             <div class="feature-icon">🕸️</div>
             <h3>知识图谱 3D 可视化</h3>
-            <p>LightRAG 863 实体 771 关系实时渲染，上传文献后知识节点动态生长，悬停查看实体详情</p>
+            <p>LightRAG 知识图谱实时渲染，9 类医学实体分类，上传文献后知识节点动态生长，悬停查看实体详情</p>
         </div>
         <div class="feature-card">
             <div class="feature-icon">📄</div>
@@ -250,6 +250,20 @@
                 requestAnimationFrame(draw);
             }
             draw();
+        })();
+    </script>
+    <script>
+        // Live stats from API
+        (function() {
+            var ent = document.getElementById('heroEntities');
+            var rel = document.getElementById('heroRelations');
+            var doc = document.getElementById('heroDocs');
+            fetch('/api/graph').then(function(r){return r.json()}).then(function(d){
+                var s = d.stats || {};
+                if (ent) ent.textContent = s.total_nodes || '--';
+                if (rel) rel.textContent = s.total_edges || '--';
+                if (doc) doc.textContent = s.total_docs || '--';
+            }).catch(function(){});
         })();
     </script>
 </body>

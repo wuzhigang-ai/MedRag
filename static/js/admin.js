@@ -31,7 +31,7 @@
             var data = await API.get('/api/status');
             if (statTotalDocs) statTotalDocs.textContent = data.total_documents || 0;
             if (statTotalChunks) statTotalChunks.textContent = data.total_chunks || 0;
-            if (statIndexSize) statIndexSize.textContent = formatBytes(data.index_size || 0);
+            if (statIndexSize) statIndexSize.textContent = (data.index_size || 0) + ' 向量';
             if (statLightRAG) {
                 statLightRAG.textContent = data.lightrag_ready ? '已就绪' : '未构建';
                 statLightRAG.style.color = data.lightrag_ready ? 'var(--medical-green)' : 'var(--text-muted)';
@@ -582,7 +582,7 @@
             '<td>'+engine+'</td>' +
             '<td>'+faissIcon+' '+faissInfo+'</td>' +
             '<td>'+lrIcon+'</td>' +
-            '<td>'+(t.parsing?t.parsing:0)+(t.faiss?t.faiss:0)+(t.lightrag?t.lightrag:0)+'</td>' +
+            '<td>'+((t.parsing_duration_ms||0)+(t.faiss_duration_ms||0)+(t.lightrag_duration_ms||0))+'ms</td>' +
             '<td>'+createdAt+'</td>' +
             '<td>'+retryBtn+'</td>' +
             '</tr>';
