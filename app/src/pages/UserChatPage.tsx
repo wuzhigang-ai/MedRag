@@ -244,7 +244,7 @@ export default function UserChatPage() {
             ...p,
             [collected.length - 1]: {
               latency: "0.0",
-              detail: data.tool === "search_rag" ? "FAISS+LightRAG 双路检索" : TOOL_DISPLAY[data.tool]?.output || "完成",
+              detail: data.tool === "search_rag" ? `检索: ${(data.args?.faiss_query || "").substring(0, 40)}` : (TOOL_DISPLAY[data.tool]?.output || "完成"),
             },
           }));
         },

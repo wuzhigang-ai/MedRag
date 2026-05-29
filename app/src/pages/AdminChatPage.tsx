@@ -202,7 +202,7 @@ export default function AdminChatPage() {
           stepStartRef.current = Date.now();
           setLiveLatency("0.0");
           timerRef.current = setInterval(() => setLiveLatency(((Date.now() - stepStartRef.current) / 1000).toFixed(1)), 100);
-          setStepMetrics(p => ({ ...p, [collected.length - 1]: { latency: "0.0", detail: TOOL_DISPLAY[data.tool]?.output || "完成" } }));
+          setStepMetrics(p => ({ ...p, [collected.length - 1]: { latency: "0.0", detail: data.tool === "search_rag" ? `检索: ${(data.args?.faiss_query || "").substring(0, 40)}` : (TOOL_DISPLAY[data.tool]?.output || "完成") } }));
         },
         (data: any) => {
           if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; }
