@@ -227,9 +227,6 @@ def parse_pdf_25pro(pdf_path, output_dir=None, chunker=None, doc_name_override=N
 
     doc_name = doc_name_override or pdf_path.stem
     out_path = out_dir / f'{doc_name}_content_list.json'
-    if out_path.exists():
-        logger.info(f"Content list already exists: {out_path}")
-        return str(out_path)
 
     # ── Step 1: MinerU 2.5-Pro page-by-page ──
     logger.info(f"Parsing {doc_name} with MinerU 2.5-Pro...")
