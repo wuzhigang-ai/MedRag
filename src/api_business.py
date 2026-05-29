@@ -265,18 +265,24 @@ def chat_rate_message(message_id: int, req: RateMessageReq):
 @router.get("/stats/system")
 def stats_system():
     from src.auth import get_system_stats
+    from src.graph import GraphManager
     s = get_system_stats()
     p = _get_pipeline()
     gs = p.get_stats()
+    # Read real LightRAG graph stats
+    gm = GraphManager()
+    graph_data = gm.build()
+    graph_nodes = graph_data.get("stats", {}).get("total_nodes", len(graph_data.get("nodes", [])))
+    graph_edges = graph_data.get("stats", {}).get("total_edges", len(graph_data.get("edges", [])))
     return {
-        "totalArticles": s["totalArticles"],
+        "totalArticles": s["totalArticles"] + gs.get("total_documents", 0),  # MySQL + FAISS
         "parsedArticles": s.get("parsedArticles", 0),
-        "knowledgeBaseArticles": s.get("knowledgeBaseArticles", 0),
-        "totalNodes": gs.get("total_nodes", 0),
-        "totalEdges": gs.get("total_edges", 0),
+        "knowledgeBaseArticles": gs.get("total_documents", 0),  # FAISS indexed docs
+        "totalNodes": graph_nodes,
+        "totalEdges": graph_edges,
         "totalChatSessions": s.get("totalChatSessions", 0),
         "totalChatMessages": s.get("totalChatMessages", 0),
-        "faissVectors": gs.get("index_size", 0),
+        "faissVectors": gs.get("faiss_index_size", 0),
         "totalDocuments": gs.get("total_documents", 0),
     }
 
