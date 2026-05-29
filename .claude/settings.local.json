@@ -181,7 +181,12 @@
       "Bash(taskkill /F /T /PID 56136)",
       "Bash(cmd //c \"taskkill /F /PID 56136\")",
       "Bash(echo \"PID: $!\")",
-      "Bash(xargs -I{} cmd //c \"taskkill /F /PID {}\")"
+      "Bash(xargs -I{} cmd //c \"taskkill /F /PID {}\")",
+      "Bash(cmd //c \"taskkill /F /IM python3.13.exe\")",
+      "Bash(cmd //c \"taskkill /F /IM python.exe\")",
+      "Bash(cmd //c \"taskkill /F /PID 53208\")",
+      "Bash(cmd //c \"taskkill /F /PID 43220\")",
+      "Bash(cmd //c \"taskkill /F /PID 59676\")"
     ]
   }
 }

@@ -143,7 +143,8 @@ class APIResilience:
     def set_cache(self, prompt: str, response: str):
         self.cache[self._cache_key(prompt)] = response
 
-    def call_text_sync(self, prompt: str, system_prompt: str = None, model: str = None) -> ResilienceResult:
+    def call_text_sync(self, prompt: str, system_prompt: str = None, model: str = None,
+                        timeout: float = 60.0, max_tokens: int = 800) -> ResilienceResult:
         """同步版本（简单重试，无降级链）"""
         model = model or self.fallback_config.text_model_chain[0]
         messages = []
@@ -154,8 +155,8 @@ class APIResilience:
         for attempt in range(self.retry_config.max_retries + 1):
             try:
                 response = self.client.chat.completions.create(
-                    model=model, messages=messages, temperature=0.3, max_tokens=800,
-                    timeout=30.0,
+                    model=model, messages=messages, temperature=0.3, max_tokens=max_tokens,
+                    timeout=timeout,
                 )
                 return ResilienceResult(
                     success=True,
