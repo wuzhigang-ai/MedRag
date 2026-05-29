@@ -195,7 +195,7 @@ async def search_only(req: QueryRequest):
             "ref": i + 1, "source": r["source"],
             "score": round(r["score"], 3), "text": r["text"][:500],
             "doc": r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"],
-            "section": meta.get("section_tag", ""),
+            "page_idx": meta.get("page_idx"), "section": meta.get("section_tag", ""),
         }
         if meta.get("image_url"):
             src["image_url"] = meta["image_url"]

@@ -128,53 +128,6 @@ MeSH 标准词检索映射（中文问题必须同时搜英文术语）:
     触发: 多篇文献涉及同一临床结论需要一致性判断时。可替代手动 cross_check 的详细版。
     返回: 一致性判定(高度一致/部分一致/存在矛盾)、各文献结论方向、矛盾分析、证据分布。
 
-  search_rag(faiss_query, lightrag_query, top_k)
-    用途: 一次调用同时走FAISS和LightRAG,各自用最优query:
-      - faiss_query: 关键词组合(如"TBAD 诊断 CTA 影像") → BGE-M3向量检索
-      - lightrag_query: 完整自然语言(如"Type B主动脉夹层的影像学诊断方法有哪些") → LLM实体提取
-      - 若用户问题本身就很清晰完整,lightrag_query直接用原问题即可
-    返回:
-      - graph_context: 知识背景 (仅背景理解, 不可作为引用来源, 可能为 null)
-      - text_snippets: 文献检索结果 (永远有值, 含文献名/页码/证据等级, 是唯一引用来源)
-    引用规则: 所有 [文献名, 页码] 引用必须来自 text_snippets, 禁止引用 graph_context
-    图片能力: 你能通过文献中的图表图片向用户展示数据。text_snippets条目含image_url时即表示该文献有对应图表。用户要求看图时,先search_rag → 若结果有image_url → 可直接展示。你并非"纯文本AI",不要说"无法生成/发送图片"。
-    触发: 所有问题类型的第一步。永远是第一个工具。
-
-  deep_retrieve(topic, aspects)
-    用途: 一次调用从多个维度系统检索同一主题。比多次 search_rag 更高效。
-    触发: 首轮 search_rag 结果<3条，或需要从多个临床角度(疗效/安全性/预后/指南)覆盖同一主题时。
-    示例: deep_retrieve("TBAD药物治疗", ["降压目标","β-blocker","钙通道阻滞剂","联合用药","不良反应"])
-
-  cross_check(topic)
-    用途: 检测多篇文献结论一致性，发现矛盾。
-    触发: search_rag 返回≥2篇文献且涉及同一临床结论时。
-    返回: documents_compared(对比的文献), evidence_levels(按证据等级分组), consistency_hint(一致性提示)
-
-  get_evidence(doc_name)
-    用途: 查询单篇文献在知识库中的覆盖信息（含多少文本块、覆盖哪些页面、内容类型）。
-    触发: 需要了解某文献在知识库中的覆盖范围时。doc_name 从 search_rag 结果的 doc 字段提取。
-    注意: 此工具返回文献覆盖信息，不是逐篇证据评级。证据等级从 search_rag 结果的 evidence_level 字段获取。
-
-  list_docs()
-    用途: 列出知识库全部文献名称及文本块数量。
-    触发: 首次使用本系统、用户问"有哪些文献"、需要判断知识库覆盖范围时。
-    策略: 先 list_docs 了解全局 → 再精准 search_rag
-
-  extract_chart(doc_name, chart_hint)
-    用途: 搜索文献中与指定图表相关的文本片段（表格标题、图表描述的文字部分）。
-    触发: 需要查找文献中是否有某种类型的图表时（如基线表、结局表）。
-    注意: 此工具返回文本描述，不是结构化数值。精确数值用 analyze_image 从图片中提取。
-
-  analyze_image(image_path, analysis_hint)
-    用途: VLM多模态模型实时分析图表图片，返回结构化JSON数据（效应量/CI/p值/生存率等）。
-    触发: search_rag 返回的 source 包含 image_url 字段时。
-    黄金法则: 看到 image_url → 立刻 analyze_image。文字描述无法替代VLM提取的精确数值。
-    提示构建:
-      森林图 → "提取各亚组的 HR 及其 95%CI,异质性 I²,总体效应"
-      KM曲线 → "提取2组中位生存期,各时间点生存率,log-rank p值"
-      基线表 → "提取2组的基线特征,检查组间均衡性(p值)"
-      流程图 → "提取诊断/治疗流程的步骤和判断节点"
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## 四、Few-Shot 推理示例
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -421,6 +374,38 @@ class MedicalAgent:
 
     # ─── Tool Executors ───────────────────────────────
 
+    def _llm_rerank(self, query: str, candidates: list) -> list | None:
+        """LLM relevance scoring: top-10 → LLM batch score → weighted re-rank → top-5.
+        Combines vector score (0.3) with LLM relevance score (0.7). Fails silently."""
+        if len(candidates) <= 5:
+            return None
+        try:
+            import re as _re
+            items_text = []
+            for i, r in enumerate(candidates[:10]):
+                items_text.append(f"[{i}] (score={r.get('score',0):.2f}) {r['text'][:300]}")
+            prompt = f"""对以下{len(items_text)}个文本块按与查询的相关性打分(0-10):
+查询: {query}
+{chr(10).join(items_text)}
+只返回JSON数组: [分数, 分数, ...]"""
+            resp = self.client.chat.completions.create(
+                model=self.model, messages=[{"role":"user","content":prompt}],
+                temperature=0, max_tokens=100, timeout=15.0,
+            )
+            raw = resp.choices[0].message.content.strip()
+            scores = json.loads(_re.sub(r'[^\d,\[\] ]', '', raw))
+            for i, r in enumerate(candidates[:10]):
+                llm_score = float(scores[i]) / 10.0 if i < len(scores) else 0.5
+                vec_score = r.get("score", 0.5)
+                r["score"] = vec_score * 0.3 + llm_score * 0.7
+                r["_llm_reranked"] = True
+            candidates.sort(key=lambda x: x["score"], reverse=True)
+            logger.info(f"LLM reranked {len(items_text)} chunks → top score: {candidates[0].get('score',0):.3f}")
+            return candidates
+        except Exception as e:
+            logger.warning(f"LLM rerank failed (falling back to FAISS order): {str(e)[:100]}")
+            return None
+
     def _tool_search_rag(self, args: dict) -> str:
         faiss_query = args.get("faiss_query", args.get("query", ""))
         lightrag_query = args.get("lightrag_query") or faiss_query
@@ -442,6 +427,14 @@ class MedicalAgent:
                 result = json.loads(resp.read())
             graph = result.get("graph_context")
             snippets = result.get("text_snippets", result.get("sources", []))
+            # LLM Reranking: re-rank snippets by combined vector+LLM relevance
+            _candidates = [{"score": s.get("score",0), "text": s.get("text","")} for s in snippets]
+            _reranked = self._llm_rerank(faiss_query, _candidates)
+            if _reranked:
+                # Reorder snippets to match reranked order (by score match)
+                _score_map = {i: r["score"] for i, r in enumerate(_reranked)}
+                snippets.sort(key=lambda s: -_score_map.get(
+                    next((i for i, c in enumerate(_candidates) if c["text"] == s.get("text","")), -1), 0))
             if not graph and not snippets:
                 return "未找到相关文献内容。"
 
@@ -454,17 +447,34 @@ class MedicalAgent:
                 }
             if snippets:
                 items = []
+                seen_pages = set()
+                page_contexts = []
                 for s in snippets:
                     item = {
                         "ref": s.get("ref", 0), "source": s.get("source", ""),
                         "doc": s.get("doc", ""), "section": s.get("section", ""),
+                        "page_idx": s.get("page_idx"),
                         "evidence_level": self._infer_evidence_level(s.get("text", "")),
                         "score": s.get("score", 0), "text": s.get("text", "")[:500],
                     }
                     if s.get("image_url"):
                         item["image_url"] = s["image_url"]
                     items.append(item)
+                    # Parent-page retrieval: chunk as pointer → full page context
+                    doc = s.get("doc", "")
+                    pid = s.get("page_idx")
+                    if pid is not None and (doc, pid) not in seen_pages:
+                        seen_pages.add((doc, pid))
+                        full_page = self.pipeline.get_page_text(doc, int(pid))
+                        if full_page:
+                            page_contexts.append({
+                                "doc": doc, "page_idx": int(pid),
+                                "full_text": full_page[:3000],
+                            })
                 output["文献证据"] = items
+                if page_contexts:
+                    output["页面完整上下文"] = page_contexts
+                    output["_页面说明"] = "'页面完整上下文'包含命中chunk所在页的完整文本(含表格数据和图表描述),可用于提取chunk中未覆盖的精确数值。"
                 output["_引用规则"] = "'知识背景'用于理解主题,'文献证据'用于引用来源。只有'文献证据'中的条目可以作为 [文献名, 页码] 引用。"
             return json.dumps(output, ensure_ascii=False, indent=2)
         except Exception:
@@ -472,14 +482,22 @@ class MedicalAgent:
 
         # Direct FAISS fallback
         results = self.pipeline._doc_aware_retrieve(faiss_query, top_k=top_k)
+        # LLM Reranking
+        _reranked = self._llm_rerank(faiss_query, results)
+        if _reranked:
+            results = _reranked[:5]
         if not results:
             return "未找到相关文献内容。"
         items = []
+        seen_pages = set()
+        page_contexts = []
         for i, r in enumerate(results):
             meta = r.get("meta", {})
+            pid = meta.get("page_idx")
+            doc = r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"]
             item = {
                 "ref": i + 1, "source": r["source"],
-                "doc": r["source"].split(" [p.")[0] if " [p." in r["source"] else r["source"],
+                "doc": doc, "page_idx": pid,
                 "section": meta.get("section_tag", ""),
                 "evidence_level": self._infer_evidence_level(r["text"]),
                 "score": round(r["score"], 3), "text": r["text"][:500],
@@ -487,7 +505,19 @@ class MedicalAgent:
             if meta.get("image_url"):
                 item["image_url"] = meta["image_url"]
             items.append(item)
-        return json.dumps(items, ensure_ascii=False, indent=2)
+            # Parent-page retrieval
+            if pid is not None and (doc, pid) not in seen_pages:
+                seen_pages.add((doc, pid))
+                full_page = self.pipeline.get_page_text(doc, int(pid))
+                if full_page:
+                    page_contexts.append({
+                        "doc": doc, "page_idx": int(pid),
+                        "full_text": full_page[:3000],
+                    })
+        output = {"文献证据": items}
+        if page_contexts:
+            output["页面完整上下文"] = page_contexts
+        return json.dumps(output, ensure_ascii=False, indent=2)
 
     def _tool_cross_check(self, args: dict) -> str:
         topic = args.get("topic", "")

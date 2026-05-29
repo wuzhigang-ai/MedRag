@@ -36,6 +36,10 @@ HEADER_PATTERNS = [
     re.compile(r'JACC\s+Vol\.\s+\d+,\s+No\.\s+\d+,\s+\d{4}\s*\n.+?\d{4}:\d+[-–]\d+', re.IGNORECASE),
     re.compile(r'Seyfarth et al\.\s*\nLVAD Versus IABP in Cardiogenic Shock', re.IGNORECASE),
     re.compile(r'Downloaded from.*?on.*?\d{4}', re.IGNORECASE | re.DOTALL),
+    # Generic: repeated journal header lines (e.g. "BRIEF COMMUNICATION Genetics inMedicine")
+    re.compile(r'(?:BRIEF|ORIGINAL|CLINICAL|RESEARCH|REVIEW)\s+(?:COMMUNICATION|ARTICLE|REPORT|PAPER|LETTER)\s+[\w\s]+(?:inMedicine|in\s+Medicine|Medicine)', re.IGNORECASE),
+    # Generic: running header with journal name + "Vol." + page numbers
+    re.compile(r'^[\w\s]+Vol\.\s+\d+.*?\d{4}$', re.MULTILINE | re.IGNORECASE),
 ]
 
 def _clean_page(text):
@@ -385,9 +389,14 @@ def parse_pdf_25pro(pdf_path, output_dir=None, chunker=None, doc_name_override=N
     for ic in img_chunks:
         content_list.append(ic)
 
-    # Save
+    # Save content_list
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(content_list, f, ensure_ascii=False, indent=2)
 
-    logger.info(f"Saved {len(content_list)} items ({len(all_chunks)}T + {len(img_chunks)}I) → {out_path}")
+    # Save raw page texts for parent-page retrieval
+    pages_path = out_dir / f'{doc_name}_pages.json'
+    with open(pages_path, 'w', encoding='utf-8') as f:
+        json.dump(pages_text, f, ensure_ascii=False, indent=2)
+
+    logger.info(f"Saved {len(content_list)} items ({len(all_chunks)}T + {len(img_chunks)}I) + {len(pages_text)} pages → {out_dir}")
     return str(out_path)

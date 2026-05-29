@@ -66,6 +66,11 @@ PROVIDERS = {
         "api_key": os.getenv("MOONSHOT_API_KEY"),
         "model": os.getenv("MOONSHOT_MODEL"),
     },
+    "deepseek_official": {
+        "base_url": os.getenv("DEEPSEEK_OFFICIAL_BASE_URL"),
+        "api_key": os.getenv("DEEPSEEK_OFFICIAL_API_KEY"),
+        "model": os.getenv("DEEPSEEK_OFFICIAL_MODEL", "deepseek-chat"),
+    },
 }
 
 EMBED_MODEL_NAME = "BAAI/bge-m3"
@@ -97,6 +102,10 @@ class MedicalRAGPipeline:
         self.resilience_xunfei = APIResilience(self.clients["xunfei"])
         self.resilience_baidu_flash = APIResilience(self.clients["baidu_flash"])
         self.resilience_baidu_pro = APIResilience(self.clients["baidu_pro"])
+        self.resilience_deepseek = APIResilience(self.clients["deepseek_official"])
+
+        # ─── 父页面检索缓存 ───
+        self._page_texts: Dict[str, Dict[int, str]] = {}  # {doc_name: {page_idx: full_text}}
 
         # ─── FAISS 引擎 ───
         self._embed_model = None
@@ -179,25 +188,27 @@ class MedicalRAGPipeline:
 
     def _llm_entity_extract(self, prompt: str, system_prompt: str = None) -> str:
         """
-        实体提取专用: 百度 DeepSeek-V4-Pro 主 → DeepSeek-V4-Flash 兜底
-        使用 resilience 模块的指数退避重试 (timeout=30s, 快速fallback)
+        实体提取专用: DeepSeek官方API 主 → 百度Flash 兜底
+        timeout=120s, max_tokens=400
         """
-        # 尝试百度 DeepSeek-V4-Pro with retry
-        result = self.resilience_baidu_pro.call_text_sync(
-            prompt, system_prompt, model=PROVIDERS["baidu_pro"]["model"]
+        # 主引擎: DeepSeek官方 API (不限流)
+        result = self.resilience_deepseek.call_text_sync(
+            prompt, system_prompt, model=PROVIDERS["deepseek_official"]["model"],
+            timeout=120.0, max_tokens=400,
         )
         if result.success and result.data and len(result.data.strip()) > 10:
             return result.data
         if not result.success:
-            logger.warning(f"百度Pro entity extract failed: {result.error[:120] if result.error else 'unknown'}")
+            logger.warning(f"DeepSeek官方 entity extract failed: {result.error[:120] if result.error else 'unknown'}")
 
-        # 兜底: 百度 DeepSeek-V4-Flash (更快更便宜)
+        # 兜底: 百度 DeepSeek-V4-Flash
         result = self.resilience_baidu_flash.call_text_sync(
-            prompt, system_prompt, model=PROVIDERS["baidu_flash"]["model"]
+            prompt, system_prompt, model=PROVIDERS["baidu_flash"]["model"],
+            timeout=90.0, max_tokens=400,
         )
         if result.success and result.data and len(result.data.strip()) > 10:
             return result.data
-        logger.error(f"Flash fallback also failed: {result.error[:120] if result.error else 'unknown'}")
+        logger.error(f"所有实体提取引擎均失败: {result.error[:120] if result.error else 'unknown'}")
         raise RuntimeError(f"Entity extraction failed: {result.error}")
 
     # ═══════════════════════════════════════════════════════
@@ -223,6 +234,14 @@ class MedicalRAGPipeline:
                 continue
 
             doc_name = f.name.replace("_content_list.json", "")
+            # Load page texts for parent-page retrieval (graceful: skip if not found)
+            try:
+                pages_file = self.content_dir / f'{doc_name}_pages.json'
+                if pages_file.exists() and doc_name not in self._page_texts:
+                    pages = json.loads(pages_file.read_text(encoding='utf-8'))
+                    self._page_texts[doc_name] = {i: t for i, t in enumerate(pages)}
+            except Exception:
+                pass
             # Cross-engine dedup: skip mineru_* if the original (non-prefixed) exists
             if doc_name.startswith("mineru_"):
                 original_name = doc_name.replace("mineru_", "", 1)
@@ -388,7 +407,7 @@ class MedicalRAGPipeline:
 只回复类型名称。"""
         try:
             resp = client.chat.completions.create(
-                model=model, temperature=0.1, max_tokens=30,
+                model=model, temperature=0.1, max_tokens=30, timeout=20.0,
                 messages=[{"role":"user","content":[
                     {"type":"text","text":classify_prompt},
                     {"type":"image_url","image_url":{"url":f"data:image/jpeg;base64,{b64}"}},
@@ -421,7 +440,7 @@ class MedicalRAGPipeline:
                     {"type":"text","text":detail_prompt},
                     {"type":"image_url","image_url":{"url":f"data:image/jpeg;base64,{b64}"}},
                 ]}],
-                temperature=0.3, max_tokens=800,
+                temperature=0.3, max_tokens=800, timeout=30.0,
             )
             raw = resp.choices[0].message.content.strip()
             if "```json" in raw:
@@ -1364,6 +1383,11 @@ HTML数据:
             logger.error(f"Failed to remove document '{doc_name}', rolled back: {e}")
             raise
 
+    def get_page_text(self, doc_name: str, page_idx: int) -> str | None:
+        """返回完整页面文本用于父页面检索。旧文档无 _pages.json 时返回 None。"""
+        doc_pages = self._page_texts.get(doc_name, {})
+        return doc_pages.get(page_idx)
+
     def add_parsed_document(self, content_list_path: str, replace_existing: bool = True) -> int:
         """
         Load a content_list JSON, append new chunks to the FAISS index.
@@ -1384,6 +1408,14 @@ HTML数据:
             data = json.load(fh)
 
         doc_name = content_list_path.name.replace("_content_list.json", "")
+        # Load page texts for parent-page retrieval
+        try:
+            pages_file = content_list_path.parent / f'{doc_name}_pages.json'
+            if pages_file.exists() and doc_name not in self._page_texts:
+                pages = json.loads(pages_file.read_text(encoding='utf-8'))
+                self._page_texts[doc_name] = {i: t for i, t in enumerate(pages)}
+        except Exception:
+            pass
         is_update = doc_name in self._doc_map
         self._upload_state["is_update"] = is_update
         self._upload_state["replaced_doc"] = doc_name if is_update else None
