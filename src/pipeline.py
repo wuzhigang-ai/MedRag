@@ -998,11 +998,9 @@ class MedicalRAGPipeline:
 
     def parse_remote_pdf(self, pdf_path: str) -> Optional[str]:
         """
-        Dual-engine PDF parsing: Docling (local primary) → MinerU (remote validator).
-        Docling via RAG-Anything built-in parser. MinerU via SSH for cross-validation.
-        Post-processing quality layer applied to final output.
+        PDF parsing via MinerU 2.5-Pro (local GPU VLM).
+        Replaces Docling + remote MinerU SSH. Single engine, SOTA quality.
         """
-        import scripts.remote_parse as rp
         pdf_path_obj = Path(pdf_path)
 
         self._upload_state = {
@@ -1012,272 +1010,31 @@ class MedicalRAGPipeline:
             "chunks_added": 0,
             "is_update": False,
             "replaced_doc": None,
+            "engine": "mineru25pro",
         }
 
-        # ── Engine 1+2: Docling local + MinerU remote — concurrent ──
-        # Both engines are independent: Docling is CPU-bound (local), MinerU is I/O-bound (SSH).
-        # Running them concurrently cuts parsing time to max(Docling, MinerU) instead of sum.
-        from concurrent.futures import ThreadPoolExecutor
+        try:
+            from src.mineru25pro_parser import parse_pdf_25pro
+            final_path = parse_pdf_25pro(
+                str(pdf_path_obj),
+                output_dir=str(self.content_dir),
+                chunker=self._chunker if hasattr(self, '_chunker') else None,
+                doc_name_override=pdf_path_obj.stem
+            )
 
-        def _parse_mineru():
-            try:
-                rp.REMOTE_HOST = os.getenv("REMOTE_HOST", "")
-                rp.REMOTE_PORT = int(os.getenv("REMOTE_PORT", "22"))
-                rp.REMOTE_USER = os.getenv("REMOTE_USER", "root")
-                rp.REMOTE_PASSWORD = os.getenv("REMOTE_PASSWORD") or ""
-                if not rp.REMOTE_HOST:
-                    return None
-                remote = rp.RemoteMinerUParser()
-                remote.connect()
-                remote.ensure_dirs()
-                remote_pdf = remote.upload_pdf(str(pdf_path_obj))
-                self._upload_state["state"] = "parsing"
-                remote_cl = remote.parse_pdf(remote_pdf)
-                if not remote_cl:
-                    return None
-                self._upload_state["state"] = "downloading"
-                local_name = Path(remote_cl).name
-                mineru_path = self.content_dir / f"mineru_{local_name}"
-                self.content_dir.mkdir(parents=True, exist_ok=True)
-                remote.sftp.get(remote_cl, str(mineru_path))
-
-                # Download images from remote MinerU output directory
-                remote_dir = str(Path(remote_cl).parent)
-                local_images = self.content_dir / "images"
-                local_images.mkdir(parents=True, exist_ok=True)
-                try:
-                    _, img_out, _ = remote.exec(
-                        f"find {remote_dir} -type f \\( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \\) 2>/dev/null | head -100"
-                    )
-                    for remote_img in [f.strip() for f in img_out.split("\n") if f.strip()]:
-                        try:
-                            img_name = Path(remote_img).name
-                            local_img = local_images / img_name
-                            if not local_img.exists():
-                                remote.sftp.get(remote_img, str(local_img))
-                        except Exception:
-                            pass
-                except Exception:
-                    pass
-
-                logger.info(f"MinerU validator output: {mineru_path}")
-                return str(mineru_path)
-            except Exception as e:
-                logger.warning(f"MinerU remote unavailable, using Docling only: {e}")
+            if not final_path:
+                self._upload_state["state"] = "error"
+                self._upload_state["error"] = "MinerU 2.5-Pro parsing failed"
                 return None
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            dl_future = executor.submit(self._parse_local_docling, str(pdf_path_obj))
-            mu_future = executor.submit(_parse_mineru)
-            docling_path = dl_future.result()
-            mineru_path = mu_future.result()
+            self._upload_state["state"] = "done"
+            return final_path
 
-        # ── Engine 3: PaddleOCR emergency fallback ──
-        paddleocr_path = None
-        if not docling_path and not mineru_path:
-            try:
-                from raganything.parser import PaddleOCRParser
-                parser = PaddleOCRParser()
-                pd_result = parser.parse_pdf(str(pdf_path_obj))
-                if pd_result:
-                    paddleocr_path = self.content_dir / f"{pdf_path_obj.stem}_content_list.json"
-                    with open(paddleocr_path, "w", encoding="utf-8") as f:
-                        json.dump(pd_result, f, ensure_ascii=False, indent=2)
-                    logger.info(f"PaddleOCR fallback: {paddleocr_path}")
-            except Exception as e:
-                logger.warning(f"PaddleOCR also failed: {e}")
-
-        # ── Decide final output ──
-        if docling_path:
-            final_path = docling_path
-            self._upload_state["engine"] = "docling"
-            self._upload_state["engine_reason"] = "Docling primary (first choice)"
-        elif mineru_path:
-            final_path = mineru_path
-            self._upload_state["engine"] = "mineru"
-            self._upload_state["engine_reason"] = "Docling failed, MinerU fallback"
-        elif paddleocr_path:
-            final_path = paddleocr_path
-            self._upload_state["engine"] = "paddleocr"
-        else:
-            self._upload_state["state"] = "error"
-            self._upload_state["error"] = "All 3 parsers failed (Docling + MinerU + PaddleOCR)"
-            return None
-
-        # ── Cross-validation: LLM arbitration on divergence ──
-        if docling_path and mineru_path:
-            try:
-                with open(docling_path) as f: dl = json.load(f)
-                with open(mineru_path) as f: mu = json.load(f)
-                dl_texts = [i for i in dl if i.get("type") == "text"]
-                mu_texts = [i for i in mu if i.get("type") == "text"]
-                dl_t = len(dl_texts)
-                mu_t = len(mu_texts)
-                divergence = abs(dl_t - mu_t) / max(dl_t, 1)
-                logger.info(f"Parse diff: Docling={dl_t}text vs MinerU={mu_t}text, divergence={divergence:.1%}")
-
-                if divergence > 0.3:
-                    logger.info(f"Divergence >30% — LLM quality scoring")
-                    dl_sample = [t.get("text", "")[:200] for t in dl_texts[:8]]
-                    mu_sample = [t.get("text", "")[:200] for t in mu_texts[:8]]
-                    try:
-                        cv_url = os.getenv("CROSS_VALIDATION_BASE_URL")
-                        cv_key = os.getenv("CROSS_VALIDATION_API_KEY")
-                        cv_model = os.getenv("CROSS_VALIDATION_MODEL")
-                        if cv_url and cv_key:
-                            from openai import OpenAI as OAI
-                            cv_client = OAI(base_url=cv_url, api_key=cv_key)
-                            prompt = f"""评估两个PDF解析器的输出质量，分别打分。
-
-解析器A (Docling, {dl_t}文本块):
-{chr(10).join(f'{i+1}. {t}' for i, t in enumerate(dl_sample))}
-
-解析器B (MinerU, {mu_t}文本块):
-{chr(10).join(f'{i+1}. {t}' for i, t in enumerate(mu_sample))}
-
-评分标准(1-10分): 文本无截断/段落连贯/表格正文区分准确
-回复格式: A=X B=Y (一句话理由)"""
-                            resp = cv_client.chat.completions.create(
-                                model=cv_model,
-                                messages=[{"role": "user", "content": prompt}],
-                                temperature=0.1, max_tokens=60, timeout=20.0,
-                            )
-                            verdict = resp.choices[0].message.content.strip()
-                            logger.info(f"LLM quality scores: {verdict}")
-                            import re
-                            scores = {}
-                            for m in re.finditer(r'([AB])\s*=\s*(\d+)', verdict, re.IGNORECASE):
-                                scores[m.group(1).upper()] = int(m.group(2))
-                            score_a = scores.get("A", 7)
-                            score_b = scores.get("B", 7)
-                            # Score <7 → involve LLM for quality improvement
-                            if score_a < 7 and score_b < 7:
-                                logger.warning(f"Both parsers scored low (A={score_a}, B={score_b}) — trying PaddleOCR")
-                                try:
-                                    from raganything.parser import PaddleOCRParser
-                                    parser = PaddleOCRParser()
-                                    pd_result = parser.parse_pdf(str(pdf_path_obj))
-                                    if pd_result:
-                                        paddleocr_path = self.content_dir / f"{pdf_path_obj.stem}_content_list.json"
-                                        with open(paddleocr_path, "w", encoding="utf-8") as f:
-                                            json.dump(pd_result, f, ensure_ascii=False, indent=2)
-                                        # Score PaddleOCR too
-                                        pd_texts = [i for i in pd_result if i.get("type") == "text"]
-                                        pd_sample = [t.get("text", "")[:200] for t in pd_texts[:8]]
-                                        pd_prompt = f"""评估此PDF解析器输出质量(1-10分)。
-{chr(10).join(f'{i+1}. {t}' for i, t in enumerate(pd_sample))}
-评分标准: 文本无截断/段落连贯/表格正文区分
-回复格式: score=X (一句话)"""
-                                        pd_resp = cv_client.chat.completions.create(
-                                            model=cv_model,
-                                            messages=[{"role": "user", "content": pd_prompt}],
-                                            temperature=0.1, max_tokens=40, timeout=20.0,
-                                        )
-                                        pd_verdict = pd_resp.choices[0].message.content.strip()
-                                        pd_score = int(re.search(r'score\s*=\s*(\d+)', pd_verdict, re.IGNORECASE).group(1)) if re.search(r'score\s*=\s*(\d+)', pd_verdict, re.IGNORECASE) else 7
-                                        logger.info(f"PaddleOCR score: {pd_score}")
-                                        # All three low → LLM reconstruct
-                                        if score_a < 7 and score_b < 7 and pd_score < 7:
-                                            logger.warning(f"All 3 parsers scored low — LLM reconstruction")
-                                            best_sample = dl_sample if score_a >= score_b else mu_sample
-                                            reconstruct_prompt = f"""以下PDF解析输出可能包含错误(截断句/段落断裂/结构混乱)。请根据碎片化内容重建正确的医学文档结构。
-
-原始碎片:
-{chr(10).join(f'{i+1}. {t}' for i, t in enumerate(best_sample))}
-
-任务:
-1. 合并明显被截断的句子
-2. 识别并标注章节边界(如Abstract/Introduction/Methods/Results/Discussion)
-3. 将连续段落按逻辑顺序重组
-4. 删除明显的OCR噪声/乱码
-
-输出格式: 直接输出重建后的完整文本，章节标题用##标记。"""
-                                            recon_resp = cv_client.chat.completions.create(
-                                                model=cv_model,
-                                                messages=[{"role": "user", "content": reconstruct_prompt}],
-                                                temperature=0.3, max_tokens=2000, timeout=60.0,
-                                            )
-                                            reconstructed = recon_resp.choices[0].message.content.strip()
-                                            # Replace content_list with reconstructed version
-                                            reconstructed_items = [{"type": "text", "text": reconstructed, "page_idx": 0,
-                                                "_reconstructed": True, "_source_engines": "docling+mineru+paddleocr",
-                                                "_quality_warning": f"三引擎评分均低(A={score_a}/B={score_b}/C={pd_score}), LLM从碎片重建, 建议人工校对"}]
-                                            with open(final_path, "w", encoding="utf-8") as f:
-                                                json.dump(reconstructed_items, f, ensure_ascii=False, indent=2)
-                                            self._upload_state["engine"] = "llm-reconstructed"
-                                            self._upload_state["quality_warning"] = f"解析质量存疑: 三引擎评分均低(Docling={score_a}/MinerU={score_b}/PaddleOCR={pd_score}), 已LLM重建但建议人工校对"
-                                            logger.warning(f"LLM reconstruction — quality warning set (A={score_a},B={score_b},C={pd_score})")
-                                        elif pd_score >= max(score_a, score_b):
-                                            final_path = paddleocr_path
-                                            self._upload_state["engine"] = "paddleocr"
-                                            logger.info("PaddleOCR selected as best of three")
-                                except Exception as e:
-                                    logger.warning(f"PaddleOCR/LLM reconstruction chain failed: {e}")
-                            elif score_b > score_a and mineru_path:
-                                logger.info(f"MinerU scored higher (B={score_b} > A={score_a}) — swapping")
-                                final_path = mineru_path
-                                self._upload_state["engine"] = "mineru"
-                    except Exception as e:
-                        logger.warning(f"LLM arbitration failed, keeping Docling: {e}")
-                else:
-                    # ── CJK quality spot-check (even when divergence ≤30%) ──
-                    # Docling is known weaker on Chinese. Check for CJK artifacts.
-                    dl_sample = [t.get("text", "")[:300] for t in dl_texts[:5]]
-                    mu_sample = [t.get("text", "")[:300] for t in mu_texts[:5]]
-                    dl_cjk_issues = 0
-                    mu_cjk_issues = 0
-                    for text in dl_sample:
-                        cjk_chars = sum(1 for c in text if '一' <= c <= '鿿')
-                        if cjk_chars > 10:
-                            # Check for isolated CJK chars (space between each char = Docling artifact)
-                            cjk_spaced = sum(1 for i in range(1, len(text)-1)
-                                           if '一' <= text[i] <= '鿿'
-                                           and text[i-1] == ' ' and text[i+1] == ' ')
-                            if cjk_spaced > cjk_chars * 0.3:
-                                dl_cjk_issues += 1
-                    for text in mu_sample:
-                        cjk_chars = sum(1 for c in text if '一' <= c <= '鿿')
-                        if cjk_chars > 10:
-                            cjk_spaced = sum(1 for i in range(1, len(text)-1)
-                                           if '一' <= text[i] <= '鿿'
-                                           and text[i-1] == ' ' and text[i+1] == ' ')
-                            if cjk_spaced > cjk_chars * 0.3:
-                                mu_cjk_issues += 1
-                    if dl_cjk_issues > mu_cjk_issues and mineru_path:
-                        logger.info(f"CJK quality: Docling has {dl_cjk_issues} artifact samples vs MinerU {mu_cjk_issues} — swapping to MinerU")
-                        final_path = mineru_path
-                        self._upload_state["engine"] = "mineru"
-            except Exception:
-                logger.debug("CJK quality check failed, keeping current engine choice")
-                pass
-
-        # ── Post-processing quality layer ──
-        try:
-            final_path = self._postprocess_content_list(final_path)
         except Exception as e:
-            logger.warning(f"Post-processing failed, using raw output: {e}")
-
-        # ── Cleanup: delete stale cross-engine output files to prevent duplicates ──
-        doc_stem = pdf_path_obj.stem
-        final_path_obj = Path(final_path)
-        for candidate in [mineru_path, paddleocr_path]:
-            if candidate and Path(candidate) != final_path_obj and Path(candidate).exists():
-                try:
-                    Path(candidate).unlink()
-                    logger.info(f"Deleted stale cross-engine output: {Path(candidate).name}")
-                except Exception:
-                    pass
-        # Also clean up any orphaned mineru_* files from previous runs (only if not the winner)
-        for stale in self.content_dir.glob(f"mineru_{doc_stem}_content_list.json"):
-            if stale != final_path_obj:
-                try:
-                    stale.unlink()
-                    logger.info(f"Deleted orphaned mineru output: {stale.name}")
-                except Exception:
-                    pass
-
-        self._upload_state["state"] = "done"
-        return final_path
+            logger.error(f"MinerU 2.5-Pro parsing failed: {e}")
+            self._upload_state["state"] = "error"
+            self._upload_state["error"] = str(e)[:500]
+            return None
 
     @staticmethod
     def _table_dict_to_html(tbl: dict) -> str:
