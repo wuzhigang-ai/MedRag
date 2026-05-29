@@ -1,154 +1,128 @@
 /**
  * MedRAG REST API Adapter — drop-in replacement for tRPC.
- * All existing trpc.xxx.yyy.useQuery() / useMutation() calls work unchanged.
- * Routes calls to src/lib/api.ts → Python FastAPI backend.
+ * Uses explicit object model (no Proxy) for reliable React Query integration.
  */
 import { useQuery, useMutation, useQueryClient, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { ReactNode } from "react";
 
-// ── useUtils: tRPC cache invalidation → React Query ──
+// ── Utility: call API function with smart arg unwrapping ──
+function callApiFn(fn: Function, args: any): any {
+    if (args === null || args === undefined) return fn();
+    if (typeof args !== "object" || Array.isArray(args)) return fn(args);
+    // { id: N } → fn(N)
+    if ("id" in args && Object.keys(args).length === 1) return fn(args.id);
+    // { id: N, status: "approved" } → fn(N, "approved")
+    if ("id" in args && "status" in args && Object.keys(args).length === 2) return fn(args.id, args.status);
+    // { id: N, ...rest } → fn(N, rest)
+    if ("id" in args) { const { id, ...rest } = args; return fn(id, rest); }
+    // { sessionId: N, ...rest }
+    if ("sessionId" in args) { const { sessionId, ...rest } = args; return fn(sessionId, rest); }
+    // { messageId: N, ...rest }
+    if ("messageId" in args) { const { messageId, ...rest } = args; return fn(messageId, rest); }
+    // { articleId: N, ...rest }
+    if ("articleId" in args) { const { articleId, ...rest } = args; return fn(articleId, rest); }
+    return fn(args);
+}
+
+// ── Hook Factory ──────────────────────────────────
+type QueryHook = (params?: any, opts?: any) => any;
+type MutationHook = (opts?: any) => any;
+
+interface ModuleDef {
+    [method: string]: {
+        useQuery?: (params?: any, opts?: any) => any;
+        useMutation?: (opts?: any) => any;
+    };
+}
+
+function makeQueryHook(moduleName: string, method: string): QueryHook {
+    return (params?: any, opts?: any) => {
+        const qKey = [moduleName, method, params];
+        return useQuery({
+            queryKey: qKey,
+            queryFn: async () => {
+                const mod = (api as any)[moduleName];
+                const fn = mod?.[method];
+                if (typeof fn !== "function") return null;
+                return callApiFn(fn, params);
+            },
+            ...opts,
+        });
+    };
+}
+
+function makeMutationHook(moduleName: string, method: string): MutationHook {
+    return (opts?: any) => {
+        return useMutation({
+            mutationFn: async (args?: any) => {
+                const mod = (api as any)[moduleName];
+                const fn = mod?.[method];
+                if (typeof fn !== "function") throw new Error(`API: ${moduleName}.${method}`);
+                return callApiFn(fn, args);
+            },
+            ...opts,
+        });
+    };
+}
+
+// ── Module Builder ────────────────────────────────
+function buildModule(name: string, methods: string[]) {
+    const mod: Record<string, any> = {};
+    for (const m of methods) {
+        mod[m] = {
+            useQuery: makeQueryHook(name, m),
+            useMutation: makeMutationHook(name, m),
+        };
+    }
+    return mod;
+}
+
+// ── Explicit Modules (no Proxy) ───────────────────
+const _modules = {
+    auth: buildModule("auth", ["me", "login", "register", "logout"]),
+    articles: buildModule("articles", [
+        "list", "get", "create", "updateStatus", "approve", "delete",
+        "addSegments", "addFigures", "stats",
+    ]),
+    chat: buildModule("chat", [
+        "listSessions", "createSession", "getSession", "addMessage",
+        "deleteSession", "rateMessage",
+    ]),
+    knowledge: buildModule("knowledge", ["getGraph", "stats", "searchNodes", "listNodes", "getNode", "createNode", "createEdge", "search"]),
+    stats: buildModule("stats", ["system", "trends", "departmentDist"]),
+    notes: buildModule("notes", ["list", "get", "create", "update", "delete", "deleteMany"]),
+};
+
+// ── useUtils: cache invalidation ──────────────────
 function createUseUtils() {
     return function useUtils() {
         const qc = useQueryClient();
-        return new Proxy({} as any, {
-            get(_target, moduleName: string) {
-                if (moduleName === "invalidate") {
-                    return () => qc.invalidateQueries();
-                }
-                return new Proxy({} as any, {
-                    get(_target2, method: string) {
-                        if (method === "invalidate") {
-                            return () => qc.invalidateQueries({ queryKey: [moduleName] });
-                        }
+        // Build utils shape: utils.articles.list.invalidate() etc.
+        const handler: ProxyHandler<any> = {
+            get(_target: any, moduleName: string) {
+                if (moduleName === "invalidate") return () => qc.invalidateQueries();
+                if (moduleName === "then") return undefined; // prevent Promise-like behavior
+                return new Proxy({}, {
+                    get(_t2: any, method: string) {
+                        if (method === "invalidate") return () => qc.invalidateQueries({ queryKey: [moduleName] });
+                        if (method === "then") return undefined;
                         return {
                             invalidate: () => qc.invalidateQueries({ queryKey: [moduleName, method] }),
                         };
                     },
                 });
             },
-        });
+        };
+        return new Proxy({}, handler);
     };
 }
 
-// ── REST Adapter ───────────────────────────────────
-function createRESTAdapter() {
-    const cache = new Map<string, any>();
-
-    function getModule(moduleName: string): any {
-        if (cache.has(moduleName)) return cache.get(moduleName);
-
-        const mod = new Proxy({} as Record<string, any>, {
-            get(_target, method: string) {
-                return {
-                    useQuery(params?: any, opts?: any) {
-                        const qKey = [moduleName, method, params];
-                        return useQuery({
-                            queryKey: qKey,
-                            queryFn: async () => {
-                                const fn = getNestedFn(api, moduleName, method);
-                                if (!fn) return null;
-                                return callApiFn(fn, params);
-                            },
-                            ...opts,
-                        });
-                    },
-                    useMutation(opts?: any) {
-                        return useMutation({
-                            mutationFn: async (args?: any) => {
-                                const fn = getNestedFn(api, moduleName, method);
-                                if (!fn) throw new Error(`API not found: ${moduleName}.${method}`);
-                                return callApiFn(fn, args);
-                            },
-                            ...opts,
-                        });
-                    },
-                };
-            },
-        });
-
-        cache.set(moduleName, mod);
-        return mod;
-    }
-
-    return new Proxy({} as any, {
-        get(_target, moduleName: string) {
-            return getModule(moduleName);
-        },
-    });
-}
-
-function getNestedFn(obj: any, moduleName: string, method: string): Function | null {
-    const mod = obj[moduleName];
-    if (!mod) return null;
-    const fn = mod[method];
-    return typeof fn === "function" ? fn : null;
-}
-
-/**
- * Smart argument mapping: handles tRPC conventions → REST conventions.
- *
- * tRPC mutations often pass { id, ...other } as a single object.
- * Our REST API expects id as first positional arg.
- *
- * Examples:
- *   { id: 1 }                          → fn(1)
- *   { id: 1, status: "approved" }      → fn(1, "approved") or fn(1, { status: "approved" })
- *   { title: "hello" }                 → fn({ title: "hello" })
- *   "simpleString"                     → fn("simpleString")
- */
-function callApiFn(fn: Function, args: any): any {
-    if (args === null || args === undefined) return fn();
-
-    // Non-object → pass directly
-    if (typeof args !== "object" || Array.isArray(args)) return fn(args);
-
-    const keys = Object.keys(args);
-
-    // { id: N } or { id: N, ...rest }
-    if ("id" in args) {
-        const { id, ...rest } = args;
-        const restKeys = Object.keys(rest);
-        if (restKeys.length === 0) {
-            return fn(id);
-        }
-        if (restKeys.length === 1) {
-            // Try fn(id, value) — e.g. updateStatus(id, "approved")
-            return fn(id, rest[restKeys[0]]);
-        }
-        return fn(id, rest);
-    }
-
-    // { sessionId: N, ...rest } → fn(sessionId, rest)
-    if ("sessionId" in args) {
-        const { sessionId, ...rest } = args;
-        return fn(sessionId, rest);
-    }
-
-    // { messageId: N, ...rest } → fn(messageId, rest)
-    if ("messageId" in args) {
-        const { messageId, ...rest } = args;
-        return fn(messageId, rest);
-    }
-
-    // { articleId: N, ...rest } → fn(articleId, rest)
-    if ("articleId" in args) {
-        const { articleId, ...rest } = args;
-        return fn(articleId, rest);
-    }
-
-    // Plain object → pass as-is
-    return fn(args);
-}
-
-const _adapter = createRESTAdapter();
-const _directProps = { useUtils: createUseUtils() };
-export const trpc = new Proxy(_directProps, {
-    get(target, prop: string) {
-        if (prop in target) return (target as any)[prop];
-        return (_adapter as any)[prop];
-    },
-});
+// ── Export ────────────────────────────────────────
+export const trpc: any = {
+    ..._modules,
+    useUtils: createUseUtils(),
+};
 
 // ── Query Client ────────────────────────────────
 const isFileProtocol = typeof window !== "undefined" && window.location.protocol === "file:";
