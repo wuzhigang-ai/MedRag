@@ -166,6 +166,12 @@ export default function AdminChatPage() {
         question,
         (data: any) => {
           const step = toolToStep(data.tool || "unknown", collected.length);
+          // Freeze previous step's timer
+          const prevIdx = collected.length - 1;
+          if (prevIdx >= 0 && timerRef.current) {
+            const frozen = ((Date.now() - stepStartRef.current) / 1000).toFixed(1);
+            setStepMetrics(p => ({ ...p, [prevIdx]: { ...p[prevIdx], latency: frozen } }));
+          }
           collected.push(step);
           setTrace([...collected]);
           setActiveStep(collected.length - 1);
@@ -173,14 +179,17 @@ export default function AdminChatPage() {
           stepStartRef.current = Date.now();
           setLiveLatency("0.0");
           timerRef.current = setInterval(() => setLiveLatency(((Date.now() - stepStartRef.current) / 1000).toFixed(1)), 100);
-          const cumElapsed = data.elapsed || 0;
-          const prevCum = collected.length > 1 ? _cumTimes[collected.length - 2] : 0;
-          const stepLatency = Math.max(cumElapsed - prevCum, 0.01);
-          _cumTimes.push(cumElapsed);
-          setStepMetrics(p => ({ ...p, [collected.length - 1]: { latency: stepLatency.toFixed(2), detail: TOOL_DISPLAY[data.tool]?.output || "完成" } }));
+          setStepMetrics(p => ({ ...p, [collected.length - 1]: { latency: "0.0", detail: TOOL_DISPLAY[data.tool]?.output || "完成" } }));
         },
         (data: any) => {
-          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          if (timerRef.current) {
+            clearInterval(timerRef.current); timerRef.current = null;
+            const lastIdx = collected.length - 1;
+            if (lastIdx >= 0) {
+              const frozen = ((Date.now() - stepStartRef.current) / 1000).toFixed(1);
+              setStepMetrics(p => ({ ...p, [lastIdx]: { ...p[lastIdx], latency: frozen } }));
+            }
+          }
           aiContent = data.answer || "";
           aiCitations = (data.sources || []).map((s: any) => ({ articleId: 0, articleTitle: s.source || s.title || String(s), content: s.text_preview || "" }));
         },

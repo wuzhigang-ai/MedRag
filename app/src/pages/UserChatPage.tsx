@@ -190,32 +190,43 @@ export default function UserChatPage() {
         (data: any) => {
           const toolName = data.tool || "unknown";
           const step: RagStep = toolToRagStep(toolName, collected.length, data.elapsed || 0);
+          // Freeze previous step's timer → store as final
+          const prevIdx = collected.length - 1;
+          if (prevIdx >= 0 && timerRef.current) {
+            const frozen = ((Date.now() - stepStartRef.current) / 1000).toFixed(1);
+            setStepMetrics((p) => ({
+              ...p,
+              [prevIdx]: { ...p[prevIdx], latency: frozen },
+            }));
+          }
           collected.push(step);
           setTrace([...collected]);
           setActiveStep(collected.length - 1);
-          // Start live timer for this step
+          // Start live timer for new step
           if (timerRef.current) clearInterval(timerRef.current);
           stepStartRef.current = Date.now();
           setLiveLatency("0.0");
           timerRef.current = setInterval(() => {
             setLiveLatency(((Date.now() - stepStartRef.current) / 1000).toFixed(1));
           }, 100);
-          // Per-step latency from SSE cumulative elapsed
-          const cumElapsed = data.elapsed || 0;
-          const prevCum = collected.length > 1 ? _cumTimes[collected.length - 2] : 0;
-          const stepLatency = Math.max(cumElapsed - prevCum, 0.01);
-          _cumTimes.push(cumElapsed);
           setStepMetrics((p) => ({
             ...p,
             [collected.length - 1]: {
-              latency: stepLatency.toFixed(2),
+              latency: "0.0",
               detail: data.tool === "search_rag" ? "FAISS+LightRAG 双路检索" : TOOL_DISPLAY[data.tool]?.output || "完成",
             },
           }));
         },
         // onAnswer — fires when stream completes with answer
         (data: any) => {
-          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          if (timerRef.current) {
+            clearInterval(timerRef.current); timerRef.current = null;
+            const lastIdx = collected.length - 1;
+            if (lastIdx >= 0) {
+              const frozen = ((Date.now() - stepStartRef.current) / 1000).toFixed(1);
+              setStepMetrics((p) => ({ ...p, [lastIdx]: { ...p[lastIdx], latency: frozen } }));
+            }
+          }
           aiContent = data.answer || "";
           aiCitations = (data.sources || []).map((s: any) => ({
             articleId: 0,
@@ -449,41 +460,55 @@ export default function UserChatPage() {
               if (!active && !generating) return null;
               return (
                 <div key={i} style={{
-                  padding: 8, borderRadius: 8,
-                  background: active ? "var(--bg-surface)" : "var(--bg-hover)",
-                  border: `1.5px solid ${cur ? "rgba(0,196,180,0.30)" : active ? "var(--bd-100)" : "transparent"}`,
+                  padding: "10px 10px 8px", borderRadius: 10,
+                  background: cur ? "linear-gradient(135deg, rgba(239,68,68,0.02) 0%, var(--bg-surface) 50%)" : active ? "var(--bg-surface)" : "var(--bg-hover)",
+                  boxShadow: cur ? "0 0 0 1px rgba(239,68,68,0.12), 0 2px 8px rgba(239,68,68,0.06)" : active ? "var(--sh-xs)" : "none",
+                  border: `1px solid ${cur ? "rgba(239,68,68,0.20)" : active ? "var(--bd-100)" : "transparent"}`,
                   opacity: active || cur ? 1 : 0.4,
-                  transition: "all 0.4s var(--ease-out-expo)",
+                  transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
                   position: "relative",
                   overflow: "hidden",
-                  animation: active ? "fadeIn 0.4s ease" : "none",
+                  animation: active ? "fadeIn 0.35s cubic-bezier(0.16,1,0.3,1)" : "none",
                 }}>
                   {cur && (
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(0,196,180,0.06) 45%, rgba(37,99,235,0.08) 50%, rgba(0,196,180,0.06) 55%, transparent 60%)", backgroundSize: "200% 100%", animation: "shimmer 1.8s ease-in-out infinite", pointerEvents: "none" }} />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(239,68,68,0.04) 45%, rgba(239,68,68,0.06) 50%, rgba(239,68,68,0.04) 55%, transparent 60%)", backgroundSize: "200% 100%", animation: "shimmer 1.8s ease-in-out infinite", pointerEvents: "none" }} />
                   )}
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: metrics ? 6 : 4 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: active ? "rgba(0,196,180,0.12)" : "var(--bg-hover)", color: active ? "var(--m-cyan)" : "var(--tx-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, border: active ? "1.5px solid rgba(0,196,180,0.2)" : "1.5px solid transparent" }}>
-                      {active ? <FiCheck size={9} /> : i + 1}
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: metrics ? 7 : 4 }}>
+                    <div style={{
+                      width: 22, height: 22, borderRadius: "50%",
+                      background: active ? "linear-gradient(135deg, rgba(0,196,180,0.15), rgba(37,99,235,0.10))" : "var(--bg-hover)",
+                      color: active ? "var(--m-cyan)" : "var(--tx-100)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 9, fontWeight: 700,
+                      border: active ? "1.5px solid rgba(0,196,180,0.25)" : "1.5px solid transparent",
+                      transition: "all 0.4s ease",
+                    }}>
+                      {active ? <FiCheck size={10} /> : i + 1}
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--tx-700)" }}>{s.step}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: cur ? "var(--tx-900)" : "var(--tx-700)", transition: "color 0.3s" }}>{s.step}</span>
                     {cur && (
-                      <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 700, fontFamily: "monospace", color: "#ef4444", background: "rgba(239,68,68,0.08)", padding: "2px 6px", borderRadius: 4, animation: "fadeIn 0.3s ease" }}>
+                      <span style={{
+                        marginLeft: "auto", fontSize: 10, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
+                        color: "#ef4444", background: "rgba(239,68,68,0.08)", padding: "3px 7px", borderRadius: 5,
+                        animation: "fadeIn 0.3s ease",
+                        boxShadow: "0 0 8px rgba(239,68,68,0.10)",
+                      }}>
                         {liveLatency}s
                       </span>
                     )}
                   </div>
-                  <div style={{ marginLeft: 26 }}>
+                  <div style={{ marginLeft: 29 }}>
                     <div style={{ fontSize: 10, color: "var(--tx-100)", marginBottom: 1 }}>工具: {s.tool}</div>
                     {active && (
                       <>
                         <div style={{ fontSize: 10, color: "var(--tx-100)" }}>输入: {s.input}</div>
                         <div style={{ fontSize: 10, color: "var(--m-cyan)", fontWeight: 500 }}>输出: {s.output}</div>
                         {metrics && (
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, padding: "5px 8px", background: "linear-gradient(135deg, rgba(239,68,68,0.02) 0%, rgba(239,68,68,0.04) 100%)", borderRadius: 5, border: "1px solid rgba(239,68,68,0.10)" }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 8, fontWeight: 700, fontFamily: "monospace", color: "#ef4444", background: "rgba(239,68,68,0.10)", padding: "2px 6px", borderRadius: 3, letterSpacing: "0.03em" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 7, padding: "5px 9px", background: "linear-gradient(135deg, rgba(239,68,68,0.015) 0%, rgba(239,68,68,0.03) 100%)", borderRadius: 6, border: "1px solid rgba(239,68,68,0.08)" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 9, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: "#ef4444", background: "rgba(239,68,68,0.08)", padding: "2px 7px", borderRadius: 4, letterSpacing: "0.02em" }}>
                               {metrics.latency}s
                             </span>
-                            <span style={{ fontSize: 9, color: "var(--tx-300)", fontWeight: 500 }}>{metrics.detail}</span>
+                            <span style={{ fontSize: 9, color: "var(--tx-400)", fontWeight: 500, letterSpacing: "0.01em" }}>{metrics.detail}</span>
                           </div>
                         )}
                       </>
