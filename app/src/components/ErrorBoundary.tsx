@@ -48,8 +48,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             }}>M</div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: "#e2eafc", marginBottom: 12 }}>页面遇到了问题</h2>
             <p style={{ fontSize: 13, color: "#7a8db0", lineHeight: 1.6, marginBottom: 20 }}>
-              这可能是由于本地文件协议限制导致的。<br />
-              请使用以下方式打开：
+              请刷新页面重试。如果问题持续，请联系管理员。
             </p>
             <div style={{
               background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)",
