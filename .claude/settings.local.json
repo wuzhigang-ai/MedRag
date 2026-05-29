@@ -186,7 +186,11 @@
       "Bash(cmd //c \"taskkill /F /IM python.exe\")",
       "Bash(cmd //c \"taskkill /F /PID 53208\")",
       "Bash(cmd //c \"taskkill /F /PID 43220\")",
-      "Bash(cmd //c \"taskkill /F /PID 59676\")"
+      "Bash(cmd //c \"taskkill /F /PID 59676\")",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)",
+      "Bash(echo \"Vite PID: $!\")",
+      "Bash(cmd //c \"taskkill /F /IM node.exe\")"
     ]
   }
 }

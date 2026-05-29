@@ -258,13 +258,13 @@ export default function UserChatPage() {
         <div style={{ marginTop: 4, flex: 1, overflow: "auto" }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--tx-100)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, padding: "0 6px" }}>历史对话</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {sessions?.map((s) => (
+            {msgs.filter(m => m.role === "user").slice(0, 8).map((s) => (
               <div key={s.id} style={{ padding: "5px 7px", borderRadius: 6, fontSize: 11, display: "flex", alignItems: "center", gap: 6, color: "var(--tx-300)", cursor: "pointer", transition: "all 0.15s" }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-hover)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
                 <FiMessageSquare size={11} style={{ flexShrink: 0 }} />
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{s.title}</span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{s.content.substring(0, 30)}</span>
               </div>
             ))}
           </div>

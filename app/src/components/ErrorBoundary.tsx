@@ -47,6 +47,9 @@ export default class ErrorBoundary extends Component<Props, State> {
               margin: "0 auto 20px",
             }}>M</div>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: "#e2eafc", marginBottom: 12 }}>页面遇到了问题</h2>
+            <p style={{ fontSize: 12, color: "#ef4444", lineHeight: 1.6, marginBottom: 20, wordBreak: "break-all", background: "rgba(239,68,68,0.1)", padding: 12, borderRadius: 8, fontFamily: "monospace" }}>
+              {this.state.error?.message || "Unknown"}
+            </p>
             <p style={{ fontSize: 13, color: "#7a8db0", lineHeight: 1.6, marginBottom: 20 }}>
               请刷新页面重试。如果问题持续，请联系管理员。
             </p>
