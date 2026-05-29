@@ -26,7 +26,7 @@ interface StepMetrics {
 
 // ── Real tool → display step mapping ──
 const TOOL_DISPLAY: Record<string, { label: string; desc: string; output: string }> = {
-  search_rag: { label: "双路检索", desc: "FAISS关键词向量检索 + LightRAG自然语言图谱检索", output: "召回文献片段" },
+  search_rag: { label: "双路检索", desc: "多模态RAG关键词向量检索 + LightRAG自然语言图谱检索", output: "召回文献片段" },
   deep_retrieve: { label: "多维检索", desc: "从多个临床维度系统检索同一主题", output: "多维度结果" },
   cross_check: { label: "交叉验证", desc: "检测多篇文献结论一致性，发现证据矛盾", output: "一致性报告" },
   get_evidence: { label: "文献覆盖", desc: "查询单篇文献在知识库中的覆盖范围", output: "覆盖信息" },
@@ -143,6 +143,7 @@ export default function UserChatPage() {
 
   const [articles] = useState<any[]>([]);
   const [liveLatency, setLiveLatency] = useState<string>("0.0");
+  const [fadingTimer, setFadingTimer] = useState<{stepIdx: number; value: string} | null>(null);
   const stepStartRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -190,14 +191,15 @@ export default function UserChatPage() {
         (data: any) => {
           const toolName = data.tool || "unknown";
           const step: RagStep = toolToRagStep(toolName, collected.length, data.elapsed || 0);
-          // Freeze previous step's timer → store as final
+          // Freeze previous step's timer → fade-out then bottom-reveal
           const prevIdx = collected.length - 1;
           if (prevIdx >= 0 && timerRef.current) {
             const frozen = ((Date.now() - stepStartRef.current) / 1000).toFixed(1);
-            setStepMetrics((p) => ({
-              ...p,
-              [prevIdx]: { ...p[prevIdx], latency: frozen },
-            }));
+            setFadingTimer({ stepIdx: prevIdx, value: frozen });
+            setTimeout(() => {
+              setStepMetrics((p) => ({ ...p, [prevIdx]: { ...p[prevIdx], latency: frozen } }));
+              setFadingTimer(null);
+            }, 500);
           }
           collected.push(step);
           setTrace([...collected]);
@@ -486,7 +488,19 @@ export default function UserChatPage() {
                       {active ? <FiCheck size={10} /> : i + 1}
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 600, color: cur ? "var(--tx-900)" : "var(--tx-700)", transition: "color 0.3s" }}>{s.step}</span>
-                    {cur && (
+                    {/* Fading timer: frozen at completion, fades out over 0.5s */}
+                    {fadingTimer && fadingTimer.stepIdx === i && (
+                      <span style={{
+                        marginLeft: "auto", fontSize: 10, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
+                        color: "#ef4444", background: "rgba(239,68,68,0.08)", padding: "3px 7px", borderRadius: 5,
+                        boxShadow: "0 0 8px rgba(239,68,68,0.10)",
+                        opacity: 0, animation: "fadeIn 0.15s ease forwards, fadeOut 0.5s ease 0.15s forwards",
+                      }}>
+                        {fadingTimer.value}s
+                      </span>
+                    )}
+                    {/* Live timer: counting up in real-time */}
+                    {cur && !(fadingTimer && fadingTimer.stepIdx === i) && (
                       <span style={{
                         marginLeft: "auto", fontSize: 10, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
                         color: "#ef4444", background: "rgba(239,68,68,0.08)", padding: "3px 7px", borderRadius: 5,
