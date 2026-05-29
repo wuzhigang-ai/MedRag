@@ -154,6 +154,7 @@ export default function AdminChatPage() {
 
     const aiMsgId = Date.now() + 1;
     const collected: RagStep[] = [];
+    const _cumTimes: number[] = [];
     let aiContent = "";
     let aiCitations: Msg["citations"] = [];
 
@@ -165,7 +166,11 @@ export default function AdminChatPage() {
           collected.push(step);
           setTrace([...collected]);
           setActiveStep(collected.length - 1);
-          setStepMetrics(p => ({ ...p, [collected.length - 1]: { latency: data.elapsed?.toFixed(2) || "0.05", detail: TOOL_DISPLAY[data.tool]?.output || "完成" } }));
+          const cumElapsed = data.elapsed || 0;
+          const prevCum = collected.length > 1 ? _cumTimes[collected.length - 2] : 0;
+          const stepLatency = Math.max(cumElapsed - prevCum, 0.01);
+          _cumTimes.push(cumElapsed);
+          setStepMetrics(p => ({ ...p, [collected.length - 1]: { latency: stepLatency.toFixed(2), detail: TOOL_DISPLAY[data.tool]?.output || "完成" } }));
         },
         (data: any) => {
           aiContent = data.answer || "";

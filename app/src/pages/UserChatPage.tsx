@@ -176,6 +176,7 @@ export default function UserChatPage() {
     const t0 = Date.now();
     const aiMsgId = Date.now() + 1;
     const collected: RagStep[] = [];
+    const _cumTimes: number[] = [];
     let aiContent = "";
     let aiCitations: Msg["citations"] = [];
 
@@ -189,11 +190,15 @@ export default function UserChatPage() {
           collected.push(step);
           setTrace([...collected]);
           setActiveStep(collected.length - 1);
-          const stepLatency = (data.elapsed || 0) - (collected.length > 0 ? (parseFloat(Object.values(p).reverse()[0]?.latency || "0") || 0) : 0);
+          // Per-step latency: cumulative elapsed minus previous cumulative
+          const cumElapsed = data.elapsed || 0;
+          const prevCum = collected.length > 1 ? _cumTimes[collected.length - 2] : 0;
+          const stepLatency = Math.max(cumElapsed - prevCum, 0.01);
+          _cumTimes.push(cumElapsed);
           setStepMetrics((p) => ({
             ...p,
             [collected.length - 1]: {
-              latency: stepLatency > 0 ? stepLatency.toFixed(2) : (data.elapsed || 0).toFixed(2),
+              latency: stepLatency.toFixed(2),
               detail: data.tool === "search_rag" ? "FAISS+LightRAG 双路检索" : TOOL_DISPLAY[data.tool]?.output || "完成",
             },
           }));
