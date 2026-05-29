@@ -322,13 +322,18 @@ def graph_data():
 
 @router.get("/graph/stats")
 def graph_stats():
-    p = _get_pipeline()
-    gs = p.get_stats()
+    """Real graph stats from LightRAG via GraphManager."""
+    from src.graph import GraphManager
+    from collections import Counter
+    gm = GraphManager()
+    data = gm.build()
+    nodes = data.get("nodes", [])
+    edges = data.get("edges", [])
+    node_types = Counter(n.get("group", "其他") for n in nodes if n.get("group"))
     return {
-        "totalNodes": gs.get("total_nodes", 0),
-        "totalEdges": gs.get("total_edges", 0),
-        "nodeTypes": {"disease": 8, "drug": 5, "treatment": 4, "clinical_indicator": 3,
-                      "anatomy": 2, "procedure": 1},
+        "totalNodes": data.get("stats", {}).get("total_nodes", len(nodes)),
+        "totalEdges": data.get("stats", {}).get("total_edges", len(edges)),
+        "nodeTypes": dict(node_types),
     }
 
 @router.get("/graph/nodes/search")
