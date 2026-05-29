@@ -961,14 +961,17 @@ class MedicalAgent:
     # ─── Agent Loop ───────────────────────────────────
 
     def run(self, query: str, max_steps: int = 20,
-            conversation_history: list = None) -> Dict[str, Any]:
+            conversation_history: list = None,
+            on_step: callable = None) -> Dict[str, Any]:
         """
         Agent 多跳推理循环 — 支持多轮对话和复杂医学问题:
         1. LLM 拆解问题 → 分层检索 → 交叉验证 → 证据综合
         2. conversation_history: [{"q":"...","a":"..."}, ...] 近3轮对话上下文
         3. 最多 20 步, 检索 5 次后强制给出答案
         4. 低置信度时自动回溯重搜 (最多 2 次)
+        5. on_step(step_info): 可选回调, 每完成一个工具调用立即通知 (用于SSE流式)
         """
+        self._on_step = on_step  # store for use by execute_tool
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
         # Inject conversation history for multi-turn context
         if conversation_history:
@@ -1067,6 +1070,19 @@ class MedicalAgent:
                         "result_preview": preview,
                     })
 
+                    # Real-time streaming callback for SSE
+                    if self._on_step:
+                        try:
+                            self._on_step({
+                                "type": "step",
+                                "step": step + 1,
+                                "tool": tool_name,
+                                "args": tool_args,
+                                "preview": preview,
+                            })
+                        except Exception:
+                            pass
+
                     messages.append({
                         "role": "assistant",
                         "content": None,
@@ -1105,6 +1121,17 @@ class MedicalAgent:
                             "args": {"action": "backtrack", "reason": critique["issues"]},
                             "result_preview": backtrack_result,
                         })
+                        if self._on_step:
+                            try:
+                                self._on_step({
+                                    "type": "step",
+                                    "step": step + 1,
+                                    "tool": "self_reflect",
+                                    "args": {"action": "backtrack", "reason": critique.get("issues",[])},
+                                    "preview": backtrack_result[:300] if backtrack_result else "",
+                                })
+                            except Exception:
+                                pass
                         messages.append({"role": "user", "content": f"补充检索结果:\n{backtrack_result}\n\n请基于以上补充信息和之前检索结果，重新给出更准确的回答。"})
                         continue  # Re-enter the loop for refined answer
 
