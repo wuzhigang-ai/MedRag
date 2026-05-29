@@ -164,17 +164,17 @@ export default function AdminChatPage() {
     setStepMetrics({});
     setActiveStep(-1);
 
-    // Pre-tool reasoning phases
+    // Pre-tool reasoning phases (chained setTimeout)
     if (timerRef.current) clearInterval(timerRef.current);
-    if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
+    if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current as any);
     stepStartRef.current = Date.now();
     setLiveLatency("0.0");
     timerRef.current = setInterval(() => setLiveLatency(((Date.now() - stepStartRef.current) / 1000).toFixed(1)), 100);
-    let preIdx = 0;
-    phaseTimerRef.current = setInterval(() => {
-      if (preIdx < PRE_PHASES.length) { setPreTrace(p => [...p, PRE_PHASES[preIdx]]); preIdx++; }
-      else { if (phaseTimerRef.current) clearInterval(phaseTimerRef.current); }
-    }, PRE_PHASES[0].duration);
+    let delay = 0;
+    PRE_PHASES.forEach((p, i) => {
+      delay += i === 0 ? 800 : (PRE_PHASES[i-1].duration);
+      phaseTimerRef.current = setTimeout(() => { setPreTrace(prev => [...prev, p]); }, delay) as any;
+    });
 
     const aiMsgId = Date.now() + 1;
     const collected: RagStep[] = [];
@@ -186,7 +186,7 @@ export default function AdminChatPage() {
       await api.streamAgent(
         question,
         (data: any) => {
-          if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+          if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; }
           setPreTrace([]);
           const step = toolToStep(data.tool || "unknown", collected.length);
           // Freeze previous step's timer
@@ -205,7 +205,7 @@ export default function AdminChatPage() {
           setStepMetrics(p => ({ ...p, [collected.length - 1]: { latency: "0.0", detail: TOOL_DISPLAY[data.tool]?.output || "完成" } }));
         },
         (data: any) => {
-          if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+          if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; }
           setPreTrace([]);
           if (timerRef.current) {
             clearInterval(timerRef.current); timerRef.current = null;
@@ -218,11 +218,11 @@ export default function AdminChatPage() {
           aiContent = data.answer || "";
           aiCitations = (data.sources || []).map((s: any) => ({ articleId: 0, articleTitle: s.source || s.title || String(s), content: s.text_preview || "" }));
         },
-        (err: string) => { if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; } setPreTrace([]); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } aiContent = `错误: ${err}`; },
-        () => { if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; } if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
+        (err: string) => { if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; } setPreTrace([]); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } aiContent = `错误: ${err}`; },
+        () => { if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; } if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
       );
     } catch (err: any) {
-      if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+      if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; }
       setPreTrace([]);
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       aiContent = `连接失败: ${err.message || "未知错误"}`;
@@ -345,14 +345,19 @@ export default function AdminChatPage() {
             {preTrace.map((p, i) => {
               const isLastPre = i === preTrace.length - 1 && trace.length === 0;
               return (
-                <div key={`pre-${i}`} style={{ padding: "8px 10px", borderRadius: 8, background: isLastPre ? "linear-gradient(135deg, rgba(99,102,241,0.02) 0%, var(--bg-surface) 50%)" : "var(--bg-surface)", border: `1px solid ${isLastPre ? "rgba(99,102,241,0.15)" : "var(--bd-100)"}`, animation: "fadeIn 0.3s ease", position: "relative", overflow: "hidden" }}>
-                  {isLastPre && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(99,102,241,0.02) 50%, transparent 60%)", backgroundSize: "200% 100%", animation: "shimmer 2s ease-in-out infinite", pointerEvents: "none" }} />}
-                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <span style={{ fontSize: 12 }}>{p.icon}</span>
+                <div key={`pre-${i}`} style={{
+                  padding: "8px 10px", borderRadius: 8,
+                  background: isLastPre ? "linear-gradient(135deg, rgba(239,68,68,0.02) 0%, var(--bg-surface) 50%)" : "var(--bg-surface)",
+                  border: `1px solid ${isLastPre ? "rgba(239,68,68,0.18)" : "var(--bd-100)"}`,
+                  animation: "fadeIn 0.3s ease", position: "relative", overflow: "hidden",
+                }}>
+                  {isLastPre && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(239,68,68,0.03) 50%, transparent 60%)", backgroundSize: "200% 100%", animation: "shimmer 1.8s ease-in-out infinite", pointerEvents: "none" }} />}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: "linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.06))", color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, border: "1.5px solid rgba(239,68,68,0.18)" }}>{p.icon}</div>
                     <span style={{ fontSize: 10, fontWeight: 600 }}>{p.label}</span>
-                    {isLastPre && <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 700, fontFamily: "monospace", color: "#818cf8" }}>{liveLatency}s</span>}
+                    {isLastPre && <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 700, fontFamily: "monospace", color: "#ef4444" }}>{liveLatency}s</span>}
                   </div>
-                  <div style={{ marginTop: 2, fontSize: 9, color: "var(--tx-200)" }}>{p.desc}</div>
+                  <div style={{ marginTop: 2, fontSize: 9, color: "var(--tx-200)", marginLeft: 26 }}>{p.desc}</div>
                 </div>
               );
             })}

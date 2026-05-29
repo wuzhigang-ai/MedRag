@@ -187,23 +187,21 @@ export default function UserChatPage() {
     setStepMetrics({});
     setActiveStep(-1);
 
-    // ── Start pre-tool reasoning phases ──
+    // ── Start pre-tool reasoning phases (chained setTimeout) ──
     if (timerRef.current) clearInterval(timerRef.current);
-    if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
+    if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current as any);
     stepStartRef.current = Date.now();
     setLiveLatency("0.0");
     timerRef.current = setInterval(() => {
       setLiveLatency(((Date.now() - stepStartRef.current) / 1000).toFixed(1));
     }, 100);
-    let preIdx = 0;
-    phaseTimerRef.current = setInterval(() => {
-      if (preIdx < PRE_PHASES.length) {
-        setPreTrace(p => [...p, PRE_PHASES[preIdx]]);
-        preIdx++;
-      } else {
-        if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
-      }
-    }, PRE_PHASES[0].duration);
+    let delay = 0;
+    PRE_PHASES.forEach((p, i) => {
+      delay += i === 0 ? 800 : (PRE_PHASES[i-1].duration);
+      phaseTimerRef.current = setTimeout(() => {
+        setPreTrace(prev => [...prev, p]);
+      }, delay) as any;
+    });
 
     const t0 = Date.now();
     const aiMsgId = Date.now() + 1;
@@ -218,7 +216,7 @@ export default function UserChatPage() {
         // onStep — fires as each tool completes
         (data: any) => {
           // Clear pre-tool phases on first real tool
-          if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+          if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; }
           setPreTrace([]);
           const toolName = data.tool || "unknown";
           const step: RagStep = toolToRagStep(toolName, collected.length, data.elapsed || 0);
@@ -252,7 +250,7 @@ export default function UserChatPage() {
         },
         // onAnswer — fires when stream completes with answer
         (data: any) => {
-          if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+          if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; }
           setPreTrace([]);
           if (timerRef.current) {
             clearInterval(timerRef.current); timerRef.current = null;
@@ -270,12 +268,12 @@ export default function UserChatPage() {
           }));
         },
         // onError
-        (err: string) => { if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; } setPreTrace([]); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } aiContent = `抱歉，处理请求时出错: ${err}`; },
+        (err: string) => { if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; } setPreTrace([]); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } aiContent = `抱歉，处理请求时出错: ${err}`; },
         // onDone
-        () => { if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; } if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
+        () => { if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; } if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
       );
     } catch (err: any) {
-      if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+      if (phaseTimerRef.current) { clearTimeout(phaseTimerRef.current as any); phaseTimerRef.current = null; }
       setPreTrace([]);
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       aiContent = `连接失败: ${err.message || "未知错误"}`;
@@ -488,29 +486,30 @@ export default function UserChatPage() {
             </div>
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {/* ── Pre-tool reasoning phases ── */}
+            {/* ── Pre-tool reasoning phases (same visual style as tool cards) ── */}
             {preTrace.map((p, i) => {
               const isLastPre = i === preTrace.length - 1 && trace.length === 0;
               return (
                 <div key={`pre-${i}`} style={{
                   padding: "10px 10px 8px", borderRadius: 10,
-                  background: isLastPre ? "linear-gradient(135deg, rgba(99,102,241,0.03) 0%, var(--bg-surface) 50%)" : "var(--bg-surface)",
-                  boxShadow: isLastPre ? "0 0 0 1px rgba(99,102,241,0.10), 0 2px 6px rgba(99,102,241,0.04)" : "var(--sh-xs)",
-                  border: `1px solid ${isLastPre ? "rgba(99,102,241,0.18)" : "var(--bd-100)"}`,
+                  background: isLastPre ? "linear-gradient(135deg, rgba(239,68,68,0.02) 0%, var(--bg-surface) 50%)" : "var(--bg-surface)",
+                  boxShadow: isLastPre ? "0 0 0 1px rgba(239,68,68,0.12), 0 2px 8px rgba(239,68,68,0.06)" : "var(--sh-xs)",
+                  border: `1px solid ${isLastPre ? "rgba(239,68,68,0.20)" : "var(--bd-100)"}`,
+                  opacity: 1,
                   transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
                   animation: "fadeIn 0.35s cubic-bezier(0.16,1,0.3,1)",
                   position: "relative", overflow: "hidden",
                 }}>
                   {isLastPre && (
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(99,102,241,0.03) 45%, rgba(139,92,246,0.04) 50%, rgba(99,102,241,0.03) 55%, transparent 60%)", backgroundSize: "200% 100%", animation: "shimmer 2s ease-in-out infinite", pointerEvents: "none" }} />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(239,68,68,0.04) 45%, rgba(239,68,68,0.06) 50%, rgba(239,68,68,0.04) 55%, transparent 60%)", backgroundSize: "200% 100%", animation: "shimmer 1.8s ease-in-out infinite", pointerEvents: "none" }} />
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))", color: "#818cf8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, border: "1.5px solid rgba(99,102,241,0.20)" }}>
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.08))", color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, border: "1.5px solid rgba(239,68,68,0.20)" }}>
                       {p.icon}
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 600, color: "var(--tx-700)" }}>{p.label}</span>
                     {isLastPre && (
-                      <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: "#818cf8", background: "rgba(99,102,241,0.08)", padding: "3px 7px", borderRadius: 5, boxShadow: "0 0 8px rgba(99,102,241,0.08)" }}>
+                      <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: "#ef4444", background: "rgba(239,68,68,0.08)", padding: "3px 7px", borderRadius: 5, boxShadow: "0 0 8px rgba(239,68,68,0.10)" }}>
                         {liveLatency}s
                       </span>
                     )}
