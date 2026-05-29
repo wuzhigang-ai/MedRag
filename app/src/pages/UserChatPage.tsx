@@ -57,10 +57,17 @@ function MdRender({ content, isUser }: { content: string; isUser: boolean }) {
   let tableRows: string[] = [];
   let inTable = false;
 
+  const isSepRow = (r: string) => /^\|[\s\-:]+\|$/.test(r.trim());
   const flushTable = () => {
-    if (tableRows.length < 2) return;
+    // Strip leading/trailing separator rows (Agent LLM sometimes adds extra border lines)
+    while (tableRows.length > 0 && isSepRow(tableRows[0])) tableRows.shift();
+    while (tableRows.length > 0 && isSepRow(tableRows[tableRows.length - 1])) tableRows.pop();
+    if (tableRows.length < 2) { tableRows = []; inTable = false; return; }
+    // Find separator row (|---|...|) to locate header/data boundary
+    let sepIdx = tableRows.findIndex((r, i) => i > 0 && isSepRow(r));
+    if (sepIdx === -1) sepIdx = 1; // fallback: assume row[0]=header, row[1]=separator
     const headers = tableRows[0].split("|").map((h) => h.trim()).filter(Boolean);
-    const dataRows = tableRows.slice(2).map((r) => r.split("|").map((c) => c.trim()).filter(Boolean));
+    const dataRows = tableRows.slice(sepIdx + 1).filter(r => !isSepRow(r)).map((r) => r.split("|").map((c) => c.trim()).filter(Boolean));
     elements.push(
       <div key={`table-${elements.length}`} style={{ overflow: "auto", margin: "8px 0", borderRadius: 8, border: "1px solid var(--bd-100)" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
