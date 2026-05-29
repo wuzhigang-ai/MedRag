@@ -142,6 +142,9 @@ export default function UserChatPage() {
   const navigate = useNavigate();
 
   const [articles] = useState<any[]>([]);
+  const [liveLatency, setLiveLatency] = useState<string>("0.0");
+  const stepStartRef = useRef<number>(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Route guard: redirect to login if not authenticated
   useEffect(() => {
@@ -190,7 +193,14 @@ export default function UserChatPage() {
           collected.push(step);
           setTrace([...collected]);
           setActiveStep(collected.length - 1);
-          // Per-step latency: cumulative elapsed minus previous cumulative
+          // Start live timer for this step
+          if (timerRef.current) clearInterval(timerRef.current);
+          stepStartRef.current = Date.now();
+          setLiveLatency("0.0");
+          timerRef.current = setInterval(() => {
+            setLiveLatency(((Date.now() - stepStartRef.current) / 1000).toFixed(1));
+          }, 100);
+          // Per-step latency from SSE cumulative elapsed
           const cumElapsed = data.elapsed || 0;
           const prevCum = collected.length > 1 ? _cumTimes[collected.length - 2] : 0;
           const stepLatency = Math.max(cumElapsed - prevCum, 0.01);
@@ -205,6 +215,7 @@ export default function UserChatPage() {
         },
         // onAnswer — fires when stream completes with answer
         (data: any) => {
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
           aiContent = data.answer || "";
           aiCitations = (data.sources || []).map((s: any) => ({
             articleId: 0,
@@ -213,11 +224,12 @@ export default function UserChatPage() {
           }));
         },
         // onError
-        (err: string) => { aiContent = `抱歉，处理请求时出错: ${err}`; },
+        (err: string) => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } aiContent = `抱歉，处理请求时出错: ${err}`; },
         // onDone
-        () => {}
+        () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
       );
     } catch (err: any) {
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       aiContent = `连接失败: ${err.message || "未知错误"}`;
     }
 
@@ -454,9 +466,9 @@ export default function UserChatPage() {
                       {active ? <FiCheck size={9} /> : i + 1}
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 600, color: "var(--tx-700)" }}>{s.step}</span>
-                    {cur && metrics && (
-                      <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 600, fontFamily: "monospace", color: "var(--m-cyan)", background: "rgba(0,196,180,0.08)", padding: "1px 5px", borderRadius: 4, animation: "fadeIn 0.3s ease" }}>
-                        {metrics.latency}s
+                    {cur && (
+                      <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 700, fontFamily: "monospace", color: "#ef4444", background: "rgba(239,68,68,0.08)", padding: "2px 6px", borderRadius: 4, animation: "fadeIn 0.3s ease" }}>
+                        {liveLatency}s
                       </span>
                     )}
                   </div>
@@ -467,8 +479,8 @@ export default function UserChatPage() {
                         <div style={{ fontSize: 10, color: "var(--tx-100)" }}>输入: {s.input}</div>
                         <div style={{ fontSize: 10, color: "var(--m-cyan)", fontWeight: 500 }}>输出: {s.output}</div>
                         {metrics && (
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, padding: "5px 8px", background: "linear-gradient(135deg, rgba(0,196,180,0.04) 0%, rgba(37,99,235,0.03) 100%)", borderRadius: 5, border: "1px solid rgba(0,196,180,0.10)" }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 8, fontWeight: 700, fontFamily: "monospace", color: "var(--m-cyan)", background: "rgba(0,196,180,0.10)", padding: "2px 6px", borderRadius: 3, letterSpacing: "0.03em" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, padding: "5px 8px", background: "linear-gradient(135deg, rgba(239,68,68,0.02) 0%, rgba(239,68,68,0.04) 100%)", borderRadius: 5, border: "1px solid rgba(239,68,68,0.10)" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 8, fontWeight: 700, fontFamily: "monospace", color: "#ef4444", background: "rgba(239,68,68,0.10)", padding: "2px 6px", borderRadius: 3, letterSpacing: "0.03em" }}>
                               {metrics.latency}s
                             </span>
                             <span style={{ fontSize: 9, color: "var(--tx-300)", fontWeight: 500 }}>{metrics.detail}</span>
