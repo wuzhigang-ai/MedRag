@@ -244,7 +244,9 @@ export default function UserChatPage() {
             ...p,
             [collected.length - 1]: {
               latency: "0.0",
-              detail: data.tool === "search_rag" ? `检索: ${(data.args?.faiss_query || "").substring(0, 40)}` : (TOOL_DISPLAY[data.tool]?.output || "完成"),
+              detail: data.tool === "search_rag"
+                ? `🔑 ${(data.args?.faiss_query || "").substring(0, 35)}${(data.args?.lightrag_query && data.args.lightrag_query !== data.args.faiss_query) ? " | 🌐 " + (data.args.lightrag_query || "").substring(0, 30) : ""}`
+                : (TOOL_DISPLAY[data.tool]?.output || "完成"),
             },
           }));
         },
