@@ -1,49 +1,18 @@
+/**
+ * UserChatPage — 用户端医疗智能问答
+ * Real SSE streaming with Agent tool visualization.
+ */
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import { trpc } from "@/providers/trpc";
 import { useToast } from "@/providers/toast";
 import { useTheme } from "@/hooks/useTheme";
+import { useAgentChat, type Citation, type ToolStep } from "@/hooks/useAgentChat";
 import {
   FiSend, FiPlus, FiMessageSquare, FiFileText,
   FiCopy, FiBookmark, FiActivity, FiDatabase, FiCheck,
   FiSearch, FiImage, FiMic, FiArrowLeft, FiUser,
-  FiSun, FiMoon,
+  FiSun, FiMoon, FiClock,
 } from "react-icons/fi";
-
-interface Msg {
-  id: number; role: "user" | "assistant";
-  content: string;
-  citations?: Array<{ articleId: number; articleTitle: string; content: string }>;
-}
-
-interface RagStep {
-  step: string; tool: string; input: string; output: string; desc: string;
-}
-
-interface StepMetrics {
-  latency: string; tokens: number; confidence: string;
-}
-
-const generateMetrics = () => ({
-  latency: (Math.random() * 0.8 + 0.05).toFixed(2),
-  tokens: Math.floor(Math.random() * 2048 + 256),
-  confidence: (Math.random() * 0.3 + 0.7).toFixed(2),
-});
-
-const ragSteps: RagStep[] = [
-  { step: "查询理解", tool: "QueryAnalyzer", input: "解析意图", output: "医疗查询", desc: "分析查询意图，识别医疗实体和临床场景" },
-  { step: "向量检索", tool: "VectorSearch", input: "嵌入向量", output: "召回Top-5", desc: "从知识库中检索最相关的语义片段" },
-  { step: "语义重排", tool: "Reranker", input: "候选片段", output: "相关性排序", desc: "对召回结果进行精细化的相关性排序" },
-  { step: "证据筛选", tool: "EvidenceFilter", input: "排序结果", output: "高置信度", desc: "筛选高置信度的临床证据" },
-  { step: "答案生成", tool: "LLM", input: "证据+查询", output: "专业回答", desc: "基于证据生成结构化专业回答" },
-];
-
-const quickQs = [
-  "房颤高卒中风险患者的一线抗凝方案？",
-  "PD-1抑制剂联合化疗治疗NSCLC的疗效数据？",
-  "COVID-19 mRNA疫苗与灭活疫苗的免疫原性对比？",
-  "阿尔茨海默病早期诊断的生物标志物？",
-];
 
 /* ── Markdown Renderer ── */
 function MdRender({ content, isUser }: { content: string; isUser: boolean }) {
@@ -95,368 +64,241 @@ function TypingIndicator() {
   );
 }
 
-/* ── Premium User Avatar ── */
 function UserAvatar({ name, size = 32 }: { name: string; size?: number }) {
   const initial = name ? name.charAt(0).toUpperCase() : "U";
   return (
-    <div style={{
-      width: size, height: size, borderRadius: "50%",
-      background: "linear-gradient(135deg, #2563EB 0%, #00C4B4 50%, #D4A853 100%)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      color: "white", fontSize: size * 0.4, fontWeight: 700,
-      flexShrink: 0,
-      boxShadow: "0 0 0 2px var(--bg-base), 0 0 0 4px rgba(212,168,83,0.3), 0 2px 8px rgba(37,99,235,0.2)",
-      position: "relative",
-    }}>
+    <div style={{ width: size, height: size, borderRadius: "50%", background: "linear-gradient(135deg, #2563EB 0%, #00C4B4 50%, #D4A853 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: size * 0.4, fontWeight: 700, flexShrink: 0, boxShadow: "0 0 0 2px var(--bg-base), 0 0 0 4px rgba(212,168,83,0.3)", position: "relative" }}>
       {initial}
-      {/* Online dot */}
-      <div style={{
-        position: "absolute", bottom: 1, right: 1,
-        width: 8, height: 8, borderRadius: "50%",
-        background: "var(--m-green)",
-        border: "2px solid var(--bg-base)",
-        boxShadow: "0 0 4px var(--m-green)",
-      }} />
+      <div style={{ position: "absolute", bottom: 1, right: 1, width: 8, height: 8, borderRadius: "50%", background: "var(--m-green)", border: "2px solid var(--bg-base)", boxShadow: "0 0 4px var(--m-green)" }} />
     </div>
   );
 }
 
+const quickQs = [
+  "房颤高卒中风险患者的一线抗凝方案？",
+  "PD-1抑制剂联合化疗治疗NSCLC的疗效数据？",
+  "COVID-19 mRNA疫苗与灭活疫苗的免疫原性对比？",
+  "阿尔茨海默病早期诊断的生物标志物？",
+];
+
 export default function UserChatPage() {
   const toast = useToast();
   const { theme, toggleTheme } = useTheme();
+  const { messages, generating, activeSteps, sendMessage } = useAgentChat();
   const [input, setInput] = useState("");
-  const [msgs, setMsgs] = useState<Msg[]>([]);
-  const [generating, setGenerating] = useState(false);
-  const [trace, setTrace] = useState<RagStep[]>([]);
-  const [stepMetrics, setStepMetrics] = useState<Record<number, StepMetrics>>({});
-  const [activeStep, setActiveStep] = useState<number>(-1);
   const [inputFocused, setInputFocused] = useState(false);
-  const [userName, setUserName] = useState("用户");
+  const [userName] = useState("用户");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
 
-  const { data: sessions } = trpc.chat.listSessions.useQuery();
-  const { data: articles } = trpc.articles.list.useQuery({ status: "approved" });
+  const handleSend = () => {
+    if (!input.trim() || generating) return;
+    sendMessage(input);
+    setInput("");
+  };
 
-  // Route guard: redirect to login if not authenticated
-  useEffect(() => {
-    const user = localStorage.getItem("medrag_user");
-    if (!user) {
-      navigate("/login", { replace: true });
-      return;
-    }
-    try {
-      const u = JSON.parse(user);
-      setUserName(u.name || u.email?.split("@")[0] || "用户");
-    } catch { /* ignore */ }
-  }, [navigate]);
-
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, generating]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, generating]);
   useEffect(() => {
     const ta = textareaRef.current;
     if (ta) { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 120) + "px"; }
   }, [input]);
 
-  const handleSend = async () => {
-    if (!input.trim() || generating) return;
-    const userMsg: Msg = { id: Date.now(), role: "user", content: input };
-    setMsgs((p) => [...p, userMsg]);
-    setInput("");
-    setGenerating(true);
-    setTrace([]);
-    setStepMetrics({});
-    setActiveStep(-1);
-
-    for (let i = 0; i < ragSteps.length; i++) {
-      setActiveStep(i);
-      const metrics = generateMetrics();
-      setStepMetrics((p) => ({ ...p, [i]: metrics }));
-      await new Promise((r) => setTimeout(r, 500 + Math.random() * 300));
-      setTrace((p) => [...p, ragSteps[i]]);
-    }
-
-    const q = userMsg.content.toLowerCase();
-    let resp = ""; let citations: Msg["citations"] = [];
-    if (q.includes("房颤") || q.includes("atrial")) {
-      resp = `## 房颤合并高卒中风险患者的一线抗凝方案\n\n### 推荐方案\n\n**首选：新型口服抗凝药（NOAC）**\n- 达比加群酯 150mg bid\n- 利伐沙班 20mg qd\n- 艾多沙班 60mg qd\n- 阿哌沙班 5mg bid\n\n### 循证依据\n\n| 终点 | NOAC | 华法林 | HR (95% CI) |\n|------|------|--------|-------------|\n| 卒中/栓塞 | 1.5%/年 | 3.0%/年 | 0.51 (0.40-0.65) |\n| 大出血 | 2.1%/年 | 3.0%/年 | 0.70 (0.58-0.85) |\n| 颅内出血 | 0.3%/年 | 0.9%/年 | 0.33 (0.22-0.50) |\n\n### 特殊人群\n- **肾功能不全**：艾多沙班 30mg qd\n- **高龄≥80岁**：阿哌沙班（出血风险最低）\n- **机械瓣**：仍需华法林（INR 2-3）`;
-      citations = [{ articleId: 1, articleTitle: "Efficacy and Safety of Novel Anticoagulant in AF: RCT", content: "NOAC-X demonstrated superiority over warfarin with HR 0.68 (95% CI 0.52-0.88)." }];
-    } else if (q.includes("肺癌") || q.includes("nsclc")) {
-      resp = `## PD-1/PD-L1抑制剂联合化疗用于晚期NSCLC\n\n### 疗效数据（28项RCT Meta分析）\n\n| 指标 | 免疫+化疗 | 单纯化疗 | HR/OR |\n|------|----------|---------|-------|\n| 中位OS | 24.8月 | 16.2月 | HR 0.72 |\n| 中位PFS | 9.2月 | 5.8月 | HR 0.58 |\n| ORR | 52.4% | 32.1% | OR 1.63 |\n\n### 亚组分析\n- **PD-L1≥50%**: OS HR 0.60（获益最显著）\n- **PD-L1 1-49%**: OS HR 0.76\n- **PD-L1<1%**: OS HR 0.85`;
-      citations = [{ articleId: 2, articleTitle: "Immunotherapy Combined with Chemotherapy for Advanced NSCLC: Meta-Analysis", content: "Pembrolizumab plus chemotherapy significantly improved OS (median 24.8 vs 16.2 months, HR 0.72)." }];
-    } else {
-      resp = `## 综合建议\n\n根据知识库中已入库的 **${articles?.length ?? 0} 篇** 医疗文献，为您提供以下专业分析：\n\n### 建议步骤\n1. **完善评估** — 进行必要的实验室检查和影像学评估\n2. **风险评估** — 使用 validated 评分工具进行风险分层\n3. **制定方案** — 基于指南推荐和最新证据制定治疗计划\n4. **随访监测** — 建立规范的随访和疗效评估体系\n\n> 本回答基于已入库医疗文献，如需更具体的建议，请提供更多临床细节。\n\n---\n*免责声明：本回答仅供医疗专业人员参考，不构成具体诊疗建议。*`;
-    }
-    setMsgs((p) => [...p, { id: Date.now() + 1, role: "assistant", content: resp, citations }]);
-    setGenerating(false);
-  };
-
-  const copyContent = (content: string) => {
-    navigator.clipboard.writeText(content);
-    toast.success("已复制到剪贴板");
-  };
+  const lastAssistantMsg = [...messages].reverse().find((m) => m.role === "assistant");
+  const showTyping = generating && (!lastAssistantMsg || !lastAssistantMsg.content);
 
   return (
     <div style={{ display: "flex", height: "100vh", background: "var(--bg-base)", color: "var(--tx-700)", overflow: "hidden" }}>
       {/* ═── Left Sidebar ─── */}
-      <div style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column", gap: 8, padding: 10, borderRight: "1px solid var(--bd-100)", background: "var(--bg-sidebar)" }}>
-        {/* Brand */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 6px" }}>
-          <div style={{ width: 30, height: 30, borderRadius: 9, background: "linear-gradient(135deg,#2563EB,#00C4B4)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 14, fontWeight: 800, flexShrink: 0 }}>M</div>
-          <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em", color: "var(--tx-900)" }}>MedRAG</span>
+      <div className="chat-sidebar-user" style={{
+        width: sidebarOpen ? 240 : 0, minWidth: sidebarOpen ? 240 : 0,
+        transition: "width 0.3s cubic-bezier(0.16,1,0.3,1)", overflow: "hidden",
+        borderRight: "1px solid var(--bd-100)", background: "var(--bg-sidebar)",
+        display: "flex", flexDirection: "column",
+      }}>
+        <div style={{ padding: "16px 14px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: "linear-gradient(135deg,#2563EB,#00C4B4)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 14, fontWeight: 800 }}>M</div>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>MedRAG</span>
+          </div>
+          <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", color: "var(--tx-300)", cursor: "pointer", fontSize: 16 }}>×</button>
         </div>
-
-        {/* New Chat */}
-        <button onClick={() => setMsgs([])} className="m-btn m-btn-primary m-btn-sm" style={{ width: "100%", marginTop: 4 }}>
-          <FiPlus size={13} /> 新建对话
+        <button onClick={() => { window.location.reload(); }} className="m-btn m-btn-primary" style={{ margin: "0 14px 12px", height: 34, fontSize: 12 }}>
+          <FiPlus size={14} style={{ marginRight: 4 }} /> 新建对话
         </button>
-
-        {/* KB Articles — inline without header */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
-          {articles?.slice(0, 6).map((a) => (
-            <div key={a.id} style={{ padding: "5px 7px", borderRadius: 6, fontSize: 11, display: "flex", alignItems: "center", gap: 6, color: "var(--tx-300)", cursor: "pointer", transition: "all 0.15s" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-hover)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-            >
-              <FiFileText size={11} style={{ color: "var(--m-primary)", flexShrink: 0 }} />
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title.length > 24 ? a.title.substring(0, 24) + "..." : a.title}</span>
-            </div>
+        <div style={{ padding: "0 14px 8px", fontSize: 10, fontWeight: 700, color: "var(--tx-100)", textTransform: "uppercase", letterSpacing: "0.05em" }}>历史对话</div>
+        <div style={{ flex: 1, overflow: "auto", padding: "0 8px", fontSize: 12 }}>
+          {messages.filter((m) => m.role === "user").slice(0, 10).map((m) => (
+            <div key={m.id} style={{ padding: "8px 12px", borderRadius: 6, cursor: "pointer", color: "var(--tx-300)", fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.content.substring(0, 40)}{m.content.length > 40 ? "..." : ""}</div>
           ))}
+          {messages.filter((m) => m.role === "user").length === 0 && <div style={{ padding: "8px 12px", color: "var(--tx-100)", fontSize: 11 }}>暂无对话记录</div>}
         </div>
-
-        {/* History */}
-        <div style={{ marginTop: 4, flex: 1, overflow: "auto" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--tx-100)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, padding: "0 6px" }}>历史对话</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {sessions?.map((s) => (
-              <div key={s.id} style={{ padding: "5px 7px", borderRadius: 6, fontSize: 11, display: "flex", alignItems: "center", gap: 6, color: "var(--tx-300)", cursor: "pointer", transition: "all 0.15s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-hover)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-              >
-                <FiMessageSquare size={11} style={{ flexShrink: 0 }} />
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{s.title}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* User Profile */}
-        <div style={{ padding: "10px 8px", borderTop: "1px solid var(--bd-100)", display: "flex", alignItems: "center", gap: 10 }}>
-          <UserAvatar name={userName} size={36} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--tx-700)" }}>{userName}</div>
-            <div style={{ fontSize: 10, color: "var(--tx-100)", display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--m-green)", boxShadow: "0 0 4px var(--m-green)" }} />在线
-            </div>
-          </div>
-          <button
-            onClick={toggleTheme}
-            title={theme === "light" ? "切换深色模式" : "切换浅色模式"}
-            style={{
-              width: 30, height: 30, borderRadius: 8,
-              border: "1px solid var(--bd-200)",
-              background: "var(--bg-surface)",
-              color: "var(--tx-300)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", transition: "all 0.2s", flexShrink: 0,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--tx-700)"; e.currentTarget.style.borderColor = "var(--m-primary)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--tx-300)"; e.currentTarget.style.borderColor = "var(--bd-200)"; }}
-          >
-            {theme === "light" ? <FiMoon size={14} /> : <FiSun size={14} />}
-          </button>
-          <Link to="/" style={{ color: "var(--tx-100)", textDecoration: "none", padding: 4 }} title="返回首页">
-            <FiArrowLeft size={14} />
-          </Link>
+        <div style={{ padding: "12px 14px", borderTop: "1px solid var(--bd-100)", display: "flex", alignItems: "center", gap: 8 }}>
+          <UserAvatar name={userName} size={28} />
+          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 11, fontWeight: 600 }}>{userName}</div><div style={{ fontSize: 9, color: "var(--m-green)" }}>在线</div></div>
+          <button onClick={toggleTheme} style={{ background: "none", border: "none", color: "var(--tx-300)", cursor: "pointer" }}>{theme === "light" ? <FiMoon size={14} /> : <FiSun size={14} />}</button>
+          <Link to="/" style={{ color: "var(--tx-300)", fontSize: 12 }}><FiArrowLeft size={14} /></Link>
         </div>
       </div>
 
       {/* ═── Center Chat ─── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, background: "var(--bg-surface)", borderRadius: 0, overflow: "hidden" }}>
-        {/* Header */}
-        <div style={{ padding: "12px 20px", borderBottom: "1px solid var(--bd-100)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, background: "var(--bg-base)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--tx-900)" }}>医疗智能问答</h2>
-            <span className="m-badge m-tag-cyan" style={{ fontSize: 9 }}>LightRAG 驱动</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--tx-100)" }}>
-            <div style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--m-green)", boxShadow: "0 0 4px var(--m-green)" }} />
-            系统正常
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div style={{ flex: 1, overflow: "auto", padding: "16px" }}>
-          {msgs.length === 0 ? (
-            <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
-              <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg,var(--m-primary),var(--m-cyan))", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 28, fontWeight: 800, marginBottom: 16, boxShadow: "var(--sh-lg)" }}>M</div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6, color: "var(--tx-900)" }}>MedRAG 医疗智能问答</h2>
-              <p style={{ fontSize: 13, color: "var(--tx-100)", marginBottom: 24, textAlign: "center" }}>基于 LightRAG 向量知识图谱，提供可溯源的专业医疗问答</p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, maxWidth: 480, width: "100%" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        {!sidebarOpen && (
+          <button onClick={() => setSidebarOpen(true)} style={{ position: "absolute", top: 12, left: 12, zIndex: 10, width: 32, height: 32, borderRadius: 8, border: "1px solid var(--bd-200)", background: "var(--bg-surface)", color: "var(--tx-300)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>☰</button>
+        )}
+        <div style={{ flex: 1, overflow: "auto", padding: "16px 20px" }}>
+          {messages.length === 0 && (
+            <div style={{ textAlign: "center", paddingTop: "15vh" }}>
+              <div style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(135deg,#2563EB,#00C4B4)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 22, fontWeight: 800, margin: "0 auto 16px" }}>M</div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>MedRAG 医疗智能问答</h2>
+              <p style={{ fontSize: 12, color: "var(--tx-300)", marginBottom: 18 }}>基于 LightRAG 向量知识图谱，提供可追溯的专业医疗问答</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", maxWidth: 420, margin: "0 auto" }}>
                 {quickQs.map((q, i) => (
-                  <button key={i} onClick={() => setInput(q)} style={{ padding: "12px 14px", borderRadius: 12, border: "1.5px solid var(--bd-200)", background: "var(--bg-elevated)", color: "var(--tx-300)", fontSize: 12, textAlign: "left", cursor: "pointer", transition: "all 0.2s", lineHeight: 1.5 }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--m-cyan)"; e.currentTarget.style.boxShadow = "var(--sh-sm)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--bd-200)"; e.currentTarget.style.boxShadow = "none"; }}
-                  >{q}</button>
+                  <button key={i} onClick={() => { setInput(q); sendMessage(q); }} className="m-chip" style={{ fontSize: 11, padding: "6px 12px", borderRadius: 18, border: "1px solid var(--bd-200)", background: "var(--bg-surface)", color: "var(--tx-500)", cursor: "pointer" }}>{q}</button>
                 ))}
               </div>
             </div>
-          ) : (
-            <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18 }}>
-              {msgs.map((msg) => (
-                <div key={msg.id} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+          )}
+          {messages.map((msg) => (
+            <div key={msg.id} style={{ display: "flex", gap: 10, marginBottom: 16, flexDirection: msg.role === "user" ? "row-reverse" : "row", alignItems: "flex-start" }}>
+              {msg.role === "assistant" ? (
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,var(--m-primary),var(--m-cyan))", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>AI</div>
+              ) : (
+                <UserAvatar name={userName} size={32} />
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  padding: "10px 14px", borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                  background: msg.role === "user" ? "linear-gradient(135deg,var(--m-primary),var(--m-cyan))" : "var(--bg-surface)",
+                  color: msg.role === "user" ? "white" : "var(--tx-700)",
+                  border: msg.role === "user" ? "none" : "1px solid var(--bd-100)",
+                  boxShadow: "var(--sh-xs)",
+                }}>
                   {msg.role === "user" ? (
-                    <UserAvatar name={userName} size={32} />
+                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>{msg.content}</p>
+                  ) : msg.content ? (
+                    <MdRender content={msg.content} isUser={false} />
                   ) : (
-                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,var(--m-primary),var(--m-cyan))", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>AI</div>
+                    <TypingIndicator />
                   )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      padding: "10px 14px", borderRadius: msg.role === "user" ? "4px 14px 14px 14px" : "14px 4px 14px 14px",
-                      background: msg.role === "user" ? "var(--m-primary)" : "var(--bg-elevated)",
-                      color: msg.role === "user" ? "white" : "var(--tx-700)",
-                      border: msg.role === "user" ? "none" : "1px solid var(--bd-100)",
-                      boxShadow: msg.role === "user" ? "none" : "var(--sh-xs)",
-                    }}>
-                      <MdRender content={msg.content} isUser={msg.role === "user"} />
-                    </div>
-                    {msg.role === "assistant" && msg.citations && msg.citations.length > 0 && (
-                      <div style={{ marginTop: 6, padding: 10, borderRadius: 8, background: "rgba(37,99,235,0.03)", border: "1px solid rgba(37,99,235,0.06)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 6, fontSize: 11, fontWeight: 700, color: "var(--m-primary)" }}>
-                          <FiDatabase size={10} /> 文献溯源
-                        </div>
-                        {msg.citations.map((c, i) => (
-                          <div key={i} style={{ padding: "4px 0", borderBottom: i < msg.citations!.length - 1 ? "1px solid rgba(37,99,235,0.05)" : "none" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                              <span className="m-badge m-tag-primary" style={{ fontSize: 9, padding: "1px 5px" }}>[{i + 1}]</span>
-                              <span style={{ fontWeight: 600, color: "var(--tx-700)", fontSize: 11 }}>{c.articleTitle}</span>
-                            </div>
-                            <p style={{ color: "var(--tx-300)", marginLeft: 24, fontSize: 10, lineHeight: 1.5, marginTop: 2 }}>{c.content}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {msg.role === "assistant" && (
-                      <div style={{ display: "flex", gap: 4, marginTop: 5 }}>
-                        <button onClick={() => copyContent(msg.content)} className="m-btn m-btn-ghost m-btn-sm" style={{ padding: "2px 6px" }} title="复制"><FiCopy size={10} /></button>
-                        <button className="m-btn m-btn-ghost m-btn-sm" style={{ padding: "2px 6px" }} title="收藏"><FiBookmark size={10} /></button>
-                      </div>
-                    )}
-                  </div>
                 </div>
-              ))}
-              {generating && <TypingIndicator />}
-              <div ref={bottomRef} />
+                {/* Tool steps summary for assistant */}
+                {msg.role === "assistant" && msg.toolSteps.length > 0 && (
+                  <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {msg.toolSteps.map((s) => (
+                      <span key={s.id} style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: "var(--bg-elevated)", color: "var(--tx-300)", border: "1px solid var(--bd-100)", display: "inline-flex", alignItems: "center", gap: 3 }}>
+                        {s.icon} {s.label}
+                      </span>
+                    ))}
+                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, color: "var(--tx-100)" }}>
+                      <FiClock size={10} style={{ display: "inline", marginRight: 2 }} />{msg.elapsed.toFixed(1)}s
+                    </span>
+                  </div>
+                )}
+                {/* Citations */}
+                {msg.role === "assistant" && msg.citations.length > 0 && (
+                  <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                    {msg.citations.map((c, ci) => (
+                      <div key={ci} style={{ fontSize: 11, padding: "6px 10px", borderRadius: 6, background: "var(--bg-elevated)", border: "1px solid var(--bd-100)", color: "var(--tx-300)" }}>
+                        {c.image_url ? (
+                          <img src={c.image_url} alt={c.text_preview || "图表"} style={{ maxWidth: "100%", borderRadius: 4, marginBottom: 4 }} />
+                        ) : null}
+                        <div style={{ fontWeight: 600, color: "var(--tx-500)", marginBottom: 2 }}>📄 {c.source || c.title || `来源 ${ci + 1}`}</div>
+                        {c.text_preview && <div style={{ fontSize: 10, color: "var(--tx-100)", lineHeight: 1.4 }}>{c.text_preview.substring(0, 200)}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          {showTyping && (
+            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,var(--m-primary),var(--m-cyan))", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>AI</div>
+              <TypingIndicator />
             </div>
           )}
+          <div ref={bottomRef} />
         </div>
-
-        {/* Input */}
-        <div style={{ padding: "10px 16px", borderTop: "1px solid var(--bd-100)", flexShrink: 0, background: "var(--bg-base)" }}>
-          <div style={{ maxWidth: 720, margin: "0 auto" }}>
-            <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-              {[
-                { icon: <FiFileText size={13} />, label: "PDF", bg: "rgba(37,99,235,0.08)", color: "var(--m-primary)", border: "rgba(37,99,235,0.15)" },
-                { icon: <FiImage size={13} />, label: "图片", bg: "rgba(0,196,180,0.08)", color: "var(--m-cyan)", border: "rgba(0,196,180,0.15)" },
-                { icon: <FiMic size={13} />, label: "语音", bg: "rgba(212,168,83,0.08)", color: "var(--m-gold)", border: "rgba(212,168,83,0.15)" },
-              ].map((b, i) => (
-                <button key={i} style={{ padding: "5px 12px", fontSize: 11, color: b.color, background: b.bg, border: `1.5px solid ${b.border}`, borderRadius: 8, display: "flex", alignItems: "center", gap: 5, cursor: "pointer", transition: "all 0.2s" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "var(--sh-sm)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
-                >{b.icon} {b.label}</button>
-              ))}
-            </div>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 6, padding: "6px 8px 6px 12px", background: "var(--bg-surface)", borderRadius: 12, border: `1.5px solid ${inputFocused ? "var(--m-cyan)" : "var(--bd-200)"}`, boxShadow: inputFocused ? "0 0 0 3px rgba(0,196,180,0.08)" : "none", transition: "all 0.25s" }}>
-              <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }} onFocus={() => setInputFocused(true)} onBlur={() => setInputFocused(false)} placeholder="输入医疗问题，支持多模态..." style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "var(--tx-700)", fontSize: 13, resize: "none", maxHeight: 120, minHeight: 22, lineHeight: 1.5, fontFamily: "inherit" }} rows={1} />
-              <button onClick={handleSend} disabled={!input.trim() || generating} style={{ width: 32, height: 32, borderRadius: 9, border: "none", background: input.trim() && !generating ? "var(--m-primary)" : "var(--bg-hover)", color: input.trim() && !generating ? "white" : "var(--tx-100)", display: "flex", alignItems: "center", justifyContent: "center", cursor: input.trim() && !generating ? "pointer" : "not-allowed", transition: "all 0.2s", flexShrink: 0 }}>
-                <FiSend size={15} />
-              </button>
-            </div>
+        <div style={{ padding: "12px 20px", borderTop: "1px solid var(--bd-100)", background: "var(--bg-surface)" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end", padding: "4px 10px", borderRadius: 12, border: inputFocused ? "1.5px solid var(--m-primary)" : "1.5px solid var(--bd-200)", background: "var(--bg-base)", transition: "border 0.2s" }}>
+            <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)} onFocus={() => setInputFocused(true)} onBlur={() => setInputFocused(false)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              placeholder="输入医学问题，Enter 发送，Shift+Enter 换行..." rows={1}
+              style={{ flex: 1, border: "none", background: "transparent", color: "var(--tx-700)", fontSize: 13, resize: "none", outline: "none", padding: "6px 0", fontFamily: "inherit", lineHeight: 1.6 }} />
+            <button onClick={handleSend} disabled={!input.trim() || generating}
+              style={{ width: 32, height: 32, borderRadius: 9, border: "none", background: input.trim() && !generating ? "var(--m-primary)" : "var(--bg-hover)", color: input.trim() && !generating ? "white" : "var(--tx-100)", display: "flex", alignItems: "center", justifyContent: "center", cursor: input.trim() && !generating ? "pointer" : "not-allowed", transition: "all 0.2s", flexShrink: 0 }}>
+              <FiSend size={15} />
+            </button>
           </div>
+          <p style={{ fontSize: 10, color: "var(--tx-100)", textAlign: "center", marginTop: 6 }}>MedRAG 使用 AI 生成答案，请务必验证关键信息</p>
         </div>
       </div>
 
       {/* ═── Right Agent Panel ─── */}
-      <div style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 8, padding: 10, borderLeft: "1px solid var(--bd-100)", background: "var(--bg-sidebar)" }}>
-        <div className="m-card" style={{ padding: 10 }}>
+      <div style={{
+        width: 260, minWidth: 260, borderLeft: "1px solid var(--bd-100)",
+        background: "var(--bg-sidebar)", display: "flex", flexDirection: "column",
+        overflow: "hidden",
+      }}>
+        <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid var(--bd-100)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <FiActivity size={13} style={{ color: "var(--m-cyan)" }} />
+            <FiActivity size={14} style={{ color: "var(--m-cyan)" }} />
             <span style={{ fontSize: 12, fontWeight: 700 }}>Agent 推理过程</span>
           </div>
+          <p style={{ fontSize: 10, color: "var(--tx-100)", marginTop: 2 }}>实时展示多步推理工具调用</p>
         </div>
-
-        <div className="m-card" style={{ flex: 1, overflow: "auto", padding: 10 }}>
-          {trace.length === 0 && !generating && (
-            <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--tx-100)", fontSize: 11, textAlign: "center", gap: 6 }}>
-              <FiSearch size={20} />
+        <div style={{ flex: 1, overflow: "auto", padding: "8px 10px" }}>
+          {activeSteps.length === 0 && !generating && messages.length === 0 && (
+            <div style={{ padding: 20, textAlign: "center", color: "var(--tx-100)", fontSize: 11 }}>
+              <FiSearch size={24} style={{ marginBottom: 8, opacity: 0.4 }} />
               <p>发送问题后将显示<br />Agent 推理过程</p>
             </div>
           )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {ragSteps.map((s, i) => {
-              const active = i < trace.length;
-              const cur = i === activeStep && generating;
-              const metrics = stepMetrics[i];
-              // Only render if this step has been reached
-              if (!active && !cur && generating && i > activeStep) return null;
-              if (!active && !generating) return null;
-              return (
-                <div key={i} style={{
-                  padding: 8, borderRadius: 8,
-                  background: active ? "var(--bg-surface)" : "var(--bg-hover)",
-                  border: `1.5px solid ${cur ? "rgba(0,196,180,0.30)" : active ? "var(--bd-100)" : "transparent"}`,
-                  opacity: active || cur ? 1 : 0.4,
-                  transition: "all 0.4s var(--ease-out-expo)",
-                  position: "relative",
-                  overflow: "hidden",
-                  animation: active ? "fadeIn 0.4s ease" : "none",
-                }}>
-                  {cur && metrics && (
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, var(--m-cyan), var(--m-primary))", animation: "pulseGlow 1.5s ease-in-out infinite" }} />
-                  )}
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: metrics ? 6 : 4 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: active ? "rgba(0,196,180,0.12)" : "var(--bg-hover)", color: active ? "var(--m-cyan)" : "var(--tx-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, border: active ? "1.5px solid rgba(0,196,180,0.2)" : "1.5px solid transparent" }}>
-                      {active ? <FiCheck size={9} /> : i + 1}
-                    </div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--tx-700)" }}>{s.step}</span>
-                    {cur && metrics && (
-                      <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 600, fontFamily: "monospace", color: "var(--m-cyan)", background: "rgba(0,196,180,0.08)", padding: "1px 5px", borderRadius: 4, animation: "fadeIn 0.3s ease" }}>
-                        {metrics.latency}s
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ marginLeft: 26 }}>
-                    <div style={{ fontSize: 10, color: "var(--tx-100)", marginBottom: 1 }}>工具: {s.tool}</div>
-                    {active && (
-                      <>
-                        <div style={{ fontSize: 10, color: "var(--tx-100)" }}>输入: {s.input}</div>
-                        <div style={{ fontSize: 10, color: "var(--m-cyan)", fontWeight: 500 }}>输出: {s.output}</div>
-                        {metrics && (
-                          <div style={{ display: "flex", gap: 8, marginTop: 4, padding: "3px 6px", background: "rgba(0,196,180,0.04)", borderRadius: 4, border: "1px solid rgba(0,196,180,0.08)" }}>
-                            <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}><span style={{ opacity: 0.6 }}>耗时</span> <span style={{ color: "var(--m-cyan)", fontWeight: 600 }}>{metrics.latency}s</span></span>
-                            <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}><span style={{ opacity: 0.6 }}>tokens</span> <span style={{ color: "var(--m-primary)", fontWeight: 600 }}>{metrics.tokens}</span></span>
-                            <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}><span style={{ opacity: 0.6 }}>置信</span> <span style={{ color: "var(--m-green)", fontWeight: 600 }}>{metrics.confidence}</span></span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Sources */}
-        <div className="m-card" style={{ padding: 10 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--tx-100)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>知识库来源</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {articles?.slice(0, 4).map((a) => (
-              <div key={a.id} style={{ padding: "4px 6px", borderRadius: 5, background: "var(--bg-hover)", fontSize: 10, display: "flex", alignItems: "center", gap: 5 }}>
-                <FiFileText size={9} style={{ color: "var(--m-primary)", flexShrink: 0 }} />
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title.length > 22 ? a.title.substring(0, 22) + "..." : a.title}</span>
+          {activeSteps.length === 0 && generating && (
+            <div style={{ padding: 20, textAlign: "center", color: "var(--tx-100)", fontSize: 11 }}>
+              <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid var(--m-primary)", borderTopColor: "transparent", margin: "0 auto 8px" }} className="anim-spin" />
+              <p>Agent 分析中...</p>
+            </div>
+          )}
+          {activeSteps.map((s, i) => (
+            <div key={s.id} style={{
+              padding: "10px 12px", marginBottom: 6, borderRadius: 8,
+              background: i === activeSteps.length - 1 ? "var(--bg-surface)" : "transparent",
+              border: i === activeSteps.length - 1 ? "1px solid var(--bd-100)" : "1px solid transparent",
+              boxShadow: i === activeSteps.length - 1 ? "var(--sh-xs)" : "none",
+              transition: "all 0.3s",
+              animation: "slideInRight 0.3s ease-out",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                <span style={{ fontSize: 16 }}>{s.icon}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--tx-700)" }}>{s.label}</span>
+                <span style={{ marginLeft: "auto", fontSize: 9, color: "var(--tx-100)", fontFamily: "monospace" }}>{s.elapsed.toFixed(1)}s</span>
               </div>
-            ))}
+              <p style={{ fontSize: 10, color: "var(--tx-300)", margin: "0 0 4px", lineHeight: 1.4 }}>{s.description}</p>
+              {s.detail && (
+                <div style={{ fontSize: 9, color: "var(--m-cyan)", background: "rgba(0,196,180,0.06)", padding: "3px 6px", borderRadius: 4, lineHeight: 1.4, wordBreak: "break-all" }}>
+                  {s.detail}
+                </div>
+              )}
+            </div>
+          ))}
+          {!generating && lastAssistantMsg && lastAssistantMsg.toolSteps.length > 0 && (
+            <div style={{ padding: "10px 12px", marginTop: 4, borderRadius: 8, background: "rgba(0,196,180,0.05)", border: "1px solid rgba(0,196,180,0.12)" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--m-cyan)", marginBottom: 3, display: "flex", alignItems: "center", gap: 4 }}>
+                <FiCheck size={12} /> 推理完成
+              </div>
+              <div style={{ fontSize: 9, color: "var(--tx-300)" }}>
+                {lastAssistantMsg.toolSteps.length} 步推理 · {lastAssistantMsg.elapsed.toFixed(1)}s · {lastAssistantMsg.citations.length} 引用
+              </div>
+            </div>
+          )}
+        </div>
+        <div style={{ padding: "10px 14px", borderTop: "1px solid var(--bd-100)", fontSize: 10, color: "var(--tx-100)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span>系统正常</span>
+            <span style={{ color: "var(--m-green)" }}>●</span>
           </div>
         </div>
       </div>
