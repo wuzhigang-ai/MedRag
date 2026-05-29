@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useTheme } from "@/hooks/useTheme";
 import { useToast } from "@/providers/toast";
+import { api } from "@/lib/api";
 import {
   FiEye, FiEyeOff, FiMail, FiLock, FiUser, FiSun, FiMoon,
   FiArrowRight, FiArrowLeft, FiPhone, FiCheck, FiBriefcase, FiHome, FiCalendar
@@ -53,11 +54,22 @@ export default function Register() {
     if (!agreed) { toast.error("请同意用户隐私协议"); return; }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast.success("注册成功", "正在跳转登录页面...");
-      setTimeout(() => navigate("/login"), 800);
-    }, 1200);
+    (async () => {
+      try {
+        await api.auth.register({
+          username: form.username.trim(),
+          password: form.password,
+          confirmPassword: form.confirmPassword,
+          role: form.medicalRole === "clinical_doctor" ? "user" : "user",
+        });
+        setLoading(false);
+        toast.success("注册成功", "正在跳转登录页面...");
+        setTimeout(() => navigate("/login"), 800);
+      } catch (err: any) {
+        setLoading(false);
+        toast.error(err.message || "注册失败");
+      }
+    })();
   };
 
   const feats = [
