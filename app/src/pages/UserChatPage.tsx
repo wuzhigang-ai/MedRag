@@ -462,9 +462,11 @@ export default function UserChatPage() {
                         <div style={{ fontSize: 10, color: "var(--tx-100)" }}>输入: {s.input}</div>
                         <div style={{ fontSize: 10, color: "var(--m-cyan)", fontWeight: 500 }}>输出: {s.output}</div>
                         {metrics && (
-                          <div style={{ display: "flex", gap: 8, marginTop: 4, padding: "3px 6px", background: "rgba(0,196,180,0.04)", borderRadius: 4, border: "1px solid rgba(0,196,180,0.08)" }}>
-                            <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}>⚡ {metrics.latency}s</span>
-                            <span style={{ fontSize: 9, color: "var(--m-cyan)" }}>{metrics.detail}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, padding: "5px 8px", background: "linear-gradient(135deg, rgba(0,196,180,0.04) 0%, rgba(37,99,235,0.03) 100%)", borderRadius: 5, border: "1px solid rgba(0,196,180,0.10)" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 8, fontWeight: 700, fontFamily: "monospace", color: "var(--m-cyan)", background: "rgba(0,196,180,0.10)", padding: "2px 6px", borderRadius: 3, letterSpacing: "0.03em" }}>
+                              {metrics.latency}s
+                            </span>
+                            <span style={{ fontSize: 9, color: "var(--tx-300)", fontWeight: 500 }}>{metrics.detail}</span>
                           </div>
                         )}
                       </>

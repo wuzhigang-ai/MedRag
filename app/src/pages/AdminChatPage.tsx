@@ -300,7 +300,7 @@ export default function AdminChatPage() {
               if (!active && !generating) return null;
               return (
                 <div key={i} style={{ padding: 8, borderRadius: 8, background: active ? "var(--bg-surface)" : "var(--bg-hover)", border: `1.5px solid ${cur ? "rgba(0,196,180,0.30)" : active ? "var(--bd-100)" : "transparent"}`, transition: "all 0.4s", position: "relative", overflow: "hidden", animation: active ? "fadeIn 0.4s ease" : "none" }}>
-                  {cur && metrics && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, var(--m-cyan), var(--m-primary))", animation: "pulseGlow 1.5s ease-in-out infinite" }} />}
+                  {cur && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(0,196,180,0.06) 45%, rgba(37,99,235,0.08) 50%, rgba(0,196,180,0.06) 55%, transparent 60%)", backgroundSize: "200% 100%", animation: "shimmer 1.8s ease-in-out infinite", pointerEvents: "none" }} />}
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: metrics ? 6 : 4 }}>
                     <div style={{ width: 20, height: 20, borderRadius: "50%", background: active ? "rgba(0,196,180,0.12)" : "var(--bg-hover)", color: active ? "var(--m-cyan)" : "var(--tx-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, border: active ? "1.5px solid rgba(0,196,180,0.2)" : "1.5px solid transparent" }}>{active ? <FiCheck size={9} /> : i + 1}</div>
                     <span style={{ fontSize: 11, fontWeight: 600, color: "var(--tx-700)" }}>{s.step}</span>
@@ -309,10 +309,9 @@ export default function AdminChatPage() {
                   <div style={{ marginLeft: 26 }}>
                     <div style={{ fontSize: 10, color: "var(--tx-100)", marginBottom: 1 }}>工具: {s.tool}</div>
                     {active && <><div style={{ fontSize: 10, color: "var(--tx-100)" }}>输入: {s.input}</div><div style={{ fontSize: 10, color: "var(--m-cyan)", fontWeight: 500 }}>输出: {s.output}</div>
-                      {metrics && <div style={{ display: "flex", gap: 6, marginTop: 4, padding: "3px 6px", background: "rgba(0,196,180,0.04)", borderRadius: 4, border: "1px solid rgba(0,196,180,0.08)" }}>
-                        <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}><span style={{ opacity: 0.6 }}>耗时</span> <span style={{ color: "var(--m-cyan)", fontWeight: 600 }}>{metrics.latency}s</span></span>
-                        <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}>⚡ {metrics.latency}s</span>
-                        <span style={{ fontSize: 9, color: "var(--m-cyan)" }}>{metrics.detail}</span>
+                      {metrics && <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 5, padding: "4px 7px", background: "linear-gradient(135deg, rgba(0,196,180,0.04) 0%, rgba(37,99,235,0.03) 100%)", borderRadius: 4, border: "1px solid rgba(0,196,180,0.10)" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 8, fontWeight: 700, fontFamily: "monospace", color: "var(--m-cyan)", background: "rgba(0,196,180,0.10)", padding: "2px 5px", borderRadius: 3, letterSpacing: "0.03em" }}>{metrics.latency}s</span>
+                        <span style={{ fontSize: 9, color: "var(--tx-300)", fontWeight: 500 }}>{metrics.detail}</span>
                       </div>}
                     </>}
                   </div>
