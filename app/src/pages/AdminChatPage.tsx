@@ -128,8 +128,16 @@ export default function AdminChatPage() {
 
   const [articles] = useState<any[]>([]);
   const [liveLatency, setLiveLatency] = useState("0.0");
+  const [preTrace, setPreTrace] = useState<Array<{icon: string; label: string; desc: string}>>([]);
   const stepStartRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const phaseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const PRE_PHASES = [
+    { icon: "🧠", label: "意图识别", desc: "解析用户查询，识别医学实体与临床场景", duration: 1500 },
+    { icon: "💭", label: "思考决策", desc: "判断问题类型，选择最优检索策略与证据链", duration: 2500 },
+    { icon: "🔗", label: "规划工具链", desc: "编排多步推理工具调用序列", duration: 2500 },
+  ];
 
   useEffect(() => {
     const user = localStorage.getItem("medrag_user");
@@ -152,8 +160,21 @@ export default function AdminChatPage() {
     setInput("");
     setGenerating(true);
     setTrace([]);
+    setPreTrace([]);
     setStepMetrics({});
     setActiveStep(-1);
+
+    // Pre-tool reasoning phases
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
+    stepStartRef.current = Date.now();
+    setLiveLatency("0.0");
+    timerRef.current = setInterval(() => setLiveLatency(((Date.now() - stepStartRef.current) / 1000).toFixed(1)), 100);
+    let preIdx = 0;
+    phaseTimerRef.current = setInterval(() => {
+      if (preIdx < PRE_PHASES.length) { setPreTrace(p => [...p, PRE_PHASES[preIdx]]); preIdx++; }
+      else { if (phaseTimerRef.current) clearInterval(phaseTimerRef.current); }
+    }, PRE_PHASES[0].duration);
 
     const aiMsgId = Date.now() + 1;
     const collected: RagStep[] = [];
@@ -165,6 +186,8 @@ export default function AdminChatPage() {
       await api.streamAgent(
         question,
         (data: any) => {
+          if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+          setPreTrace([]);
           const step = toolToStep(data.tool || "unknown", collected.length);
           // Freeze previous step's timer
           const prevIdx = collected.length - 1;
@@ -182,6 +205,8 @@ export default function AdminChatPage() {
           setStepMetrics(p => ({ ...p, [collected.length - 1]: { latency: "0.0", detail: TOOL_DISPLAY[data.tool]?.output || "完成" } }));
         },
         (data: any) => {
+          if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+          setPreTrace([]);
           if (timerRef.current) {
             clearInterval(timerRef.current); timerRef.current = null;
             const lastIdx = collected.length - 1;
@@ -193,10 +218,12 @@ export default function AdminChatPage() {
           aiContent = data.answer || "";
           aiCitations = (data.sources || []).map((s: any) => ({ articleId: 0, articleTitle: s.source || s.title || String(s), content: s.text_preview || "" }));
         },
-        (err: string) => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } aiContent = `错误: ${err}`; },
-        () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
+        (err: string) => { if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; } setPreTrace([]); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } aiContent = `错误: ${err}`; },
+        () => { if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; } if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
       );
     } catch (err: any) {
+      if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+      setPreTrace([]);
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       aiContent = `连接失败: ${err.message || "未知错误"}`;
     }
@@ -315,6 +342,20 @@ export default function AdminChatPage() {
             </div>
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {preTrace.map((p, i) => {
+              const isLastPre = i === preTrace.length - 1 && trace.length === 0;
+              return (
+                <div key={`pre-${i}`} style={{ padding: "8px 10px", borderRadius: 8, background: isLastPre ? "linear-gradient(135deg, rgba(99,102,241,0.02) 0%, var(--bg-surface) 50%)" : "var(--bg-surface)", border: `1px solid ${isLastPre ? "rgba(99,102,241,0.15)" : "var(--bd-100)"}`, animation: "fadeIn 0.3s ease", position: "relative", overflow: "hidden" }}>
+                  {isLastPre && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(99,102,241,0.02) 50%, transparent 60%)", backgroundSize: "200% 100%", animation: "shimmer 2s ease-in-out infinite", pointerEvents: "none" }} />}
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <span style={{ fontSize: 12 }}>{p.icon}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600 }}>{p.label}</span>
+                    {isLastPre && <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 700, fontFamily: "monospace", color: "#818cf8" }}>{liveLatency}s</span>}
+                  </div>
+                  <div style={{ marginTop: 2, fontSize: 9, color: "var(--tx-200)" }}>{p.desc}</div>
+                </div>
+              );
+            })}
             {trace.map((s, i) => {
               const active = i < trace.length;
               const cur = i === activeStep && generating;

@@ -133,6 +133,7 @@ export default function UserChatPage() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [generating, setGenerating] = useState(false);
   const [trace, setTrace] = useState<RagStep[]>([]);
+  const [preTrace, setPreTrace] = useState<Array<{icon: string; label: string; desc: string}>>([]);
   const [stepMetrics, setStepMetrics] = useState<Record<number, StepMetrics>>({});
   const [activeStep, setActiveStep] = useState<number>(-1);
   const [inputFocused, setInputFocused] = useState(false);
@@ -146,6 +147,14 @@ export default function UserChatPage() {
   const [fadingTimer, setFadingTimer] = useState<{stepIdx: number; value: string} | null>(null);
   const stepStartRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const phaseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Pre-tool reasoning phases (before SSE delivers real tools) ──
+  const PRE_PHASES = [
+    { icon: "🧠", label: "意图识别", desc: "解析用户查询，识别医学实体与临床场景", duration: 1500 },
+    { icon: "💭", label: "思考决策", desc: "判断问题类型，选择最优检索策略与证据链", duration: 2500 },
+    { icon: "🔗", label: "规划工具链", desc: "编排多步推理工具调用序列", duration: 2500 },
+  ];
 
   // Route guard: redirect to login if not authenticated
   useEffect(() => {
@@ -174,8 +183,27 @@ export default function UserChatPage() {
     setInput("");
     setGenerating(true);
     setTrace([]);
+    setPreTrace([]);
     setStepMetrics({});
     setActiveStep(-1);
+
+    // ── Start pre-tool reasoning phases ──
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
+    stepStartRef.current = Date.now();
+    setLiveLatency("0.0");
+    timerRef.current = setInterval(() => {
+      setLiveLatency(((Date.now() - stepStartRef.current) / 1000).toFixed(1));
+    }, 100);
+    let preIdx = 0;
+    phaseTimerRef.current = setInterval(() => {
+      if (preIdx < PRE_PHASES.length) {
+        setPreTrace(p => [...p, PRE_PHASES[preIdx]]);
+        preIdx++;
+      } else {
+        if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
+      }
+    }, PRE_PHASES[0].duration);
 
     const t0 = Date.now();
     const aiMsgId = Date.now() + 1;
@@ -189,6 +217,9 @@ export default function UserChatPage() {
         question,
         // onStep — fires as each tool completes
         (data: any) => {
+          // Clear pre-tool phases on first real tool
+          if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+          setPreTrace([]);
           const toolName = data.tool || "unknown";
           const step: RagStep = toolToRagStep(toolName, collected.length, data.elapsed || 0);
           // Freeze previous step's timer → fade-out then bottom-reveal
@@ -221,6 +252,8 @@ export default function UserChatPage() {
         },
         // onAnswer — fires when stream completes with answer
         (data: any) => {
+          if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+          setPreTrace([]);
           if (timerRef.current) {
             clearInterval(timerRef.current); timerRef.current = null;
             const lastIdx = collected.length - 1;
@@ -237,11 +270,13 @@ export default function UserChatPage() {
           }));
         },
         // onError
-        (err: string) => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } aiContent = `抱歉，处理请求时出错: ${err}`; },
+        (err: string) => { if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; } setPreTrace([]); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } aiContent = `抱歉，处理请求时出错: ${err}`; },
         // onDone
-        () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
+        () => { if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; } if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }
       );
     } catch (err: any) {
+      if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+      setPreTrace([]);
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       aiContent = `连接失败: ${err.message || "未知错误"}`;
     }
@@ -453,6 +488,40 @@ export default function UserChatPage() {
             </div>
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {/* ── Pre-tool reasoning phases ── */}
+            {preTrace.map((p, i) => {
+              const isLastPre = i === preTrace.length - 1 && trace.length === 0;
+              return (
+                <div key={`pre-${i}`} style={{
+                  padding: "10px 10px 8px", borderRadius: 10,
+                  background: isLastPre ? "linear-gradient(135deg, rgba(99,102,241,0.03) 0%, var(--bg-surface) 50%)" : "var(--bg-surface)",
+                  boxShadow: isLastPre ? "0 0 0 1px rgba(99,102,241,0.10), 0 2px 6px rgba(99,102,241,0.04)" : "var(--sh-xs)",
+                  border: `1px solid ${isLastPre ? "rgba(99,102,241,0.18)" : "var(--bd-100)"}`,
+                  transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
+                  animation: "fadeIn 0.35s cubic-bezier(0.16,1,0.3,1)",
+                  position: "relative", overflow: "hidden",
+                }}>
+                  {isLastPre && (
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(99,102,241,0.03) 45%, rgba(139,92,246,0.04) 50%, rgba(99,102,241,0.03) 55%, transparent 60%)", backgroundSize: "200% 100%", animation: "shimmer 2s ease-in-out infinite", pointerEvents: "none" }} />
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))", color: "#818cf8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, border: "1.5px solid rgba(99,102,241,0.20)" }}>
+                      {p.icon}
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--tx-700)" }}>{p.label}</span>
+                    {isLastPre && (
+                      <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: "#818cf8", background: "rgba(99,102,241,0.08)", padding: "3px 7px", borderRadius: 5, boxShadow: "0 0 8px rgba(99,102,241,0.08)" }}>
+                        {liveLatency}s
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ marginLeft: 29, marginTop: 3 }}>
+                    <div style={{ fontSize: 10, color: "var(--tx-200)", lineHeight: 1.4 }}>{p.desc}</div>
+                  </div>
+                </div>
+              );
+            })}
+            {/* ── Real tool steps ── */}
             {trace.map((s, i) => {
               const active = i < trace.length;
               const cur = i === activeStep && generating;
