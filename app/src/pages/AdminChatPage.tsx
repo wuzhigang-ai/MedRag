@@ -18,7 +18,7 @@ interface RagStep {
 }
 
 interface StepMetrics {
-  latency: string; tokens: number; confidence: string;
+  latency: string; detail: string;
 }
 
 const TOOL_DISPLAY: Record<string, { label: string; desc: string; output: string }> = {
@@ -165,7 +165,7 @@ export default function AdminChatPage() {
           collected.push(step);
           setTrace([...collected]);
           setActiveStep(collected.length - 1);
-          setStepMetrics(p => ({ ...p, [collected.length - 1]: { latency: data.elapsed?.toFixed(2) || "0.05", tokens: 0, confidence: "0.95" } }));
+          setStepMetrics(p => ({ ...p, [collected.length - 1]: { latency: data.elapsed?.toFixed(2) || "0.05", detail: TOOL_DISPLAY[data.tool]?.output || "完成" } }));
         },
         (data: any) => {
           aiContent = data.answer || "";
@@ -311,8 +311,8 @@ export default function AdminChatPage() {
                     {active && <><div style={{ fontSize: 10, color: "var(--tx-100)" }}>输入: {s.input}</div><div style={{ fontSize: 10, color: "var(--m-cyan)", fontWeight: 500 }}>输出: {s.output}</div>
                       {metrics && <div style={{ display: "flex", gap: 6, marginTop: 4, padding: "3px 6px", background: "rgba(0,196,180,0.04)", borderRadius: 4, border: "1px solid rgba(0,196,180,0.08)" }}>
                         <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}><span style={{ opacity: 0.6 }}>耗时</span> <span style={{ color: "var(--m-cyan)", fontWeight: 600 }}>{metrics.latency}s</span></span>
-                        <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}><span style={{ opacity: 0.6 }}>tokens</span> <span style={{ color: "var(--m-primary)", fontWeight: 600 }}>{metrics.tokens}</span></span>
-                        <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}><span style={{ opacity: 0.6 }}>置信</span> <span style={{ color: "var(--m-green)", fontWeight: 600 }}>{metrics.confidence}</span></span>
+                        <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}>⚡ {metrics.latency}s</span>
+                        <span style={{ fontSize: 9, color: "var(--m-cyan)" }}>{metrics.detail}</span>
                       </div>}
                     </>}
                   </div>

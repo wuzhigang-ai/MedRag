@@ -21,7 +21,7 @@ interface RagStep {
 }
 
 interface StepMetrics {
-  latency: string; tokens: number; confidence: string;
+  latency: string; detail: string;
 }
 
 // ── Real tool → display step mapping ──
@@ -189,12 +189,12 @@ export default function UserChatPage() {
           collected.push(step);
           setTrace([...collected]);
           setActiveStep(collected.length - 1);
+          const stepLatency = (data.elapsed || 0) - (collected.length > 0 ? (parseFloat(Object.values(p).reverse()[0]?.latency || "0") || 0) : 0);
           setStepMetrics((p) => ({
             ...p,
             [collected.length - 1]: {
-              latency: ((data.elapsed || 0) - (collected.length > 1 ? (p[collected.length - 2]?.latency ? parseFloat(p[collected.length - 2].latency) : 0) : 0)).toFixed(2) || "0.05",
-              tokens: 0,
-              confidence: "0.95",
+              latency: stepLatency > 0 ? stepLatency.toFixed(2) : (data.elapsed || 0).toFixed(2),
+              detail: data.tool === "search_rag" ? "FAISS+LightRAG 双路检索" : TOOL_DISPLAY[data.tool]?.output || "完成",
             },
           }));
         },
@@ -441,8 +441,8 @@ export default function UserChatPage() {
                   overflow: "hidden",
                   animation: active ? "fadeIn 0.4s ease" : "none",
                 }}>
-                  {cur && metrics && (
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, var(--m-cyan), var(--m-primary))", animation: "pulseGlow 1.5s ease-in-out infinite" }} />
+                  {cur && (
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 40%, rgba(0,196,180,0.06) 45%, rgba(37,99,235,0.08) 50%, rgba(0,196,180,0.06) 55%, transparent 60%)", backgroundSize: "200% 100%", animation: "shimmer 1.8s ease-in-out infinite", pointerEvents: "none" }} />
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: metrics ? 6 : 4 }}>
                     <div style={{ width: 20, height: 20, borderRadius: "50%", background: active ? "rgba(0,196,180,0.12)" : "var(--bg-hover)", color: active ? "var(--m-cyan)" : "var(--tx-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, border: active ? "1.5px solid rgba(0,196,180,0.2)" : "1.5px solid transparent" }}>
@@ -463,9 +463,8 @@ export default function UserChatPage() {
                         <div style={{ fontSize: 10, color: "var(--m-cyan)", fontWeight: 500 }}>输出: {s.output}</div>
                         {metrics && (
                           <div style={{ display: "flex", gap: 8, marginTop: 4, padding: "3px 6px", background: "rgba(0,196,180,0.04)", borderRadius: 4, border: "1px solid rgba(0,196,180,0.08)" }}>
-                            <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}><span style={{ opacity: 0.6 }}>耗时</span> <span style={{ color: "var(--m-cyan)", fontWeight: 600 }}>{metrics.latency}s</span></span>
-                            <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}><span style={{ opacity: 0.6 }}>tokens</span> <span style={{ color: "var(--m-primary)", fontWeight: 600 }}>{metrics.tokens}</span></span>
-                            <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}><span style={{ opacity: 0.6 }}>置信</span> <span style={{ color: "var(--m-green)", fontWeight: 600 }}>{metrics.confidence}</span></span>
+                            <span style={{ fontSize: 9, fontFamily: "monospace", color: "var(--tx-100)" }}>⚡ {metrics.latency}s</span>
+                            <span style={{ fontSize: 9, color: "var(--m-cyan)" }}>{metrics.detail}</span>
                           </div>
                         )}
                       </>
