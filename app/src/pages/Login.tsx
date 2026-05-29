@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useTheme } from "@/hooks/useTheme";
-import { FiEye, FiEyeOff, FiMail, FiLock, FiSun, FiMoon, FiArrowRight, FiBook, FiLayers, FiPieChart, FiMessageSquare } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiUser, FiLock, FiSun, FiMoon, FiArrowRight, FiBook, FiLayers, FiPieChart, FiMessageSquare } from "react-icons/fi";
 import { api } from "@/lib/api";
 
 export default function Login() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const [email, setEmail] = useState("");
+  const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<"expert" | "user" | "admin">("expert");
@@ -18,13 +18,13 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!email.trim()) { setError("请输入邮箱地址"); return; }
+    if (!account.trim()) { setError("请输入用户名或邮箱账号"); return; }
     if (!password.trim()) { setError("请输入密码"); return; }
     setLoading(true);
     try {
-      const result = await api.auth.login({ username: email.trim(), password });
+      const result = await api.auth.login({ username: account.trim(), password });
       localStorage.setItem("medasr_token", result.token);
-      localStorage.setItem("medrag_user", JSON.stringify({ id: result.user.id, name: result.user.username, email: email.trim(), role: result.user.role, avatar: null }));
+      localStorage.setItem("medrag_user", JSON.stringify({ id: result.user.id, name: result.user.username, email: account.trim(), role: result.user.role, avatar: null }));
       if (result.user.role === "admin") {
         navigate("/admin");
       } else {
@@ -108,10 +108,10 @@ export default function Login() {
 
           <form onSubmit={handleLogin}>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--tx-500)", marginBottom: 5 }}>邮箱地址</label>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--tx-500)", marginBottom: 5 }}>账号名称</label>
               <div style={{ position: "relative" }}>
-                <FiMail size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--tx-100)" }} />
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="请输入邮箱" className="m-input" style={{ paddingLeft: 40 }} />
+                <FiUser size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--tx-100)" }} />
+                <input type="text" value={account} onChange={(e) => setAccount(e.target.value)} placeholder="请输入用户名或邮箱账号" className="m-input" style={{ paddingLeft: 40 }} autoComplete="username" />
               </div>
             </div>
             <div style={{ marginBottom: 14 }}>
@@ -135,34 +135,7 @@ export default function Login() {
             </button>
           </form>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "22px 0" }}>
-            <div style={{ flex: 1, height: 1, background: "var(--bd-200)" }} />
-            <span style={{ fontSize: 11, color: "var(--tx-100)" }}>或</span>
-            <div style={{ flex: 1, height: 1, background: "var(--bd-200)" }} />
-          </div>
-
-          {/* OAuth Login */}
-          <button
-            onClick={() => {
-              const appId = import.meta.env.VITE_APP_ID || "19da5128-d392-8ac8-8000-00004aa4c8cc";
-              const redirectUri = `${window.location.origin}/api/oauth/callback`;
-              const state = btoa(window.location.pathname);
-              const authUrl = `https://auth.kimi.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=profile&state=${encodeURIComponent(state)}`;
-              window.location.href = authUrl;
-            }}
-            className="m-btn"
-            style={{
-              width: "100%", height: 40, fontSize: 14, marginBottom: 16,
-              background: "var(--bg-elevated)", border: "1.5px solid var(--bd-200)",
-              color: "var(--tx-500)", display: "flex", alignItems: "center",
-              justifyContent: "center", gap: 8,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="currentColor"/></svg>
-            通过 Kimi OAuth 登录
-          </button>
-
-          <div style={{ textAlign: "center" }}>
+          <div style={{ textAlign: "center", marginTop: 22 }}>
             <span style={{ fontSize: 13, color: "var(--tx-300)" }}>暂无账号？</span>
             <Link to="/register" style={{ fontSize: 13, color: "var(--m-primary)", textDecoration: "none", fontWeight: 600, marginLeft: 4 }}>立即注册 <FiArrowRight size={12} style={{ display: "inline", verticalAlign: "middle" }} /></Link>
           </div>

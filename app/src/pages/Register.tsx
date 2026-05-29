@@ -248,13 +248,7 @@ export default function Register() {
             </div>
           </form>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "22px 0" }}>
-            <div style={{ flex: 1, height: 1, background: "var(--bd-200)" }} />
-            <span style={{ fontSize: 11, color: "var(--tx-100)" }}>或</span>
-            <div style={{ flex: 1, height: 1, background: "var(--bd-200)" }} />
-          </div>
-
-          <div style={{ textAlign: "center" }}>
+          <div style={{ textAlign: "center", marginTop: 10 }}>
             <span style={{ fontSize: 13, color: "var(--tx-300)" }}>已有账号？</span>
             <Link to="/login" style={{ fontSize: 13, color: "var(--m-primary)", textDecoration: "none", fontWeight: 600, marginLeft: 4 }}>立即登录 <FiArrowRight size={12} style={{ display: "inline", verticalAlign: "middle" }} /></Link>
           </div>

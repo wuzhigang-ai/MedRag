@@ -49,11 +49,15 @@ def create_user(username: str, password: str, role: str = "user") -> dict:
 
 
 def verify_user(username: str, password: str) -> dict | None:
-    """Verify credentials. Returns user dict or None."""
+    """Verify credentials by username OR email. Returns user dict or None."""
     try:
         conn = get_conn()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT id, username, password_hash, role FROM users WHERE username = %s", (username,))
+        # Support login with username or email
+        cursor.execute(
+            "SELECT id, username, password_hash, role FROM users WHERE username = %s OR email = %s",
+            (username, username),
+        )
         row = cursor.fetchone()
         cursor.close(); conn.close()
         if row and bcrypt.checkpw(password.encode(), row["password_hash"].encode()):
