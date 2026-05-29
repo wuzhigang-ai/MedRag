@@ -754,7 +754,11 @@
 
     /* ── POST Fallback ──────────────────────────────────── */
     async function postAgentResponse(question, agentMsg) {
-        removeThinking();
+        // Keep workbench visible — update status to show fallback mode
+        if (workbenchEl) {
+            var status = workbenchEl.querySelector('.wb-status-text');
+            if (status) status.textContent = 'Agent 分析中... (非流式)';
+        }
         try {
             var result = await API.post('/api/agent', {
                 question: question,
@@ -765,14 +769,13 @@
             agentMsg.sources = result.sources || [];
             agentMsg.model = result.model || '';
             // Show steps as workbench cards (retroactively)
-            if (agentMsg.reasoningTrace.length > 0) {
-                showThinking();
+            if (agentMsg.reasoningTrace.length > 0 && workbenchEl) {
                 agentMsg.reasoningTrace.forEach(function (s) { addWorkbenchStep(s); });
-                removeThinking();
             }
         } catch (e) {
             agentMsg.answer = '抱歉，请求处理失败: ' + (e.message || '未知错误');
         }
+        removeThinking();
         // Append agent message
         let conv = conversations.find(function (c) { return c.id === activeConvId; });
         if (conv) {

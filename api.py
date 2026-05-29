@@ -295,50 +295,57 @@ async def agent_query(req: QueryRequest):
 
 @app.get("/api/agent/stream")
 async def agent_stream(question: str):
-    """SSE streaming of Agent reasoning steps — REAL-TIME via callback + queue bridge."""
-    import queue
+    """SSE streaming of Agent reasoning steps — REAL-TIME via callback + list bridge."""
     import concurrent.futures
     p = get_pipeline()
     agent = MedicalAgent(p)
 
     async def generate():
         t0 = datetime.now()
-        q: queue.Queue = queue.Queue()
+        import threading
+        events: list = []  # Shared list: Thread-safe for append+drain pattern
+        lock = threading.Lock()
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
         def on_step(step_info):
             step_info["elapsed"] = round((datetime.now() - t0).total_seconds(), 1)
-            q.put(("step", step_info))
+            with lock:
+                events.append(("step", step_info))
 
         def run_agent():
             try:
                 result = agent.run(question, 20, on_step=on_step)
                 result["elapsed"] = round((datetime.now() - t0).total_seconds(), 1)
-                q.put(("done", result))
+                with lock:
+                    events.append(("done", result))
             except Exception as e:
-                q.put(("error", {"message": f"推理出错: {str(e)[:200]}"}))
+                with lock:
+                    events.append(("error", {"message": f"推理出错: {str(e)[:200]}"}))
 
         loop = asyncio.get_event_loop()
         future = loop.run_in_executor(executor, run_agent)
 
         yield f"data: {json.dumps({'type': 'start', 'message': '开始分析...', 'ts': t0.isoformat()})}\n\n"
 
-        while True:
-            try:
-                evt_type, data = q.get(timeout=0.3)
+        finished = False
+        while not finished:
+            await asyncio.sleep(1.0)  # Yield control to event loop
+            # Drain accumulated events
+            batch = []
+            with lock:
+                while events:
+                    batch.append(events.pop(0))
+            for evt_type, data in batch:
                 if evt_type == "step":
                     yield f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
                 elif evt_type == "done":
                     yield f"data: {json.dumps({'type': 'answer', 'answer': data['answer'], 'sources': data.get('sources', []), 'elapsed': data.get('elapsed', 0), 'steps': len(data.get('reasoning_trace', []))}, ensure_ascii=False)}\n\n"
                     yield "data: [DONE]\n\n"
-                    break
+                    finished = True
                 elif evt_type == "error":
                     yield f"data: {json.dumps({'type': 'error', 'message': data.get('message', '未知错误')})}\n\n"
                     yield "data: [DONE]\n\n"
-                    break
-            except queue.Empty:
-                # Heartbeat to keep connection alive
-                yield f"data: {json.dumps({'type': 'heartbeat', 'elapsed': round((datetime.now()-t0).total_seconds(),1)})}\n\n"
+                    finished = True
 
         await asyncio.wait_for(future, timeout=190.0)
         executor.shutdown(wait=False)
