@@ -22,7 +22,7 @@ interface StepMetrics {
 }
 
 const TOOL_DISPLAY: Record<string, { label: string; desc: string; output: string }> = {
-  search_rag: { label: "双路检索", desc: "FAISS关键词向量检索 + LightRAG自然语言图谱检索", output: "召回文献片段" },
+  search_rag: { label: "多模态 双路检索", desc: "向量关键词检索 + LightRAG自然语言图谱检索", output: "召回文献片段" },
   deep_retrieve: { label: "多维检索", desc: "从多个临床维度系统检索同一主题", output: "多维度结果" },
   cross_check: { label: "交叉验证", desc: "检测多篇文献结论一致性，发现证据矛盾", output: "一致性报告" },
   get_evidence: { label: "文献覆盖", desc: "查询单篇文献在知识库中的覆盖范围", output: "覆盖信息" },
@@ -332,7 +332,7 @@ export default function AdminChatPage() {
                   <div style={{ marginLeft: 26 }}>
                     <div style={{ fontSize: 10, color: "var(--tx-100)", marginBottom: 1 }}>工具: {s.tool}</div>
                     {active && <><div style={{ fontSize: 10, color: "var(--tx-100)" }}>输入: {s.input}</div><div style={{ fontSize: 10, color: "var(--m-cyan)", fontWeight: 500 }}>输出: {s.output}</div>
-                      {metrics && <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 5, padding: "4px 7px", background: "linear-gradient(135deg, rgba(239,68,68,0.02) 0%, rgba(239,68,68,0.04) 100%)", borderRadius: 4, border: "1px solid rgba(239,68,68,0.10)" }}>
+                      {metrics && metrics.latency !== "0.0" && <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 5, padding: "4px 7px", background: "linear-gradient(135deg, rgba(239,68,68,0.02) 0%, rgba(239,68,68,0.04) 100%)", borderRadius: 4, border: "1px solid rgba(239,68,68,0.10)", animation: "fadeIn 0.4s cubic-bezier(0.16,1,0.3,1)" }}>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 8, fontWeight: 700, fontFamily: "monospace", color: "#ef4444", background: "rgba(239,68,68,0.10)", padding: "2px 5px", borderRadius: 3, letterSpacing: "0.03em" }}>{metrics.latency}s</span>
                         <span style={{ fontSize: 9, color: "var(--tx-300)", fontWeight: 500 }}>{metrics.detail}</span>
                       </div>}
