@@ -39,6 +39,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount business REST API router (MedRAG frontend integration)
+from src.api_business import router as business_router
+app.include_router(business_router)
+
 UPLOAD_DIR = Path("./uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
@@ -46,10 +50,11 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 @app.on_event("startup")
 async def startup_event():
     """Initialize upload task table and worker on server start."""
-    from src.auth import ensure_upload_tasks_table
+    from src.auth import ensure_upload_tasks_table, ensure_business_tables
     from src.task_manager import get_task_manager
     try:
         ensure_upload_tasks_table()
+        ensure_business_tables()
         tm = get_task_manager()
         tm.set_pipeline(get_pipeline())
         await tm.start()

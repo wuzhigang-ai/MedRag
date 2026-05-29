@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useTheme } from "@/hooks/useTheme";
 import { FiEye, FiEyeOff, FiMail, FiLock, FiSun, FiMoon, FiArrowRight, FiBook, FiLayers, FiPieChart, FiMessageSquare } from "react-icons/fi";
+import { api } from "@/lib/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -14,22 +15,26 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (!email.trim()) { setError("请输入邮箱地址"); return; }
     if (!password.trim()) { setError("请输入密码"); return; }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      localStorage.setItem("medrag_user", JSON.stringify({ id: 1, name: email.split("@")[0], email, role, avatar: null }));
-      // Smart redirect based on role
-      if (role === "expert") {
+    try {
+      const result = await api.auth.login({ username: email.trim(), password });
+      localStorage.setItem("medasr_token", result.token);
+      localStorage.setItem("medrag_user", JSON.stringify({ id: result.user.id, name: result.user.username, email: email.trim(), role: result.user.role, avatar: null }));
+      if (result.user.role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/chat"); // Independent user chat interface
+        navigate("/chat");
       }
-    }, 800);
+    } catch (err: any) {
+      setError(err.message || "登录失败");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const feats = [

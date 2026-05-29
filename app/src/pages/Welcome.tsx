@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { useTheme } from "@/hooks/useTheme";
-import { trpc } from "@/providers/trpc";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import StarrySky from "@/components/StarrySky";
 import {
   FiSun, FiMoon, FiUpload, FiBook, FiMessageSquare, FiDatabase,
@@ -40,7 +41,7 @@ export default function Welcome() {
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [heroOn, setHeroOn] = useState(false);
-  const { data: stats } = trpc.stats.system.useQuery();
+  const { data: stats } = useQuery({ queryKey: ["stats", "system"], queryFn: () => api.stats.system() });
 
   useEffect(() => { const t = setTimeout(() => setHeroOn(true), 120); return () => clearTimeout(t); }, []);
   useEffect(() => { const h = () => setScrolled(window.scrollY > 50); window.addEventListener("scroll", h, { passive: true }); return () => window.removeEventListener("scroll", h); }, []);
