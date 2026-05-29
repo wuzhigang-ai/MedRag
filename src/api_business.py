@@ -47,6 +47,7 @@ class RegisterRequest(BaseModel):
     password: str
     confirmPassword: str = ""
     role: str = "user"
+    email: str = ""
 
 @router.post("/auth/login")
 def auth_login(req: LoginRequest):
@@ -64,7 +65,7 @@ def auth_register(req: RegisterRequest):
     if req.password != req.confirmPassword:
         raise HTTPException(400, "两次密码不一致")
     try:
-        user = create_user(req.username, req.password, req.role or "user")
+        user = create_user(req.username, req.password, req.role or "user", email=req.email or "")
         return {"success": True, "user": user}
     except ValueError as e:
         raise HTTPException(400, str(e))

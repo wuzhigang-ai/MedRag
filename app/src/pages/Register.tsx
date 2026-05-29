@@ -60,6 +60,7 @@ export default function Register() {
           username: form.username.trim(),
           password: form.password,
           confirmPassword: form.confirmPassword,
+          email: form.email.trim(),
           role: form.medicalRole === "clinical_doctor" ? "user" : "user",
         });
         setLoading(false);

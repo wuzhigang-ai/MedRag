@@ -27,22 +27,22 @@ def get_conn():
     return get_pool().get_connection()
 
 
-def create_user(username: str, password: str, role: str = "user") -> dict:
+def create_user(username: str, password: str, role: str = "user", email: str = "") -> dict:
     """Register a new user. Returns user info or raises."""
     try:
         conn = get_conn()
         cursor = conn.cursor()
         h = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         cursor.execute(
-            "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
-            (username, h, role),
+            "INSERT INTO users (username, password_hash, role, email) VALUES (%s, %s, %s, %s)",
+            (username, h, role, email or None),
         )
         conn.commit()
         uid = cursor.lastrowid
         cursor.close(); conn.close()
         return {"id": uid, "username": username, "role": role}
     except mysql.connector.IntegrityError:
-        raise ValueError("用户名已存在")
+        raise ValueError("用户名或邮箱已存在")
     except Exception as e:
         logger.error(f"Create user failed: {e}")
         raise
