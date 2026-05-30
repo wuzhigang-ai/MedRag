@@ -28,8 +28,8 @@ function getTC() {
     bg: bg || "#0c1222", text: s.getPropertyValue("--tx-700").trim() || (isDark?"#c8d5e8":"#1e293b"),
     textMuted: s.getPropertyValue("--tx-300").trim() || (isDark?"#7a8db0":"#64748b"),
     surface: s.getPropertyValue("--bg-surface").trim() || (isDark?"#1a2235":"#ffffff"),
-    edge: isDark?"rgba(255,255,255,0.11)":"rgba(0,0,0,0.16)",
-    edgeHi: isDark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.40)",
+    edge: isDark?"rgba(255,255,255,0.18)":"rgba(0,0,0,0.22)",
+    edgeHi: isDark?"rgba(255,255,255,0.50)":"rgba(0,0,0,0.50)",
     dot: isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.05)",
     isDark,
   };
@@ -99,7 +99,7 @@ export default function GraphPage() {
       const W=cv.width/dpr, H=cv.height/dpr, cx=W/2, cy=H/2, maxR=Math.min(W,H)*0.44;
       for(let i=0;i<sn.length;i++){for(let j=i+1;j<sn.length;j++){
         const a=sn[i],b=sn[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.sqrt(dx*dx+dy*dy)||1;
-        const f=(2000+(forces.repel-50)*40)/(d*d);
+        const f=(4000+(forces.repel-50)*40)/(d*d);
         a.vx-=(dx/d)*f;a.vy-=(dy/d)*f;b.vx+=(dx/d)*f;b.vy+=(dy/d)*f;
       }}
       for(const e of se){if(!e.sn||!e.tn)continue;
@@ -112,7 +112,7 @@ export default function GraphPage() {
         n.vx+=(dx/dist)*dist*0.0006*(forces.center/50);
         n.vy+=(dy/dist)*dist*0.0006*(forces.center/50);
         if(dist>maxR){const over=dist-maxR;n.vx-=(dx/dist)*over*0.02;n.vy-=(dy/dist)*over*0.02;}
-        n.vx*=0.82;n.vy*=0.82;n.x+=n.vx;n.y+=n.vy;
+        n.vx*=0.78;n.vy*=0.78;n.x+=n.vx;n.y+=n.vy;
         n.x+=(Math.max(10,Math.min(W-10,n.x))-n.x)*0.05;
         n.y+=(Math.max(10,Math.min(H-10,n.y))-n.y)*0.05;
       }
@@ -140,7 +140,7 @@ export default function GraphPage() {
         const isDimmed = (selNode||hoverRef.current)&&!isHighlighted;
         ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
         ctx.strokeStyle=isHighlighted?tc.edgeHi:isDimmed?(tc.isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.04)"):tc.edge;
-        ctx.lineWidth=isHighlighted?1.8:0.6;ctx.stroke();
+        ctx.lineWidth=isHighlighted?2.5:1.2;ctx.stroke();
         if(!isDimmed&&zoom>0.55){
           const mx=(a.x+b.x)/2,my=(a.y+b.y)/2,lbl=rtLabels[e.relationType]||e.relationType;
           ctx.font="8px Inter,system-ui,sans-serif";const tw=ctx.measureText(lbl).width;
@@ -156,31 +156,36 @@ export default function GraphPage() {
         const isDimmed = (selNode||hoverRef.current)&&!isSel&&!isHover;
         const color=ntColors[n.nodeType]||ntColors.other;
         const linkCount = n.weight??0;
-        const baseR = Math.max(5, Math.min(20, 8 + linkCount*1.5));
-        const r = isSel||isHover ? baseR*1.2 : baseR;
+        const baseR = Math.max(8, Math.min(28, 12 + linkCount*2.0));
+        const r = isSel||isHover ? baseR*1.3 : baseR;
         const alpha = isDimmed?0.25:1;
 
         ctx.globalAlpha = alpha;
-        // Glow
+        // Glow ring
         if(isSel||isHover){
-          ctx.beginPath();ctx.arc(n.x,n.y,r+12,0,Math.PI*2);
-          const gG=ctx.createRadialGradient(n.x,n.y,r,n.x,n.y,r+12);
-          gG.addColorStop(0,color+"30");gG.addColorStop(1,"transparent");
+          const glowR = r+14;
+          ctx.beginPath();ctx.arc(n.x,n.y,glowR,0,Math.PI*2);
+          const gG=ctx.createRadialGradient(n.x,n.y,r*0.8,n.x,n.y,glowR);
+          gG.addColorStop(0,color+"40");gG.addColorStop(1,"transparent");
           ctx.fillStyle=gG;ctx.fill();
-          ctx.beginPath();ctx.arc(n.x,n.y,r+4,0,Math.PI*2);
-          ctx.strokeStyle=color+"50";ctx.lineWidth=2;ctx.stroke();
+          ctx.beginPath();ctx.arc(n.x,n.y,r+6,0,Math.PI*2);
+          ctx.strokeStyle=color+"60";ctx.lineWidth=2.5;ctx.stroke();
         }
-        // Orb
+        // Node orb with subtle shadow
+        ctx.shadowColor = color; ctx.shadowBlur = isSel?12:4;
         ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+        ctx.shadowBlur = 0;
+        // Specular highlight
         ctx.beginPath();ctx.arc(n.x-r*0.25,n.y-r*0.25,r*0.3,0,Math.PI*2);
-        ctx.fillStyle="rgba(255,255,255,0.25)";ctx.fill();
+        ctx.fillStyle="rgba(255,255,255,0.30)";ctx.fill();
         // Label
-        if(showLabels&&(zoom>0.3||isSel||isHover)){
-          ctx.globalAlpha = isDimmed?0.3:1;
-          ctx.font="9px Inter,system-ui,sans-serif";
-          const lw=ctx.measureText(n.label).width, ly=n.y+r+10;
-          ctx.fillStyle=tc.surface+"cc";ctx.fillRect(n.x-lw/2-3,ly-7,lw+6,13);
-          ctx.fillStyle=isSel?color:tc.text;ctx.textAlign="center";ctx.fillText(n.label,n.x,ly+2);
+        if(showLabels&&(zoom>0.25||isSel||isHover)){
+          ctx.globalAlpha = isDimmed?0.35:0.95;
+          const fontSize = isSel?12:10;
+          ctx.font=`${fontSize}px Inter,system-ui,sans-serif`;
+          const lw=ctx.measureText(n.label).width, ly=n.y+r+11;
+          ctx.fillStyle=tc.surface+"ee";ctx.fillRect(n.x-lw/2-4,ly-8,lw+8,15);
+          ctx.fillStyle=isSel?color:tc.text;ctx.textAlign="center";ctx.fillText(n.label,n.x,ly+3);
         }
       }
       ctx.globalAlpha=1;ctx.restore();
