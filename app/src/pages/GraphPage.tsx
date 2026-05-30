@@ -23,15 +23,18 @@ const rtLabels: Record<string, string> = {
 interface GNode { id: number; label: string; nodeType: string; x: number; y: number; vx: number; vy: number; description?: string | null; occurrenceCount?: number | null; icd10Code?: string | null; meshTerm?: string | null; group?: string; weight?: number; }
 interface GEdge { id: number; source: number; target: number; relationType: string; strength: number | null; }
 
-function getThemeColors(): { bg: string; text: string; textMuted: string; surface: string; edgeLight: string; edgeDark: string } {
+function getThemeColors(): { bg: string; text: string; textMuted: string; surface: string; edgeLight: string; edgeDark: string; isDark: boolean } {
   const s = getComputedStyle(document.documentElement);
+  const bg = s.getPropertyValue("--bg-base").trim();
+  const isDark = !bg || bg === "#0c1222" || parseInt(bg.replace("#",""),16) < 0x888888;
   return {
-    bg: s.getPropertyValue("--bg-base").trim() || "#0c1222",
-    text: s.getPropertyValue("--tx-700").trim() || "#c8d5e8",
-    textMuted: s.getPropertyValue("--tx-300").trim() || "#7a8db0",
-    surface: s.getPropertyValue("--bg-surface").trim() || "#1a2235",
-    edgeLight: s.getPropertyValue("--bd-100").trim() || "rgba(255,255,255,0.06)",
-    edgeDark: s.getPropertyValue("--bd-200").trim() || "rgba(255,255,255,0.12)",
+    bg: bg || "#0c1222",
+    text: s.getPropertyValue("--tx-700").trim() || (isDark ? "#c8d5e8" : "#1e293b"),
+    textMuted: s.getPropertyValue("--tx-300").trim() || (isDark ? "#7a8db0" : "#64748b"),
+    surface: s.getPropertyValue("--bg-surface").trim() || (isDark ? "#1a2235" : "#ffffff"),
+    edgeLight: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)",
+    edgeDark: isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.12)",
+    isDark,
   };
 }
 
@@ -45,7 +48,7 @@ export default function GraphPage() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [hoverNode, setHoverNode] = useState<GNode | null>(null);
+  const hoverNodeRef.currentRef = useRef<GNode | null>(null); // Ref, NOT state — avoids re-render/explosion
 
   const { data: gd } = trpc.knowledge.getGraph.useQuery();
   const { data: stats } = trpc.knowledge.stats.useQuery();
@@ -159,7 +162,7 @@ export default function GraphPage() {
         const a = e.sn, b = e.tn;
         if (!a || !b) continue;
         const isFiltered = !filter || (filteredSet.has(a.id) && filteredSet.has(b.id));
-        const isHighlighted = hoverNode && (a.id === hoverNode.id || b.id === hoverNode.id);
+        const isHighlighted = hoverNodeRef.current && (a.id === hoverNodeRef.current.id || b.id === hoverNodeRef.current.id);
         if (!isFiltered) continue;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
         const edgeAlpha = isHighlighted ? 0.35 : 0.08;
@@ -182,7 +185,7 @@ export default function GraphPage() {
         const isFiltered = !filter || filteredSet.has(n.id);
         if (!isFiltered) continue;
         const isSel = selNode?.id === n.id;
-        const isHover = hoverNode?.id === n.id;
+        const isHover = hoverNodeRef.current?.id === n.id;
         const color = ntColors[n.nodeType] || ntColors.other;
         const baseR = 4 + Math.min((n.weight || n.occurrenceCount || 1) * 1.2, 12);
 
@@ -227,7 +230,7 @@ export default function GraphPage() {
 
     draw();
     return () => { cancelAnimationFrame(aid); window.removeEventListener("resize", resize); };
-  }, [nodes.length, edges.length, selNode, hoverNode, zoom, pan, filter]);
+  }, [nodes.length, edges.length, selNode, zoom, pan, filter]);
 
   const canvasToNode = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const cv = cvRef.current; if (!cv) return null;
@@ -245,7 +248,8 @@ export default function GraphPage() {
   }, [canvasToNode]);
 
   const handleMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const n = canvasToNode(e); setHoverNode(n);
+    const n = canvasToNode(e);
+    hoverNodeRef.current = n; // Ref only — no state update, no re-render
     const cv = cvRef.current; if (cv) cv.style.cursor = n ? "pointer" : dragging ? "grabbing" : "grab";
   }, [canvasToNode, dragging]);
 
