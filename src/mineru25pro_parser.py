@@ -47,6 +47,17 @@ def _clean_page(text):
         text = pat.sub('', text)
     return text.strip()
 
+
+def _is_generation_loop(text: str) -> bool:
+    """Detect VLM hallucination loops (repeated word patterns)."""
+    words = text.lower().split()
+    if len(words) < 30:
+        return False
+    from collections import Counter as _Counter
+    wc = _Counter(words)
+    top_word, top_count = wc.most_common(1)[0]
+    return top_count > 30 and top_count / len(words) > 0.3
+
 # ── Paragraph splitting ──
 SECTION_HEADERS = re.compile(
     r'^(METHODS?|RESULTS?|INTRODUCTION|DISCUSSION|CONCLUSIONS?|'
@@ -316,12 +327,18 @@ def parse_pdf_25pro(pdf_path, output_dir=None, chunker=None, doc_name_override=N
     parse_time = time.time() - t0
     logger.info(f"  Parsing: {parse_time:.0f}s ({parse_time/len(pdf):.0f}s/page)")
 
-    # ── Step 2: Split into paragraphs ──
+    # ── Step 2: Split into paragraphs + filter generation loops ──
     all_chunks = []
+    skipped = 0
     for page_idx, text in enumerate(pages_text):
         chunks = _split_paragraphs(text, page_idx)
-        all_chunks.extend(chunks)
-    logger.info(f"  Split: {len(pages_text)} pages → {len(all_chunks)} chunks")
+        for c in chunks:
+            if _is_generation_loop(c["text"]):
+                skipped += 1
+                logger.warning(f"  Skipping hallucinated chunk p{page_idx}: {c['text'][:80]}...")
+            else:
+                all_chunks.append(c)
+    logger.info(f"  Split: {len(pages_text)} pages → {len(all_chunks)} chunks (skipped {skipped} loop hallucinations)")
 
     # ── Step 3: PICO batch classification (LLM) with keyword fallback ──
     _enrich_chunks_batch(all_chunks)

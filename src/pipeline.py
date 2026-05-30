@@ -1556,6 +1556,16 @@ HTML数据:
             # Quality gate: skip garbage chunks
             if len(text) < 30:
                 continue
+            # ── Repetition filter: detect VLM generation loops ──
+            words = text.lower().split()
+            if len(words) > 30:
+                from collections import Counter as _Counter
+                wc = _Counter(words)
+                top_word, top_count = wc.most_common(1)[0]
+                # If a single word appears >30% of total words and >30 times = hallucination loop
+                if top_count > 30 and top_count / len(words) > 0.3:
+                    logger.warning(f"Repetition loop detected: word='{top_word}' count={top_count}/{len(words)}, skipping chunk")
+                    continue
             non_alpha = sum(1 for c in text if c.isascii() and not c.isalnum() and c not in ' .,;:!?()-[]{}%/=<>±')
             if len(text) > 0 and non_alpha / len(text) > 0.5:
                 logger.info(f"Skipping garbage chunk ({non_alpha}/{len(text)} noise): {text[:80]}")
