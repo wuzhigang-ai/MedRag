@@ -48,7 +48,7 @@ export default function GraphPage() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const hoverNodeRef.currentRef = useRef<GNode | null>(null); // Ref, NOT state — avoids re-render/explosion
+  const hoverNodeRef = useRef<GNode | null>(null);
 
   const { data: gd } = trpc.knowledge.getGraph.useQuery();
   const { data: stats } = trpc.knowledge.stats.useQuery();
