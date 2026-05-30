@@ -19,7 +19,7 @@ _pool = None
 def get_pool():
     global _pool
     if _pool is None:
-        _pool = pooling.MySQLConnectionPool(pool_name="medasr", pool_size=5, **DB_CONFIG)
+        _pool = pooling.MySQLConnectionPool(pool_name="medasr", pool_size=20, **DB_CONFIG)
     return _pool
 
 
