@@ -275,7 +275,7 @@ def stats_system():
     graph_nodes = graph_data.get("stats", {}).get("total_nodes", len(graph_data.get("nodes", [])))
     graph_edges = graph_data.get("stats", {}).get("total_edges", len(graph_data.get("edges", [])))
     return {
-        "totalArticles": s["totalArticles"] + gs.get("total_documents", 0),  # MySQL + FAISS
+        "totalArticles": gs.get("total_documents", 0),  # FAISS indexed docs (canonical count)
         "parsedArticles": s.get("parsedArticles", 0),
         "knowledgeBaseArticles": gs.get("total_documents", 0),  # FAISS indexed docs
         "totalNodes": graph_nodes,
