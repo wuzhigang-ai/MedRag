@@ -1,6 +1,7 @@
 """MySQL-based authentication module for MedASR."""
 
 import bcrypt
+import json
 import mysql.connector
 from mysql.connector import pooling
 import logging
@@ -27,10 +28,21 @@ def get_conn():
     return get_pool().get_connection()
 
 
+def with_conn(fn):
+    """Execute fn(conn) with auto-close. Prevents connection leaks."""
+    conn = get_conn()
+    try:
+        return fn(conn)
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
 def create_user(username: str, password: str, role: str = "user", email: str = "") -> dict:
     """Register a new user. Returns user info or raises."""
-    try:
-        conn = get_conn()
+    def _do(conn):
         cursor = conn.cursor()
         h = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         cursor.execute(
@@ -39,8 +51,10 @@ def create_user(username: str, password: str, role: str = "user", email: str = "
         )
         conn.commit()
         uid = cursor.lastrowid
-        cursor.close(); conn.close()
+        cursor.close()
         return {"id": uid, "username": username, "role": role}
+    try:
+        return with_conn(_do)
     except mysql.connector.IntegrityError:
         raise ValueError("用户名或邮箱已存在")
     except Exception as e:
@@ -50,21 +64,22 @@ def create_user(username: str, password: str, role: str = "user", email: str = "
 
 def verify_user(username: str, password: str) -> dict | None:
     """Verify credentials by username OR email. Returns user dict or None."""
-    try:
-        conn = get_conn()
+    def _do(conn):
         cursor = conn.cursor(dictionary=True)
-        # Support login with username or email
         cursor.execute(
             "SELECT id, username, password_hash, role FROM users WHERE username = %s OR email = %s",
             (username, username),
         )
         row = cursor.fetchone()
-        cursor.close(); conn.close()
+        cursor.close()
         if row and bcrypt.checkpw(password.encode(), row["password_hash"].encode()):
             return {"id": row["id"], "username": row["username"], "role": row["role"]}
+        return None
+    try:
+        return with_conn(_do)
     except Exception as e:
         logger.error(f"Verify user failed: {e}")
-    return None
+        return None
 
 
 def list_users() -> list:
@@ -641,14 +656,14 @@ def rate_chat_message(message_id: int, rating: int, feedback: str = "") -> None:
 def sync_content_to_mysql(content_list_path: str) -> int:
     """Populate MySQL articles/text_segments/extracted_figures from content_list.json.
     Called by task worker after FAISS indexing succeeds. Returns article_id."""
-    import json as _json
+    import json
     from pathlib import Path as _Path
     cp = _Path(content_list_path)
     if not cp.exists():
         return 0
     doc_name = cp.name.replace("_content_list.json", "")
     with open(cp, encoding="utf-8") as f:
-        data = _json.load(f)
+        data = json.load(f)
 
     # Check if article already exists
     existing = list_articles(search=doc_name, limit=1)
@@ -662,6 +677,15 @@ def sync_content_to_mysql(content_list_path: str) -> int:
     else:
         article_id = create_article(1, doc_name, doc_name + ".pdf", 0, "research_paper", "General")
 
+    # Map PICO chunk_type → MySQL ENUM segment_type
+    _TYPE_MAP = {
+        "primary_outcome": "results_primary", "secondary_outcome": "results_secondary",
+        "subgroup_analysis": "subgroup_analysis", "sensitivity_analysis": "sensitivity_analysis",
+        "safety_outcome": "results_secondary", "methods_design": "methods",
+        "baseline_table": "other", "outcome_table": "other", "figure_description": "other",
+        "abbreviations": "other", "references": "references", "conclusion": "conclusion",
+        "discussion": "discussion",
+    }
     # Populate segments and figures
     segments = []; figures = []; seq = 0; fig_seq = 0
     for item in data:
@@ -670,7 +694,7 @@ def sync_content_to_mysql(content_list_path: str) -> int:
             seq += 1
             segments.append({
                 "sequence": seq, "content": item["text"],
-                "segmentType": item.get("chunk_type", "other"),
+                "segmentType": _TYPE_MAP.get(item.get("chunk_type", ""), "other"),
                 "sectionTitle": item.get("section_tag", ""),
                 "pageNumber": item.get("page_idx", 0) + 1,
                 "confidence": 0.9, "wordCount": len(item["text"]),
@@ -716,12 +740,18 @@ def log_operation(user_id: int, user_name: str, action: str, target_type: str = 
 # ─── System Stats ──────────────────────────────────
 
 def get_system_stats() -> dict:
-    conn = get_conn(); cursor = conn.cursor(dictionary=True)
-    stats = {}
-    cursor.execute("SELECT COUNT(*) as cnt FROM articles"); stats["totalArticles"] = cursor.fetchone()["cnt"]
-    cursor.execute("SELECT COUNT(*) as cnt FROM articles WHERE status='parsed'"); stats["parsedArticles"] = cursor.fetchone()["cnt"]
-    cursor.execute("SELECT COUNT(*) as cnt FROM articles WHERE is_in_knowledge_base=1"); stats["knowledgeBaseArticles"] = cursor.fetchone()["cnt"]
-    cursor.execute("SELECT COUNT(*) as cnt FROM chat_sessions"); stats["totalChatSessions"] = cursor.fetchone()["cnt"]
-    cursor.execute("SELECT COUNT(*) as cnt FROM chat_messages"); stats["totalChatMessages"] = cursor.fetchone()["cnt"]
-    cursor.close(); conn.close()
-    return stats
+    def _do(conn):
+        cursor = conn.cursor(dictionary=True)
+        stats = {}
+        cursor.execute("SELECT COUNT(*) as cnt FROM articles"); stats["totalArticles"] = cursor.fetchone()["cnt"]
+        cursor.execute("SELECT COUNT(*) as cnt FROM articles WHERE status='parsed'"); stats["parsedArticles"] = cursor.fetchone()["cnt"]
+        cursor.execute("SELECT COUNT(*) as cnt FROM articles WHERE is_in_knowledge_base=1"); stats["knowledgeBaseArticles"] = cursor.fetchone()["cnt"]
+        cursor.execute("SELECT COUNT(*) as cnt FROM chat_sessions"); stats["totalChatSessions"] = cursor.fetchone()["cnt"]
+        cursor.execute("SELECT COUNT(*) as cnt FROM chat_messages"); stats["totalChatMessages"] = cursor.fetchone()["cnt"]
+        cursor.close()
+        return stats
+    try:
+        return with_conn(_do)
+    except Exception as e:
+        logger.error(f"get_system_stats failed: {e}")
+        return {"totalArticles": 0, "parsedArticles": 0, "knowledgeBaseArticles": 0, "totalChatSessions": 0, "totalChatMessages": 0}
