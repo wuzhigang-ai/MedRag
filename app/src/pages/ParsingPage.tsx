@@ -1,7 +1,8 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { trpc } from "@/providers/trpc";
 import { useToast } from "@/providers/toast";
 import { ConfirmDialog } from "./AdminLayout";
+import { api } from "@/lib/api";
 import {
   FiUpload, FiFileText, FiCheckCircle, FiXCircle, FiRotateCw,
   FiSettings, FiDatabase, FiChevronDown, FiChevronRight,
@@ -36,29 +37,20 @@ const segColors: Record<string, string> = {
   discussion: "#D97706", conclusion: "#059669", references: "#9CA3AF", other: "#6B7280",
 };
 
-// Mock upload history
-const uploadHistory = [
-  { id: 1, fileName: "diabetes_treatment_2025.pdf", title: "糖尿病治疗新进展", size: "2.4MB", uploadedAt: "2025-05-28 09:23", status: "approved" as ArticleStatus },
-  { id: 2, fileName: "nsclc_immunotherapy.pdf", title: "NSCLC免疫治疗Meta分析", size: "4.1MB", uploadedAt: "2025-05-27 16:45", status: "approved" as ArticleStatus },
-  { id: 3, fileName: "hypertension_guideline.pdf", title: "高血压管理指南2024", size: "1.8MB", uploadedAt: "2025-05-27 14:12", status: "parsed" as ArticleStatus },
-  { id: 4, fileName: "covid19_vaccine.pdf", title: "COVID-19疫苗免疫原性研究", size: "3.2MB", uploadedAt: "2025-05-26 11:30", status: "parsing" as ArticleStatus },
-];
-
-// Mock task center data
-const taskRecords = [
-  { taskId: "T20250528001", fileName: "糖尿病治疗新进展", status: "approved" as ArticleStatus, vectorStatus: "completed", uploadTime: "2025-05-28 09:23", currentPhase: 4 },
-  { taskId: "T20250527002", fileName: "NSCLC免疫治疗Meta分析", status: "approved" as ArticleStatus, vectorStatus: "completed", uploadTime: "2025-05-27 16:45", currentPhase: 4 },
-  { taskId: "T20250527003", fileName: "高血压管理指南2024", status: "parsed" as ArticleStatus, vectorStatus: "pending", uploadTime: "2025-05-27 14:12", currentPhase: 2 },
-  { taskId: "T20250526004", fileName: "COVID-19疫苗免疫原性研究", status: "parsing" as ArticleStatus, vectorStatus: "pending", uploadTime: "2025-05-26 11:30", currentPhase: 1 },
-  { taskId: "T20250525005", fileName: "阿尔茨海默病早期诊断标志物", status: "pending" as ArticleStatus, vectorStatus: "pending", uploadTime: "2025-05-25 08:56", currentPhase: 0 },
-];
-
+// Real pipeline phases matching upload_tasks status flow
 const flowPhases = [
-  { label: "PDF上传", icon: <FiUpload size={10} />, color: "var(--m-primary)" },
-  { label: "MinerU解析", icon: <FiCpu size={10} />, color: "var(--m-cyan)" },
-  { label: "AI专家审核", icon: <FiShield size={10} />, color: "var(--m-gold)" },
-  { label: "向量入库", icon: <FiDatabase size={10} />, color: "var(--m-green)" },
+  { label: "MinerU 2.5-Pro 识别中", icon: <FiCpu size={10} />, color: "var(--m-cyan)", status: "parsing" },
+  { label: "智能语义分块中", icon: <FiLayers size={10} />, color: "var(--m-gold)", status: "cross_validating" },
+  { label: "FAISS 向量化入库中", icon: <FiDatabase size={10} />, color: "var(--m-green)", status: "indexing_faiss" },
+  { label: "LightRAG 知识图谱构建中", icon: <FiTrendingUp size={10} />, color: "var(--m-primary)", status: "indexing_lightrag" },
+  { label: "完成", icon: <FiCheckCircle size={10} />, color: "#10B981", status: "done" },
 ];
+
+const TASK_STATUS_LABELS: Record<string, string> = {
+  received: "排队中", parsing: "MinerU 2.5-Pro 识别中", cross_validating: "智能语义分块中",
+  postprocessing: "语义分块中", indexing_faiss: "FAISS 向量入库中",
+  indexing_lightrag: "LightRAG 知识图谱构建中", done: "已完成", failed: "失败",
+};
 
 export default function ParsingPage() {
   const toast = useToast();
@@ -68,14 +60,17 @@ export default function ParsingPage() {
   const [isParsing, setIsParsing] = useState(false);
   const [parsingProgress, setParsingProgress] = useState(0);
   const [parsePhase, setParsePhase] = useState(0);
+  const [parseStatusText, setParseStatusText] = useState("");
+  const [activeTaskUuid, setActiveTaskUuid] = useState<string | null>(null);
   const [expandedSegments, setExpandedSegments] = useState<Set<number>>(new Set());
   const [dragOver, setDragOver] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [showTaskCenter, setShowTaskCenter] = useState(true);
   const [showUploadHistory, setShowUploadHistory] = useState(true);
+  const [taskList, setTaskList] = useState<any[]>([]);
 
   const utils = trpc.useUtils();
-  const { data: articles, isLoading } = trpc.articles.list.useQuery();
+  const { data: articles, isLoading, refetch: refetchArticles } = trpc.articles.list.useQuery();
   const { data: detail } = trpc.articles.get.useQuery(
     { id: selectedId! }, { enabled: !!selectedId },
   );
@@ -88,34 +83,85 @@ export default function ParsingPage() {
   const deleteArticle = trpc.articles.delete.useMutation({
     onSuccess: () => {
       utils.articles.list.invalidate();
-      setSelectedId(null);
-      setDeleteTarget(null);
-      toast.success("文献已删除");
+      setSelectedId(null); setDeleteTarget(null); toast.success("文献已删除");
     },
   });
 
-  const selected = articles?.find((a) => a.id === selectedId);
-  const phases = ["版面识别", "语义切分", "图表提取", "向量化"];
+  const selected = articles?.find((a: any) => a.id === selectedId);
+  const phases = ["MinerU 2.5-Pro 识别中", "智能语义分块中", "FAISS 向量入库中", "LightRAG 图谱构建"];
+
+  // Fetch task history
+  useEffect(() => {
+    fetch("/api/upload/history").then(r => r.json()).then(d => setTaskList(d || [])).catch(() => {});
+  }, [isParsing]);
+
+  // Poll active task status
+  useEffect(() => {
+    if (!activeTaskUuid) return;
+    const timer = setInterval(async () => {
+      try {
+        const r = await fetch(`/api/upload/${activeTaskUuid}/status`);
+        const task = await r.json();
+        if (!task) return;
+        setParseStatusText(TASK_STATUS_LABELS[task.status] || task.status);
+        // Map status to phase index
+        const phaseMap: Record<string, number> = { received:0, parsing:0, cross_validating:1, postprocessing:1, indexing_faiss:2, indexing_lightrag:3, done:4 };
+        const phase = phaseMap[task.status] ?? 0;
+        setParsePhase(Math.min(phase, 3));
+        setParsingProgress(phase >= 4 ? 100 : Math.min((phase / 4) * 100 + 10, 95));
+        if (task.status === "done") {
+          setIsParsing(false); setParsingProgress(100); setParsePhase(4);
+          setParseStatusText("完成");
+          setActiveTaskUuid(null);
+          toast.success(`${task.filename} 处理完成`);
+          refetchArticles();
+          // Auto-select the new article
+          setTimeout(() => {
+            fetch("/api/articles").then(r => r.json()).then(list => {
+              const match = list.find((a: any) => a.file_name === task.filename);
+              if (match) setSelectedId(match.id);
+            }).catch(() => {});
+          }, 1500);
+        } else if (task.status === "failed") {
+          setIsParsing(false);
+          toast.error(`处理失败: ${task.error_message || "未知错误"}`);
+          setActiveTaskUuid(null);
+        }
+      } catch { /* polling silent */ }
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [activeTaskUuid]);
 
   const handleUpload = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
-  const handleFileSelect = useCallback(() => {
-    setIsParsing(true);
-    setParsingProgress(0);
-    setParsePhase(0);
-    const interval = setInterval(() => {
-      setParsingProgress((p) => {
-        if (p >= 100) {
-          clearInterval(interval);
-          setTimeout(() => { setIsParsing(false); toast.success("PDF 解析完成"); }, 600);
-          return 100;
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file.name.endsWith(".pdf")) { toast.error("仅支持 PDF 文件"); continue; }
+      const formData = new FormData();
+      formData.append("file", file);
+      setIsParsing(true); setParsingProgress(0); setParsePhase(0);
+      setParseStatusText("MinerU 2.5-Pro 识别中...");
+      try {
+        const resp = await fetch("/api/upload", { method: "POST", body: formData });
+        const result = await resp.json();
+        if (result.task_uuid) {
+          setActiveTaskUuid(result.task_uuid);
+          toast.success(`${file.name} 已加入处理队列`);
+        } else {
+          toast.error("上传失败");
+          setIsParsing(false);
         }
-        setParsePhase(Math.min(Math.floor((p + Math.random() * 8) / 25), 3));
-        return p + Math.random() * 8 + 2;
-      });
-    }, 300);
+      } catch (err: any) {
+        toast.error("上传失败: " + (err.message || "网络错误"));
+        setIsParsing(false);
+      }
+    }
+    e.target.value = ""; // Reset file input
   }, [toast]);
 
   const toggleSegment = (id: number) => {
@@ -229,7 +275,7 @@ export default function ParsingPage() {
             </div>
             {showUploadHistory && (
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {uploadHistory.map((h) => {
+                {(articles || []).map((h) => {
                   const st = statusConfig[h.status as ArticleStatus];
                   return (
                     <div key={h.id} style={{ padding: "6px 8px", borderRadius: 6, background: "var(--bg-elevated)", transition: "all 0.15s", cursor: "pointer" }}
@@ -237,7 +283,7 @@ export default function ParsingPage() {
                       onMouseLeave={(e) => { e.currentTarget.style.background = "var(--bg-elevated)"; }}
                     >
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
-                        <span style={{ fontSize: 10, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>{h.fileName}</span>
+                        <span style={{ fontSize: 10, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>{(h.file_name || h.title || "—")}</span>
                         <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 4px", borderRadius: 100, background: st?.bg, color: st?.color }}>{st?.label}</span>
                       </div>
                       <div style={{ fontSize: 9, color: "var(--tx-100)", display: "flex", justifyContent: "space-between" }}>
@@ -407,7 +453,7 @@ export default function ParsingPage() {
               <FiBox size={14} style={{ color: "var(--m-primary)" }} />
               <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--tx-900)" }}>任务中心</h3>
             </div>
-            <span className="m-badge m-tag-gray" style={{ fontSize: 9 }}>{taskRecords.length} 个任务</span>
+            <span className="m-badge m-tag-gray" style={{ fontSize: 9 }}>{taskList.length} 个任务</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: 10, color: "var(--tx-100)" }}>全链路追踪</span>
@@ -426,20 +472,20 @@ export default function ParsingPage() {
                 </tr>
               </thead>
               <tbody>
-                {taskRecords.map((task, idx) => {
+                {taskList.map((task, idx) => {
                   const st = statusConfig[task.status as ArticleStatus];
                   return (
-                    <tr key={task.taskId} style={{ borderBottom: idx < taskRecords.length - 1 ? "1px solid var(--bd-100)" : "none", transition: "background 0.15s" }}
+                    <tr key={(task.task_uuid || "").substring(0,8)} style={{ borderBottom: idx < taskList.length - 1 ? "1px solid var(--bd-100)" : "none", transition: "background 0.15s" }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-hover)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                     >
                       <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
-                        <span style={{ fontFamily: "monospace", fontSize: 10, fontWeight: 600, color: "var(--m-primary)" }}>{task.taskId}</span>
+                        <span style={{ fontFamily: "monospace", fontSize: 10, fontWeight: 600, color: "var(--m-primary)" }}>{(task.task_uuid || "").substring(0,8)}</span>
                       </td>
                       <td style={{ padding: "7px 8px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                           <FiFileText size={11} style={{ color: "var(--tx-100)", flexShrink: 0 }} />
-                          <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{task.fileName}</span>
+                          <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{task.filename || "—"}</span>
                         </div>
                       </td>
                       <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
