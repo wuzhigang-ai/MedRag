@@ -28,9 +28,9 @@ function getTC() {
     bg: bg || "#0c1222", text: s.getPropertyValue("--tx-700").trim() || (isDark?"#c8d5e8":"#1e293b"),
     textMuted: s.getPropertyValue("--tx-300").trim() || (isDark?"#7a8db0":"#64748b"),
     surface: s.getPropertyValue("--bg-surface").trim() || (isDark?"#1a2235":"#ffffff"),
-    edge: isDark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.08)",
-    edgeHi: isDark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.25)",
-    dot: isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.04)",
+    edge: isDark?"rgba(255,255,255,0.11)":"rgba(0,0,0,0.16)",
+    edgeHi: isDark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.40)",
+    dot: isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.05)",
     isDark,
   };
   return _tcCache;
@@ -139,7 +139,7 @@ export default function GraphPage() {
         const isHighlighted = (selNode&&(a.id===selNode.id||b.id===selNode.id))||(hoverRef.current&&(a.id===hoverRef.current.id||b.id===hoverRef.current.id));
         const isDimmed = (selNode||hoverRef.current)&&!isHighlighted;
         ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
-        ctx.strokeStyle=isHighlighted?tc.edgeHi:isDimmed?"rgba(100,100,120,0.03)":tc.edge;
+        ctx.strokeStyle=isHighlighted?tc.edgeHi:isDimmed?(tc.isDark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.04)"):tc.edge;
         ctx.lineWidth=isHighlighted?1.8:0.6;ctx.stroke();
         if(!isDimmed&&zoom>0.55){
           const mx=(a.x+b.x)/2,my=(a.y+b.y)/2,lbl=rtLabels[e.relationType]||e.relationType;
