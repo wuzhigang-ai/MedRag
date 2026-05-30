@@ -75,7 +75,7 @@ export default function GraphPage() {
     };
     resize(); window.addEventListener("resize", resize);
 
-    // Physics simulation
+    // Physics — circular force layout (Obsidian-style)
     const sn = JSON.parse(JSON.stringify(nodes)) as GNode[];
     const se = edges.map((e) => ({
       ...e, sn: sn.find((n) => n.id === e.source)!, tn: sn.find((n) => n.id === e.target)!,
@@ -85,100 +85,141 @@ export default function GraphPage() {
     const filteredSet = new Set(filteredNodes.map(n => n.id));
 
     const sim = () => {
+      const W = cv.width / devicePixelRatio, H = cv.height / devicePixelRatio;
+      const cx = W / 2, cy = H / 2;
+      const maxR = Math.min(W, H) * 0.42; // Circular boundary radius
+
+      // Coulomb repulsion
       for (let i = 0; i < sn.length; i++) {
         for (let j = i + 1; j < sn.length; j++) {
           const a = sn[i], b = sn[j];
           const dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-          const f = 3000 / (d * d);
-          a.vx -= (dx / d) * f * 0.5; a.vy -= (dy / d) * f * 0.5;
-          b.vx += (dx / d) * f * 0.5; b.vy += (dy / d) * f * 0.5;
+          const f = 2000 / (d * d);
+          a.vx -= (dx / d) * f; a.vy -= (dy / d) * f;
+          b.vx += (dx / d) * f; b.vy += (dy / d) * f;
         }
       }
+      // Spring forces (edges)
       for (const e of se) {
         if (!e.sn || !e.tn) continue;
         const dx = e.tn.x - e.sn.x, dy = e.tn.y - e.sn.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-        const f = (d - 140) * 0.002;
+        const targetLen = 100;
+        const f = (d - targetLen) * 0.003;
         e.sn.vx += (dx / d) * f; e.sn.vy += (dy / d) * f;
         e.tn.vx -= (dx / d) * f; e.tn.vy -= (dy / d) * f;
       }
-      const cx = cv.width / devicePixelRatio / 2, cy = cv.height / devicePixelRatio / 2;
+      // Per-node: center gravity + radial boundary
       for (const n of sn) {
-        n.vx += (cx - n.x) * 0.0003; n.vy += (cy - n.y) * 0.0003;
-        n.vx *= 0.85; n.vy *= 0.85;
+        const dx = cx - n.x, dy = cy - n.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        // Strong center gravity (creates circular clustering)
+        n.vx += (dx / dist) * dist * 0.0008;
+        n.vy += (dy / dist) * dist * 0.0008;
+        // Soft radial boundary: push back if beyond maxR
+        if (dist > maxR) {
+          const over = dist - maxR;
+          n.vx -= (dx / dist) * over * 0.02;
+          n.vy -= (dy / dist) * over * 0.02;
+        }
+        // Damping
+        n.vx *= 0.82; n.vy *= 0.82;
         n.x += n.vx; n.y += n.vy;
-        n.x = Math.max(20, Math.min(cv.width / devicePixelRatio - 20, n.x));
-        n.y = Math.max(20, Math.min(cv.height / devicePixelRatio - 20, n.y));
+        // Soft clamp to viewport (not strict rectangle)
+        n.x += (Math.max(10, Math.min(W - 10, n.x)) - n.x) * 0.05;
+        n.y += (Math.max(10, Math.min(H - 10, n.y)) - n.y) * 0.05;
       }
     };
 
     const draw = () => {
       sim();
       const tc = getThemeColors();
-      const w = cv.width / devicePixelRatio, h = cv.height / devicePixelRatio;
-      ctx.clearRect(0, 0, w, h);
-      // Background grid
-      ctx.strokeStyle = tc.edgeLight; ctx.lineWidth = 0.5;
-      const gs = 60;
-      for (let x = (pan.x % gs + gs) % gs; x < w; x += gs) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
-      for (let y = (pan.y % gs + gs) % gs; y < h; y += gs) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+      const W = cv.width / devicePixelRatio, H = cv.height / devicePixelRatio;
+      const cx = W / 2, cy = H / 2;
+      ctx.clearRect(0, 0, W, H);
+
+      // Radial gradient background (Obsidian-style depth)
+      const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.7);
+      bgGrad.addColorStop(0, tc.surface + "40");
+      bgGrad.addColorStop(0.5, tc.bg);
+      bgGrad.addColorStop(1, tc.bg);
+      ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+
+      // Subtle dot grid (Obsidian-like background)
+      ctx.fillStyle = tc.edgeLight;
+      const gs = 50;
+      for (let x = ((pan.x % gs) + gs) % gs; x < W; x += gs) {
+        for (let y = ((pan.y % gs) + gs) % gs; y < H; y += gs) {
+          ctx.fillRect(x, y, 0.8, 0.8);
+        }
+      }
 
       ctx.save(); ctx.translate(pan.x, pan.y); ctx.scale(zoom, zoom);
 
-      // Edges
+      // Edge rendering — subtle, organic
       for (const e of se) {
         const a = e.sn, b = e.tn;
         if (!a || !b) continue;
         const isFiltered = !filter || (filteredSet.has(a.id) && filteredSet.has(b.id));
         const isHighlighted = hoverNode && (a.id === hoverNode.id || b.id === hoverNode.id);
+        if (!isFiltered) continue;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-        ctx.strokeStyle = isHighlighted ? "rgba(59,130,246,0.4)"
-          : isFiltered ? tc.edgeDark
-          : "rgba(100,100,120,0.04)";
-        ctx.lineWidth = isHighlighted ? 2 : isFiltered ? 1 : 0.5;
+        const edgeAlpha = isHighlighted ? 0.35 : 0.08;
+        ctx.strokeStyle = isHighlighted ? `rgba(59,130,246,${edgeAlpha})` : `rgba(148,163,184,${edgeAlpha})`;
+        ctx.lineWidth = isHighlighted ? 1.5 : 0.6;
         ctx.stroke();
-        // Edge label
-        if (isFiltered && zoom > 0.6) {
+        // Edge label (only when zoomed in)
+        if (zoom > 0.65) {
           const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
           const lbl = rtLabels[e.relationType] || e.relationType;
-          ctx.font = "9px Inter, system-ui, sans-serif";
+          ctx.font = "8px Inter, system-ui, sans-serif";
           const tw = ctx.measureText(lbl).width;
-          ctx.fillStyle = tc.surface; ctx.fillRect(mx - tw / 2 - 3, my - 5, tw + 6, 10);
-          ctx.fillStyle = tc.textMuted; ctx.textAlign = "center"; ctx.fillText(lbl, mx, my + 3);
+          ctx.fillStyle = tc.surface; ctx.fillRect(mx - tw / 2 - 3, my - 4, tw + 6, 9);
+          ctx.fillStyle = tc.textMuted + "99"; ctx.textAlign = "center"; ctx.fillText(lbl, mx, my + 3);
         }
       }
 
-      // Nodes
+      // Node rendering — glowing orbs
       for (const n of sn) {
         const isFiltered = !filter || filteredSet.has(n.id);
         if (!isFiltered) continue;
         const isSel = selNode?.id === n.id;
         const isHover = hoverNode?.id === n.id;
         const color = ntColors[n.nodeType] || ntColors.other;
-        const r = 6 + Math.min((n.weight || n.occurrenceCount || 1) * 1.5, 16);
+        const baseR = 4 + Math.min((n.weight || n.occurrenceCount || 1) * 1.2, 12);
 
-        // Glow for selected/hovered
+        // Outer glow (always present, subtle)
+        const glowR = baseR + 6;
+        ctx.beginPath(); ctx.arc(n.x, n.y, glowR, 0, Math.PI * 2);
+        const glowGrad = ctx.createRadialGradient(n.x, n.y, baseR * 0.8, n.x, n.y, glowR);
+        glowGrad.addColorStop(0, color + "18"); glowGrad.addColorStop(1, "transparent");
+        ctx.fillStyle = glowGrad; ctx.fill();
+
+        // Selection/hover ring
         if (isSel || isHover) {
-          ctx.beginPath(); ctx.arc(n.x, n.y, r + 14, 0, Math.PI * 2);
-          const glow = ctx.createRadialGradient(n.x, n.y, r, n.x, n.y, r + 14);
-          glow.addColorStop(0, color + "40"); glow.addColorStop(1, "transparent");
-          ctx.fillStyle = glow; ctx.fill();
-          ctx.beginPath(); ctx.arc(n.x, n.y, r + 8, 0, Math.PI * 2);
-          ctx.strokeStyle = color + "60"; ctx.lineWidth = 2; ctx.stroke();
+          const ringR = baseR + 10;
+          ctx.beginPath(); ctx.arc(n.x, n.y, ringR, 0, Math.PI * 2);
+          const ringGrad = ctx.createRadialGradient(n.x, n.y, baseR + 2, n.x, n.y, ringR);
+          ringGrad.addColorStop(0, color + "30"); ringGrad.addColorStop(1, "transparent");
+          ctx.fillStyle = ringGrad; ctx.fill();
+          ctx.beginPath(); ctx.arc(n.x, n.y, baseR + 5, 0, Math.PI * 2);
+          ctx.strokeStyle = color + "50"; ctx.lineWidth = 1.5; ctx.stroke();
         }
-        // Main circle
-        ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+        // Main orb
+        ctx.beginPath(); ctx.arc(n.x, n.y, baseR, 0, Math.PI * 2);
         ctx.fillStyle = color; ctx.fill();
-        // Inner specular highlight
-        ctx.beginPath(); ctx.arc(n.x - r * 0.3, n.y - r * 0.3, r * 0.35, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fill();
-        // Label (always visible, theme-colored)
-        ctx.font = `${10 + Math.min(r * 0.3, 3)}px Inter, system-ui, sans-serif`;
-        ctx.fillStyle = tc.text; ctx.textAlign = "center";
-        const labelY = n.y + r + 12;
-        // Label background for readability
-        const lw = ctx.measureText(n.label).width;
-        ctx.fillStyle = tc.surface + "cc"; ctx.fillRect(n.x - lw / 2 - 3, labelY - 8, lw + 6, 14);
-        ctx.fillStyle = tc.text; ctx.fillText(n.label, n.x, labelY + 1);
+        // Highlight reflection
+        ctx.beginPath(); ctx.arc(n.x - baseR * 0.25, n.y - baseR * 0.25, baseR * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.fill();
+
+        // Label with subtle background
+        if (zoom > 0.35 || isSel || isHover) {
+          const fontSize = 9;
+          ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
+          ctx.fillStyle = tc.text; ctx.textAlign = "center";
+          const labelY = n.y + baseR + 10;
+          const lw = ctx.measureText(n.label).width;
+          ctx.fillStyle = tc.surface + "cc"; ctx.fillRect(n.x - lw / 2 - 3, labelY - 7, lw + 6, 13);
+          ctx.fillStyle = isSel ? color : tc.text; ctx.fillText(n.label, n.x, labelY + 2);
+        }
       }
       ctx.restore();
       aid = requestAnimationFrame(draw);
