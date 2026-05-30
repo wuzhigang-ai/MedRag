@@ -92,7 +92,7 @@ export default function ParsingPage() {
 
   // Fetch task history
   useEffect(() => {
-    fetch("/api/upload/history").then(r => r.json()).then(d => setTaskList(d || [])).catch(() => {});
+    fetch("/api/upload/history").then(r => r.json()).then(d => setTaskList(d?.tasks || [])).catch(() => {});
   }, [isParsing]);
 
   // Poll active task status
