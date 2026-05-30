@@ -141,6 +141,14 @@ class UploadTaskManager:
                     faiss_images_vlm=up_state.get("images_vlm", 0),
                 )
 
+                # Step 2.5: Sync to MySQL (articles + segments + figures)
+                try:
+                    from src.auth import sync_content_to_mysql
+                    article_id = await asyncio.to_thread(sync_content_to_mysql, content_list_path)
+                    logger.info(f"MySQL synced article #{article_id} for {filename}")
+                except Exception as e:
+                    logger.warning(f"MySQL sync failed (non-blocking): {e}")
+
                 # Step 3: LightRAG sync
                 update_task_status(task_uuid, "indexing_lightrag",
                     lightrag_status="processing",

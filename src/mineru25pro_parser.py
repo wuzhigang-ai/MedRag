@@ -128,27 +128,79 @@ TYPE_RULES = [
     ('secondary_outcome', ['secondary','subgroup','sensitivity analysis']),
 ]
 
-def _enrich_chunk(text, use_flash=False):
-    """Add chunk_type, entities, one_liner to a paragraph."""
+# ── LLM-driven PICO batch classification ──
+PICO_TYPES = [
+    "primary_outcome", "secondary_outcome", "subgroup_analysis",
+    "sensitivity_analysis", "safety_outcome", "methods_design",
+    "baseline_table", "outcome_table", "figure_description",
+    "discussion", "conclusion", "abbreviations", "references", "other",
+]
+
+def _enrich_chunks_batch(chunks: list) -> None:
+    """Batch PICO classification via DeepSeek official API. Modifies chunks in-place."""
+    if not chunks:
+        return
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(Path(__file__).parent.parent / ".env")
+        from openai import OpenAI
+        import os as _os
+        client = OpenAI(
+            base_url=_os.getenv("DEEPSEEK_OFFICIAL_BASE_URL"),
+            api_key=_os.getenv("DEEPSEEK_OFFICIAL_API_KEY"),
+        )
+        items = []
+        for i, c in enumerate(chunks):
+            preview = c["text"][:200].replace("\n", " ").strip()
+            items.append(f"[{i}] {preview}")
+
+        prompt = f"""你是医疗文献PICO分类专家。对以下{len(items)}个文本块逐块分类。
+类型: primary_outcome(主要终点) | secondary_outcome(次要终点) | subgroup_analysis(亚组分析) | sensitivity_analysis(敏感性分析) | safety_outcome(安全性终点) | methods_design(方法设计) | baseline_table(基线表) | outcome_table(结局表) | figure_description(图表描述) | discussion(讨论) | conclusion(结论) | abbreviations(缩略语) | references(参考文献) | other(其他)
+
+只返回JSON数组: [{{"idx":0,"type":"primary_outcome","entities":["LVAD","mortality"]}}, ...]
+{chr(10).join(items)}"""
+        resp = client.chat.completions.create(
+            model=_os.getenv("DEEPSEEK_OFFICIAL_MODEL", "deepseek-chat"),
+            messages=[{"role":"user","content":prompt}],
+            temperature=0.1, max_tokens=800, timeout=45.0,
+        )
+        raw = resp.choices[0].message.content.strip()
+        json_match = re.search(r'\[[\s\S]*\]', raw)
+        if json_match:
+            results = json.loads(json_match.group(0))
+            for r in results:
+                idx = int(r.get("idx", -1))
+                if 0 <= idx < len(chunks):
+                    chunks[idx]["chunk_type"] = r.get("type", "other")
+                    chunks[idx]["entities"] = r.get("entities", [])[:10]
+        logger.info(f"PICO batch classified {len(items)} chunks via DeepSeek")
+    except Exception as e:
+        logger.warning(f"PICO batch classification failed, using keyword fallback: {e}")
+        # Fallback: keyword-based classification
+        for c in chunks:
+            meta = _enrich_chunk_kw(c["text"])
+            c.update(meta)
+
+
+def _enrich_chunk_kw(text: str) -> dict:
+    """Keyword-based fallback enrichment."""
     text_lower = text.lower()
-
-    # Entities
     entities = [kw for kw in MEDICAL_KWS if kw.lower() in text_lower]
-
-    # Chunk type
-    chunk_type = 'other'
+    chunk_type = "other"
     for ct, keywords in TYPE_RULES:
         if any(k in text_lower for k in keywords):
             chunk_type = ct
             break
-
-    # One-liner (first sentence or first 120 chars)
     first_sentence = re.split(r'[.!?]\s+', text)[0]
     one_liner = first_sentence[:150].replace('\n', ' ').strip()
     if not one_liner:
         one_liner = text[:120].replace('\n', ' ').strip()
+    return {"chunk_type": chunk_type, "entities": entities[:10], "one_liner": one_liner}
 
-    return {'chunk_type': chunk_type, 'entities': entities[:10], 'one_liner': one_liner}
+
+def _enrich_chunk(text, use_flash=False):
+    """Single-chunk enrichment (keyword fallback, used when batch fails)."""
+    return _enrich_chunk_kw(text)
 
 # ── Doc metadata extraction ──
 def _extract_doc_meta(page_texts, doc_name):
@@ -271,10 +323,8 @@ def parse_pdf_25pro(pdf_path, output_dir=None, chunker=None, doc_name_override=N
         all_chunks.extend(chunks)
     logger.info(f"  Split: {len(pages_text)} pages → {len(all_chunks)} chunks")
 
-    # ── Step 3: Enrich metadata ──
-    for c in all_chunks:
-        meta = _enrich_chunk(c['text'])
-        c.update(meta)
+    # ── Step 3: PICO batch classification (LLM) with keyword fallback ──
+    _enrich_chunks_batch(all_chunks)
     logger.info(f"  Entities: {sum(len(c.get('entities',[])) for c in all_chunks)} total")
 
     # ── Step 4: Doc metadata ──

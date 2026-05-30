@@ -638,6 +638,67 @@ def rate_chat_message(message_id: int, rating: int, feedback: str = "") -> None:
 
 # ─── Operation Log ──────────────────────────────────
 
+def sync_content_to_mysql(content_list_path: str) -> int:
+    """Populate MySQL articles/text_segments/extracted_figures from content_list.json.
+    Called by task worker after FAISS indexing succeeds. Returns article_id."""
+    import json as _json
+    from pathlib import Path as _Path
+    cp = _Path(content_list_path)
+    if not cp.exists():
+        return 0
+    doc_name = cp.name.replace("_content_list.json", "")
+    with open(cp, encoding="utf-8") as f:
+        data = _json.load(f)
+
+    # Check if article already exists
+    existing = list_articles(search=doc_name, limit=1)
+    if existing and existing[0].get("file_name") == doc_name + ".pdf":
+        article_id = existing[0]["id"]
+        # Delete old segments/figures for re-population
+        conn = get_conn(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM text_segments WHERE article_id=%s", (article_id,))
+        cursor.execute("DELETE FROM extracted_figures WHERE article_id=%s", (article_id,))
+        conn.commit(); cursor.close(); conn.close()
+    else:
+        article_id = create_article(1, doc_name, doc_name + ".pdf", 0, "research_paper", "General")
+
+    # Populate segments and figures
+    segments = []; figures = []; seq = 0; fig_seq = 0
+    for item in data:
+        t = item.get("type", "text")
+        if t == "text" and item.get("text"):
+            seq += 1
+            segments.append({
+                "sequence": seq, "content": item["text"],
+                "segmentType": item.get("chunk_type", "other"),
+                "sectionTitle": item.get("section_tag", ""),
+                "pageNumber": item.get("page_idx", 0) + 1,
+                "confidence": 0.9, "wordCount": len(item["text"]),
+                "evidenceLevel": str(item.get("evidence_level", "")) if item.get("evidence_level") else "",
+            })
+        elif t in ("image", "chart"):
+            fig_seq += 1
+            figures.append({
+                "figureType": t if t == "chart" else "figure",
+                "sequence": fig_seq,
+                "caption": item.get("one_liner", ""),
+                "description": item.get("text", ""),
+                "pageNumber": item.get("page_idx", 0) + 1,
+                "confidence": 0.85,
+                "imgPath": item.get("img_path", ""),
+                "imageUrl": item.get("image_url", ""),
+            })
+
+    if segments:
+        add_segments(article_id, segments)
+    if figures:
+        add_figures(article_id, figures)
+
+    update_article_status(article_id, "parsed")
+    logger.info(f"Synced {doc_name} → MySQL: {len(segments)} seg + {len(figures)} fig (article #{article_id})")
+    return article_id
+
+
 def log_operation(user_id: int, user_name: str, action: str, target_type: str = "",
                   target_id: int = 0, details: dict = None, ip_address: str = "") -> None:
     try:

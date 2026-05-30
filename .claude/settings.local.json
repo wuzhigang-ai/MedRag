@@ -190,7 +190,9 @@
       "Bash(npx tsc *)",
       "Bash(npx vite *)",
       "Bash(echo \"Vite PID: $!\")",
-      "Bash(cmd //c \"taskkill /F /IM node.exe\")"
+      "Bash(cmd //c \"taskkill /F /IM node.exe\")",
+      "Bash(nohup python api.py)",
+      "Bash(curl -s -X POST http://localhost:8000/api/auth/register -H \"Content-Type: application/json\" -d '{\"username\":\"testfix1\",\"password\":\"pass123\",\"confirmPassword\":\"pass123\",\"email\":\"fix@test.com\"}')"
     ]
   }
 }
