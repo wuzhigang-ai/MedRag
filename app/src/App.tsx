@@ -10,7 +10,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const ParsingPage = lazy(() => import('./pages/ParsingPage'));
 const LibraryPage = lazy(() => import('./pages/LibraryPage'));
 const GraphPage = lazy(() => import('./pages/GraphPage'));
-const ChatPage = lazy(() => import('./pages/ChatPage'));
+const ChatPage = lazy(() => import('./pages/AdminChatPage'));
 const UserChatPage = lazy(() => import('./pages/UserChatPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
