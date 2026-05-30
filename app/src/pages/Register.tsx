@@ -56,12 +56,17 @@ export default function Register() {
     setLoading(true);
     (async () => {
       try {
+        // Map medical role to system role
+        const roleMap: Record<string, string> = {
+          clinical_doctor: "expert", researcher: "expert",
+          student: "user", admin: "admin",
+        };
         await api.auth.register({
           username: form.username.trim(),
           password: form.password,
           confirmPassword: form.confirmPassword,
           email: form.email.trim(),
-          role: form.medicalRole === "clinical_doctor" ? "user" : "user",
+          role: roleMap[form.medicalRole] || "user",
         });
         setLoading(false);
         toast.success("注册成功", "正在跳转登录页面...");

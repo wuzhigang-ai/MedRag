@@ -25,7 +25,7 @@ export default function Login() {
       const result = await api.auth.login({ username: account.trim(), password });
       localStorage.setItem("medasr_token", result.token);
       localStorage.setItem("medrag_user", JSON.stringify({ id: result.user.id, name: result.user.username, email: account.trim(), role: result.user.role, avatar: null }));
-      if (result.user.role === "admin") {
+      if (result.user.role === "admin" || result.user.role === "expert") {
         navigate("/admin");
       } else {
         navigate("/chat");
