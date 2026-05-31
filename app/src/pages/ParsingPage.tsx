@@ -104,11 +104,16 @@ export default function ParsingPage() {
         const task = await r.json();
         if (!task) return;
         setParseStatusText(TASK_STATUS_LABELS[task.status] || task.status);
-        // Map status to phase index
+        // Weighted progress based on real phase durations
+        const progressWeights: Record<string, number> = {
+          received:0, parsing:10, cross_validating:18, postprocessing:25,
+          indexing_faiss:50, chunking:55, indexing_lightrag:80, indexing:80,
+          done:100, partial:92, failed:100,
+        };
         const phaseMap: Record<string, number> = { received:0, parsing:0, cross_validating:1, postprocessing:1, indexing_faiss:2, indexing_lightrag:3, done:4 };
         const phase = phaseMap[task.status] ?? 0;
         setParsePhase(Math.min(phase, 3));
-        setParsingProgress(phase >= 4 ? 100 : Math.min((phase / 4) * 100 + 10, 95));
+        setParsingProgress(progressWeights[task.status] ?? Math.min((phase / 4) * 100 + 10, 95));
         if (task.status === "done") {
           setIsParsing(false); setParsingProgress(100); setParsePhase(4);
           setParseStatusText("完成");

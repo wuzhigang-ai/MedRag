@@ -1,6 +1,26 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { trpc } from "@/providers/trpc";
-import { FiSearch, FiGrid, FiList, FiEye, FiRotateCw, FiTrash2, FiDownload, FiFileText, FiCheckCircle, FiBook, FiImage, FiDatabase, FiChevronLeft, FiChevronRight, FiFilter } from "react-icons/fi";
+import { FiSearch, FiGrid, FiList, FiEye, FiRotateCw, FiTrash2, FiDownload, FiFileText, FiCheckCircle, FiBook, FiImage, FiDatabase, FiChevronLeft, FiChevronRight, FiFilter, FiAlertTriangle } from "react-icons/fi";
+
+function ConfirmDialog({ open, title, message, onConfirm, onCancel }: { open: boolean; title: string; message: string; onConfirm: () => void; onCancel: () => void }) {
+  if (!open) return null;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)", backdropFilter: "blur(4px)" }} onClick={onCancel} />
+      <div style={{ position: "relative", background: "var(--bg-surface)", borderRadius: 14, padding: 24, width: 380, boxShadow: "var(--sh-xl)", border: "1px solid var(--bd-100)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(239,68,68,0.08)", color: "var(--m-red)", display: "flex", alignItems: "center", justifyContent: "center" }}><FiAlertTriangle size={18} /></div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--tx-900)" }}>{title}</h3>
+        </div>
+        <p style={{ fontSize: 13, color: "var(--tx-300)", lineHeight: 1.6, marginBottom: 20 }}>{message}</p>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button onClick={onCancel} className="m-btn m-btn-ghost" style={{ height: 36, padding: "0 18px", fontSize: 13 }}>取消</button>
+          <button onClick={onConfirm} className="m-btn m-btn-primary" style={{ height: 36, padding: "0 18px", fontSize: 13, background: "var(--m-red)", color: "white", border: "none" }}>确认删除</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type AStatus = "pending" | "parsing" | "parsed" | "reviewing" | "approved" | "rejected" | "error";
 const sc: Record<AStatus, { label: string; cls: string }> = {
@@ -18,6 +38,7 @@ export default function LibraryPage() {
   const [search, setSearch] = useState("");
   const [statusF, setStatusF] = useState("");
   const [typeF, setTypeF] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string } | null>(null);
   const [selId, setSelId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const ps = 6;
@@ -88,7 +109,7 @@ export default function LibraryPage() {
                   <td style={{ padding: "8px 10px" }}><div style={{ display: "flex", gap: 3 }} onClick={(e) => e.stopPropagation()}>
                     <button className="m-btn m-btn-ghost m-btn-sm" style={{ padding: "2px 5px" }}><FiEye size={12} /></button>
                     <button className="m-btn m-btn-ghost m-btn-sm" style={{ padding: "2px 5px", color: "var(--m-orange)" }}><FiRotateCw size={12} /></button>
-                    <button onClick={() => del.mutate({ id: a.id })} className="m-btn m-btn-ghost m-btn-sm" style={{ padding: "2px 5px", color: "var(--m-red)" }}><FiTrash2 size={12} /></button>
+                    <button onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: a.id, title: a.title }); }} className="m-btn m-btn-ghost m-btn-sm" style={{ padding: "2px 5px", color: "var(--m-red)" }}><FiTrash2 size={12} /></button>
                   </div></td>
                 </tr>
               ))}</tbody>
@@ -147,6 +168,13 @@ export default function LibraryPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="确认删除"
+        message={`确定删除文献《${deleteTarget?.title}》？此操作不可撤销，文献及其所有文本段和图表数据将被永久删除。`}
+        onConfirm={() => { if (deleteTarget) { del.mutate({ id: deleteTarget.id }); setDeleteTarget(null); } }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
