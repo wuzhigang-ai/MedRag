@@ -127,9 +127,9 @@ class UploadTaskManager:
         from src.auth import (get_task, update_task_status, mark_task_completed,
                               mark_task_failed, create_upload_task)
 
-        PARSE_TIMEOUT = 300.0      # 5 min per PDF
-        CHUNK_TIMEOUT = 180.0      # 3 min for FAISS + MySQL
-        LIGHTRAG_TIMEOUT = 180.0   # 3 min for LightRAG
+        PARSE_TIMEOUT = 600.0      # 10 min per PDF (MinerU VLM ~72s/page + Docling images ~90s)
+        CHUNK_TIMEOUT = 300.0      # 5 min for FAISS + MySQL
+        LIGHTRAG_TIMEOUT = 300.0   # 5 min for LightRAG
 
         while self._running:
             task_uuid = None
