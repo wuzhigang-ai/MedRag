@@ -450,13 +450,11 @@ async def upload_pdf(file: UploadFile = File(...)):
     """上传PDF → 入队串行处理 (MySQL状态机驱动)"""
     import uuid as _uuid
     import hashlib as _hashlib
-    from src.auth import create_upload_task, ensure_upload_tasks_table
+    from src.auth import create_upload_task
     from src.task_manager import get_task_manager
 
     if not file.filename.endswith('.pdf'):
         raise HTTPException(400, "仅支持PDF文件")
-
-    ensure_upload_tasks_table()
 
     file_path = UPLOAD_DIR / file.filename
     content = await file.read()
@@ -513,6 +511,24 @@ async def get_upload_history(limit: int = 50, status: str = None):
             if hasattr(v, 'isoformat'):
                 task[k] = v.isoformat() if v else None
     return {"tasks": tasks, "total": len(tasks)}
+
+
+@app.post("/api/upload/{task_uuid}/cancel")
+async def cancel_upload_task(task_uuid: str):
+    """取消正在排队或处理中的上传任务"""
+    from src.task_manager import get_task_manager
+    tm = get_task_manager()
+    result = tm.cancel_task(task_uuid)
+    status_map = {
+        "cancelled": ("任务已取消", 200),
+        "cancelling": ("取消请求已发送，任务将在当前阶段完成后终止", 200),
+        "completed": ("任务已结束，无法取消", 400),
+        "not_found": ("任务不存在", 404),
+    }
+    msg, code = status_map.get(result, ("未知状态", 500))
+    if code >= 400:
+        raise HTTPException(code, msg)
+    return {"success": True, "message": msg, "result": result}
 
 
 @app.post("/api/upload/{task_uuid}/retry")

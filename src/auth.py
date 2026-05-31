@@ -133,13 +133,14 @@ def verify_user(username: str, password: str) -> dict | None:
 
 def list_users() -> list:
     """List all users (admin only)."""
-    try:
-        conn = get_conn()
+    def _do(conn):
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT id, username, role, created_at FROM users ORDER BY id")
         rows = cursor.fetchall()
-        cursor.close(); conn.close()
+        cursor.close()
         return rows
+    try:
+        return with_conn(_do)
     except Exception as e:
         logger.error(f"List users failed: {e}")
         return []
@@ -273,21 +274,36 @@ def create_upload_task(task_uuid: str, filename: str, uploaded_by: str,
     return tid
 
 
+# Allowed columns for update_task_status — prevents SQL injection via column names
+_ALLOWED_TASK_COLUMNS = {
+    "status", "parsing_duration_ms", "engine_selected", "engine_reason",
+    "cross_validation_scores", "quality_warning",
+    "faiss_status", "faiss_duration_ms", "faiss_chunks_before", "faiss_chunks_added",
+    "faiss_is_update", "faiss_error", "faiss_images_total", "faiss_images_vlm",
+    "faiss_started_at", "lightrag_status", "lightrag_duration_ms", "lightrag_mode",
+    "lightrag_entities", "lightrag_relations", "lightrag_error",
+    "lightrag_started_at", "updated_at",
+}
+
 def update_task_status(task_uuid: str, status: str, **kwargs) -> None:
-    """Update task status and any additional fields passed as kwargs.
-    Each kwarg key maps to the column name."""
-    if not kwargs:
-        conn = get_conn(); cursor = conn.cursor()
-        cursor.execute("UPDATE upload_tasks SET status=%s WHERE task_uuid=%s",
-                       (status, task_uuid))
-        conn.commit(); cursor.close(); conn.close()
-        return
-    set_clause = ", ".join(f"{k}=%s" for k in kwargs.keys())
-    values = list(kwargs.values()) + [status, task_uuid]
-    conn = get_conn(); cursor = conn.cursor()
-    cursor.execute(f"UPDATE upload_tasks SET {set_clause}, status=%s, updated_at=NOW() WHERE task_uuid=%s",
-                   values)
-    conn.commit(); cursor.close(); conn.close()
+    """Update task status and any additional fields.
+    Only whitelisted column names are accepted."""
+    for k in kwargs:
+        if k not in _ALLOWED_TASK_COLUMNS:
+            raise ValueError(f"Invalid upload_tasks column: {k}")
+    def _do(conn):
+        cursor = conn.cursor()
+        if not kwargs:
+            cursor.execute("UPDATE upload_tasks SET status=%s WHERE task_uuid=%s",
+                           (status, task_uuid))
+        else:
+            set_clause = ", ".join(f"{k}=%s" for k in kwargs.keys())
+            values = list(kwargs.values()) + [status, task_uuid]
+            cursor.execute(f"UPDATE upload_tasks SET {set_clause}, status=%s, updated_at=NOW() WHERE task_uuid=%s",
+                           values)
+        conn.commit()
+        cursor.close()
+    with_conn(_do)
 
 
 def get_task(task_uuid: str) -> dict | None:
@@ -784,8 +800,8 @@ def log_operation(user_id: int, user_name: str, action: str, target_type: str = 
         """, (user_id, user_name, action, target_type, target_id,
               json.dumps(details or {}), ip_address))
         conn.commit(); cursor.close(); conn.close()
-    except Exception:
-        pass  # Non-critical
+    except Exception as ex:
+        logger.warning(f"Failed to log operation: {ex}")  # Non-critical but worth knowing
 
 
 # ─── System Stats ──────────────────────────────────
