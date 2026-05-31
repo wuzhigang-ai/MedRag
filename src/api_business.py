@@ -6,8 +6,8 @@ import json, logging, asyncio, hashlib, os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Header, Request, Depends
+from pydantic import BaseModel, field_validator
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +50,15 @@ class RegisterRequest(BaseModel):
     email: str = ""
 
 @router.post("/auth/login")
-def auth_login(req: LoginRequest):
-    from src.auth import verify_user, log_operation
+def auth_login(req: LoginRequest, request: Request):
+    from src.auth import verify_user, store_token, log_operation
     user = verify_user(req.username, req.password)
     if not user:
         raise HTTPException(401, "用户名或密码错误")
     token = hashlib.sha256(f"{user['id']}:{req.username}:{os.urandom(16).hex()}".encode()).hexdigest()
-    log_operation(user['id'], req.username, "login", ip_address="127.0.0.1")
+    store_token(user['id'], user['username'], token)
+    client_ip = request.client.host if request.client else "unknown"
+    log_operation(user['id'], req.username, "login", ip_address=client_ip)
     return {"token": token, "user": {"id": user['id'], "username": user['username'], "role": user['role']}}
 
 @router.post("/auth/register")
@@ -64,6 +66,8 @@ def auth_register(req: RegisterRequest):
     from src.auth import create_user
     if req.password != req.confirmPassword:
         raise HTTPException(400, "两次密码不一致")
+    if req.email and "@" not in req.email:
+        raise HTTPException(400, "邮箱格式不正确")
     try:
         user = create_user(req.username, req.password, req.role or "user", email=req.email or "")
         return {"success": True, "user": user}
@@ -71,12 +75,42 @@ def auth_register(req: RegisterRequest):
         raise HTTPException(400, str(e))
 
 @router.get("/auth/me")
-def auth_me():
-    return {"user": None}
+def auth_me(authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        return {"user": None}
+    token = authorization[7:]
+    from src.auth import get_user_by_token
+    user = get_user_by_token(token)
+    if not user:
+        return {"user": None}
+    return {"user": {"id": user["id"], "username": user["username"], "role": user["role"]}}
 
 @router.post("/auth/logout")
-def auth_logout():
+def auth_logout(authorization: str = Header(None)):
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[7:]
+        from src.auth import get_user_by_token, clear_token
+        user = get_user_by_token(token)
+        if user:
+            clear_token(user["id"])
     return {"success": True}
+
+
+# ── Auth dependencies ──
+
+def _verify_token(authorization: str = Header(None)) -> dict:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(401, "未提供认证令牌")
+    from src.auth import get_user_by_token
+    user = get_user_by_token(authorization[7:])
+    if not user:
+        raise HTTPException(401, "令牌无效或已过期")
+    return user
+
+def _require_admin(user: dict = Depends(_verify_token)) -> dict:
+    if user.get("role") not in ("admin", "expert"):
+        raise HTTPException(403, "需要管理员权限")
+    return user
 
 
 # ═══════════════════════════════════════════════════════
@@ -115,32 +149,32 @@ class CreateArticleReq(BaseModel):
     keywords: list = []
 
 @router.post("/articles")
-def articles_create(req: CreateArticleReq, user_id: int = 1):
+def articles_create(req: CreateArticleReq, user: dict = Depends(_require_admin)):
     from src.auth import create_article, log_operation
-    aid = create_article(user_id, req.title, req.fileName, req.fileSize,
+    aid = create_article(user["id"], req.title, req.fileName, req.fileSize,
                          req.articleType, req.department, req.authors,
                          req.journal, req.publishDate, req.doi, req.keywords)
-    log_operation(user_id, "admin", "create_article", "article", aid)
+    log_operation(user["id"], user["username"], "create_article", "article", aid)
     return {"id": aid}
 
 class UpdateStatusReq(BaseModel):
     status: str
 
 @router.patch("/articles/{article_id}/status")
-def articles_update_status(article_id: int, req: UpdateStatusReq):
+def articles_update_status(article_id: int, req: UpdateStatusReq, user: dict = Depends(_require_admin)):
     from src.auth import update_article_status
     update_article_status(article_id, req.status)
     return {"success": True}
 
 @router.post("/articles/{article_id}/approve")
-def articles_approve(article_id: int):
+def articles_approve(article_id: int, user: dict = Depends(_require_admin)):
     from src.auth import update_article_status, log_operation
     update_article_status(article_id, "approved")
-    log_operation(1, "admin", "approve_article", "article", article_id)
+    log_operation(user["id"], user["username"], "approve_article", "article", article_id)
     return {"success": True}
 
 @router.delete("/articles/{article_id}")
-def articles_delete(article_id: int):
+def articles_delete(article_id: int, user: dict = Depends(_require_admin)):
     from src.auth import delete_article
     delete_article(article_id)
     return {"success": True}
@@ -149,7 +183,7 @@ class SegmentsReq(BaseModel):
     segments: list = []
 
 @router.post("/articles/{article_id}/segments")
-def articles_add_segments(article_id: int, req: SegmentsReq):
+def articles_add_segments(article_id: int, req: SegmentsReq, user: dict = Depends(_require_admin)):
     from src.auth import add_segments, update_article_status
     count = add_segments(article_id, req.segments)
     update_article_status(article_id, "parsed")
@@ -159,7 +193,7 @@ class FiguresReq(BaseModel):
     figures: list = []
 
 @router.post("/articles/{article_id}/figures")
-def articles_add_figures(article_id: int, req: FiguresReq):
+def articles_add_figures(article_id: int, req: FiguresReq, user: dict = Depends(_require_admin)):
     from src.auth import add_figures
     count = add_figures(article_id, req.figures)
     return {"count": count}
@@ -175,14 +209,14 @@ class CreateSessionReq(BaseModel):
     scopeCategories: list = []
 
 @router.get("/chat/sessions")
-def chat_list_sessions(user_id: int = None):
+def chat_list_sessions(user: dict = Depends(_verify_token)):
     from src.auth import list_chat_sessions
-    return list_chat_sessions(user_id)
+    return list_chat_sessions(user["id"])
 
 @router.post("/chat/sessions")
-def chat_create_session(req: CreateSessionReq, user_id: int = 1):
+def chat_create_session(req: CreateSessionReq, user: dict = Depends(_verify_token)):
     from src.auth import create_chat_session
-    sid = create_chat_session(user_id, req.title, req.scopeArticles, req.scopeCategories)
+    sid = create_chat_session(user["id"], req.title, req.scopeArticles, req.scopeCategories)
     return {"id": sid}
 
 @router.get("/chat/sessions/{session_id}")
@@ -202,7 +236,7 @@ class AddMessageReq(BaseModel):
     tokenCount: int = 0
 
 @router.post("/chat/sessions/{session_id}/messages")
-async def chat_add_message(session_id: int, req: AddMessageReq):
+async def chat_add_message(session_id: int, req: AddMessageReq, user: dict = Depends(_verify_token)):
     """Add user message, then call Agent, save AI response."""
     from src.auth import add_chat_message
     # Save user message
@@ -242,7 +276,7 @@ async def chat_add_message(session_id: int, req: AddMessageReq):
             "sources": sources, "reasoning_trace": trace}
 
 @router.delete("/chat/sessions/{session_id}")
-def chat_delete_session(session_id: int):
+def chat_delete_session(session_id: int, user: dict = Depends(_verify_token)):
     from src.auth import delete_chat_session
     delete_chat_session(session_id)
     return {"success": True}
@@ -252,7 +286,7 @@ class RateMessageReq(BaseModel):
     feedback: str = ""
 
 @router.post("/chat/messages/{message_id}/rate")
-def chat_rate_message(message_id: int, req: RateMessageReq):
+def chat_rate_message(message_id: int, req: RateMessageReq, user: dict = Depends(_verify_token)):
     from src.auth import rate_chat_message
     rate_chat_message(message_id, req.rating, req.feedback)
     return {"success": True}

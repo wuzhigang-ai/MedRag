@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/useTheme";
 import { ToastProvider } from "@/providers/toast";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   FiSun, FiMoon, FiHome, FiUpload, FiBook, FiShare2, FiMessageSquare,
   FiUser, FiLogOut, FiMenu, FiX, FiChevronLeft, FiChevronRight,
@@ -14,12 +15,30 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    const user = localStorage.getItem("medrag_user");
-    if (!user) {
+    let cancelled = false;
+    const token = localStorage.getItem("medasr_token");
+    if (!token) {
       navigate("/login", { replace: true });
-    } else {
-      setChecked(true);
+      return;
     }
+    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return;
+        if (data.user) {
+          setChecked(true);
+        } else {
+          localStorage.removeItem("medrag_user");
+          localStorage.removeItem("medasr_token");
+          navigate("/login", { replace: true });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setChecked(true); // Allow offline access if server unreachable
+        }
+      });
+    return () => { cancelled = true; };
   }, [navigate]);
 
   if (!checked) {
@@ -73,8 +92,20 @@ function AdminShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem("medasr_token");
+    if (token) {
+      try { await fetch("/api/auth/logout", { method: "POST", headers: { Authorization: `Bearer ${token}` } }); } catch { /* best effort */ }
+    }
+    localStorage.removeItem("medrag_user");
+    localStorage.removeItem("medasr_token");
+    queryClient.clear();
+    navigate("/login");
+  };
 
   const [userRole, setUserRole] = useState<string>("expert");
   useEffect(() => {
@@ -154,7 +185,7 @@ function AdminShell() {
         {/* User */}
         <div className="sidebar-user" style={{ padding: "8px", borderTop: "1px solid var(--bd-100)", display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(37,99,235,0.08)", color: "var(--m-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 12 }}><FiUser size={14} /></div>
-          {(mobileOpen || !collapsed) && <><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 11, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>医疗专家</div><div style={{ fontSize: 10, color: "var(--tx-100)" }}>在线</div></div><button onClick={() => { localStorage.removeItem("medrag_user"); navigate("/login"); }} style={{ background: "none", border: "none", color: "var(--tx-100)", cursor: "pointer", padding: 3 }}><FiLogOut size={13} /></button></>}
+          {(mobileOpen || !collapsed) && <><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 11, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>医疗专家</div><div style={{ fontSize: 10, color: "var(--tx-100)" }}>在线</div></div><button onClick={handleLogout} style={{ background: "none", border: "none", color: "var(--tx-100)", cursor: "pointer", padding: 3 }}><FiLogOut size={13} /></button></>}
         </div>
       </aside>
 

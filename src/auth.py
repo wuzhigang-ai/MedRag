@@ -40,6 +40,55 @@ def with_conn(fn):
             pass
 
 
+# ── Token management ──
+
+_token_cache: dict[str, dict] = {}
+
+def store_token(user_id: int, username: str, token: str):
+    """Persist login token to DB + memory cache."""
+    def _do(conn):
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET auth_token=%s, token_created_at=NOW() WHERE id=%s",
+            (token, user_id),
+        )
+        conn.commit()
+        cursor.close()
+    with_conn(_do)
+    _token_cache[token] = {"id": user_id, "username": username}
+
+def get_user_by_token(token: str) -> dict | None:
+    """Look up user by auth_token. Checks memory cache first, then DB."""
+    if token in _token_cache:
+        return _token_cache[token]
+    def _do(conn):
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT id, username, role, email, department FROM users WHERE auth_token=%s",
+            (token,),
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        return row
+    try:
+        user = with_conn(_do)
+        if user:
+            _token_cache[token] = user
+        return user
+    except Exception as e:
+        logger.error(f"Token lookup failed: {e}")
+        return None
+
+def clear_token(user_id: int):
+    """Remove token from DB on logout."""
+    def _do(conn):
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET auth_token=NULL WHERE id=%s", (user_id,))
+        conn.commit()
+        cursor.close()
+    with_conn(_do)
+
+
 def create_user(username: str, password: str, role: str = "user", email: str = "") -> dict:
     """Register a new user. Returns user info or raises."""
     def _do(conn):
@@ -319,6 +368,8 @@ def ensure_business_tables() -> None:
         ("years_of_experience", "INT DEFAULT 0"),
         ("phone", "VARCHAR(50)"),
         ("last_sign_in_at", "TIMESTAMP NULL"),
+        ("auth_token", "VARCHAR(128)"),
+        ("token_created_at", "TIMESTAMP NULL"),
     ]
     for col_name, col_type in cols_to_add:
         try:
