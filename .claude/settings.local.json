@@ -192,7 +192,29 @@
       "Bash(echo \"Vite PID: $!\")",
       "Bash(cmd //c \"taskkill /F /IM node.exe\")",
       "Bash(nohup python api.py)",
-      "Bash(curl -s -X POST http://localhost:8000/api/auth/register -H \"Content-Type: application/json\" -d '{\"username\":\"testfix1\",\"password\":\"pass123\",\"confirmPassword\":\"pass123\",\"email\":\"fix@test.com\"}')"
+      "Bash(curl -s -X POST http://localhost:8000/api/auth/register -H \"Content-Type: application/json\" -d '{\"username\":\"testfix1\",\"password\":\"pass123\",\"confirmPassword\":\"pass123\",\"email\":\"fix@test.com\"}')",
+      "Bash(/c/Users/bigda/.claude/skills/gstack/browse/dist/browse goto *)",
+      "Bash(/c/Users/bigda/.claude/skills/gstack/browse/dist/browse js *)",
+      "Bash(/c/Users/bigda/.claude/skills/gstack/browse/dist/browse screenshot *)",
+      "Bash(taskkill /F /PID 19980)",
+      "Bash(wmic process *)",
+      "Bash(powershell -Command \"Stop-Process -Id 19980 -Force\")",
+      "Bash(powershell -Command ' *)",
+      "Bash(powershell -Command \"Stop-Process -Id 65000 -Force\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('WebBridge:', 'OK' if d.get\\('extension_connected'\\) else 'DOWN'\\)\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'user={d[\\\\\"user\\\\\"][\\\\\"username\\\\\"]}, role={d[\\\\\"user\\\\\"][\\\\\"role\\\\\"]}'\\)\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('Browser closed' if d.get\\('ok'\\) else 'Close failed'\\)\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('OK' if d.get\\('extension_connected'\\) else 'DOWN'\\)\")",
+      "Bash(python3 -c \"import sys,json;print\\('Login:',json.load\\(sys.stdin\\)['data']['value']\\)\")",
+      "Bash(python3 -c \"import sys,json; line=sys.stdin.read\\(\\).strip\\(\\); d=json.loads\\('{'+line+'}'\\); print\\(d['answer'][:600]+'...'\\)\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('Closed' if d.get\\('ok'\\) else 'Failed'\\)\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'Graph: nodes={d.get\\(\\\\\"totalNodes\\\\\"\\)}, edges={d.get\\(\\\\\"totalEdges\\\\\"\\)}'\\)\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('WebBridge:', 'OK' if d.get\\('extension_connected'\\) else 'DOWN'\\)\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);errs=d['data']['value'];print\\('JS errors:',errs if errs!='[]' else 'None'\\)\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(d['data']['value']\\)\")",
+      "Bash(powershell -Command \"Stop-Process -Name python -Force\")",
+      "Bash(python3 gen_pdf.py)",
+      "Bash(python3 *)"
     ]
   }
 }

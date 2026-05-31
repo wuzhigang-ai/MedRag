@@ -1,7 +1,7 @@
 [
   {
     "type": "text",
-    "text": "[文献] todo1992\nHyperammonemia, abnormalities in plasma amino acids and abnormalities of standard liver functions were corrected by orthotopic liver transplantation in a 14-day-old boy with carbamyl phosphate synthetase-I deficiency and in a 35-yr-old man with argininosuccinic acid synthetase deficiency. The first patient had high plasma glutamine levels and no measurable citrulline, whereas citrulline values were markedly increased in Patient 2. Enzyme analysis of the original livers showed undetectable activity of carbamyl phosphate synthetase-I in Patient 1 and arginosuccinic acid synthetase in Patient 2. Both patients were comatose before surgery. Intellectual recovery of patient 1 has been slightly retarded because of a brain abscess caused by Aspergillus infection after surgery. Both patients are well at 34 and 40 mo, respectively, after surgery. Our experience has shown that orthotopic liver transplantation corrects the life-threatening metabolic abnormalities caused by deficiencies in the urea cycle enzymes carbamyl phosphate synthetase-I and arginosuccinic acid synthetase.\n[摘要] Hyperammonemia, abnormalities in plasma amino acids and abnormalities of standard liver functions were corrected by orthotopic liver transplantation i\n[实体] AMI",
+    "text": "[文献] todo1992\nHyperammonemia, abnormalities in plasma amino acids and abnormalities of standard liver functions were corrected by orthotopic liver transplantation in a 14-day-old boy with carbamyl phosphate synthetase-I deficiency and in a 35-yr-old man with argininosuccinic acid synthetase deficiency. The first patient had high plasma glutamine levels and no measurable citrulline, whereas citrulline values were markedly increased in Patient 2. Enzyme analysis of the original livers showed undetectable activity of carbamyl phosphate synthetase-I in Patient 1 and arginosuccinic acid synthetase in Patient 2. Both patients were comatose before surgery. Intellectual recovery of patient 1 has been slightly retarded because of a brain abscess caused by Aspergillus infection after surgery. Both patients are well at 34 and 40 mo, respectively, after surgery. Our experience has shown that orthotopic liver transplantation corrects the life-threatening metabolic abnormalities caused by deficiencies in the urea cycle enzymes carbamyl phosphate synthetase-I and arginosuccinic acid synthetase.\n[实体] Hyperammonemia, plasma amino acids, liver functions, orthotopic liver transplantation, carbamyl phosphate synthetase",
     "page_idx": 0,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
@@ -11,117 +11,135 @@
     "section_tag": "unknown",
     "evidence_level": null,
     "entities": [
-      "AMI"
+      "Hyperammonemia",
+      "plasma amino acids",
+      "liver functions",
+      "orthotopic liver transplantation",
+      "carbamyl phosphate synthetase"
     ],
-    "one_liner": "Hyperammonemia, abnormalities in plasma amino acids and abnormalities of standard liver functions were corrected by orthotopic liver transplantation i"
+    "one_liner": ""
   },
   {
     "type": "text",
-    "text": "[文献] todo1992\nSeven other patients—six with ornithine transcarbamylase deficiency and another with carbamyl phosphate synthetase-I deficiency—are known to have been treated elsewhere with liver transplantation 1½ yr or longer ago. Four of these seven recipients also are well, with follow-ups of 1½ to 5 yr. Thus liver transplantation corrects the metabolic abnormalities of three of the six urea cycle enzyme deficiencies, and presumably would correct all. (HEPATOLOGY 1992;15:419-422.)\n[摘要] Seven other patients—six with ornithine transcarbamylase deficiency and another with carbamyl phosphate synthetase-I deficiency—are known to have been",
+    "text": "[文献] todo1992\nSeven other patients—six with ornithine transcarbamylase deficiency and another with carbamyl phosphate synthetase-I deficiency—are known to have been treated elsewhere with liver transplantation 1½ yr or longer ago. Four of these seven recipients also are well, with follow-ups of 1½ to 5 yr. Thus liver transplantation corrects the metabolic abnormalities of three of the six urea cycle enzyme deficiencies, and presumably would correct all. (HEPATOLOGY 1992;15:419-422.)\n[实体] ornithine transcarbamylase deficiency, carbamyl phosphate synthetase-I deficiency, liver transplantation",
     "page_idx": 0,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
     "journal": "",
     "publication_year": "",
     "chunk_type": "other",
-    "section_tag": "unknown",
-    "evidence_level": null,
-    "entities": [],
-    "one_liner": "Seven other patients—six with ornithine transcarbamylase deficiency and another with carbamyl phosphate synthetase-I deficiency—are known to have been"
-  },
-  {
-    "type": "text",
-    "text": "[文献] todo1992\nIt was proposed in 1975 by Dr. Leon Rosenberg of Yale University that liver transplantation would allow somatic correction of diseases caused by deficiency of any of the six urea cycle enzymes (Personal communication,\n\nReceived August 5, 1991; accepted October 31, 1991.\nThis work was aided by research grants from the Department of Veterans Affairs and by project grant No. DK 29961 from the National Institutes of Health.\nAddress reprint requests to: Thomas E. Starzl, M.D., Ph.D., Department of Surgery, 3601 Fifth Avenue, Falk Clinic 4 West, Pittsburgh, Pennsylvania 15213.\n31/1/34811\n[摘要] It was proposed in 1975 by Dr",
-    "page_idx": 0,
-    "doc_name": "todo1992",
-    "doc_title": "todo1992",
-    "journal": "",
-    "publication_year": "",
-    "chunk_type": "other",
-    "section_tag": "unknown",
-    "evidence_level": null,
-    "entities": [],
-    "one_liner": "It was proposed in 1975 by Dr"
-  },
-  {
-    "type": "text",
-    "text": "[文献] todo1992\n1975). The liver enzymes responsible for biosynthesis of urea from its principal precursors (ammonium and glutamine) are N-acetylglutamate synthetase, carbamyl phosphate synthetase-I (CPS-I), ornithine transcarbamylase (OTC), argininosuccinic acid synthetase (ASS), argininosuccinase and arginase (1). N-acetylglutamate synthetase deficiency has been reported in one man (2). OTC deficiency is an X chromosome-linked disorder, and the other 4 deficiencies are autosomal recessive traits. High plasma ammonium and glutamine levels are thought to cause astrocyte swelling, brain edema and secondary neuron injury (3), with variable neurological or behavioral consequences that may be acute or chronic. We report here the amelioration of such complications after liver transplantation in a 14-day-old white boy with CPS-I deficiency and a 35-yr-old Japanese man with ASS deficiency.\n[摘要] 1975)\n[实体] AMI",
-    "page_idx": 0,
-    "doc_name": "todo1992",
-    "doc_title": "todo1992",
-    "journal": "",
-    "publication_year": "",
-    "chunk_type": "safety_outcome",
     "section_tag": "unknown",
     "evidence_level": null,
     "entities": [
-      "AMI"
+      "ornithine transcarbamylase deficiency",
+      "carbamyl phosphate synthetase-I deficiency",
+      "liver transplantation"
     ],
-    "one_liner": "1975)"
+    "one_liner": ""
   },
   {
     "type": "text",
-    "text": "[文献] todo1992\nCASE REPORTS\nCase 1. An apparently normal, full-term male child of first-cousin parents became bradycardic and apneic shortly after birth on May 18, 1988, requiring endotracheal intubation. By postpartum day 2, he was unresponsive to pain stimuli, although results of a computed tomographic scan of the head were normal. Serum ammonia level on day 6 was 387 μmol/L, total bilirubin was 202 μmol/L (direct bilirubin = 27.4 μmol/L) and serum transaminases were normal. Peritoneal dialysis on day 7 reduced serum ammonia level from 514 to 160 μmol/L. With the diagnosis of CPS-I urea cycle enzyme deficiency, the patient was treated with an intravenous infusion of arginine, sodium benzoate and sodium phenylacetate supplemented with Intralipid and 5% dextrose (4), and tube feeding with polyxose and protein-free Mead Johnson formula 80056 (Mead Johnson, Evansville, IN). After transfer to the University of Pittsburgh, orthotopic liver transplantation (OLT) was performed with a newborn cadaver liver on June 2, 1988, at 14 days of age. Biliary drainage was performed by choledochojejunostomy (Roux-en-Y anastomosis).\n[摘要] CASE REPORTS Case 1\n[实体] AMI",
+    "text": "[文献] todo1992\nIt was proposed in 1975 by Dr. Leon Rosenberg of Yale University that liver transplantation would allow somatic correction of diseases caused by deficiency of any of the six urea cycle enzymes (Personal communication,\n\nReceived August 5, 1991; accepted October 31, 1991.\nThis work was aided by research grants from the Department of Veterans Affairs and by project grant No. DK 29961 from the National Institutes of Health.\nAddress reprint requests to: Thomas E. Starzl, M.D., Ph.D., Department of Surgery, 3601 Fifth Avenue, Falk Clinic 4 West, Pittsburgh, Pennsylvania 15213.\n31/1/34811\n[实体] liver transplantation, somatic correction, urea cycle enzymes",
     "page_idx": 0,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
     "journal": "",
     "publication_year": "",
-    "chunk_type": "figure_description",
+    "chunk_type": "other",
+    "section_tag": "unknown",
+    "evidence_level": null,
+    "entities": [
+      "liver transplantation",
+      "somatic correction",
+      "urea cycle enzymes"
+    ],
+    "one_liner": ""
+  },
+  {
+    "type": "text",
+    "text": "[文献] todo1992\n1975). The liver enzymes responsible for biosynthesis of urea from its principal precursors (ammonium and glutamine) are N-acetylglutamate synthetase, carbamyl phosphate synthetase-I (CPS-I), ornithine transcarbamylase (OTC), argininosuccinic acid synthetase (ASS), argininosuccinase and arginase (1). N-acetylglutamate synthetase deficiency has been reported in one man (2). OTC deficiency is an X chromosome-linked disorder, and the other 4 deficiencies are autosomal recessive traits. High plasma ammonium and glutamine levels are thought to cause astrocyte swelling, brain edema and secondary neuron injury (3), with variable neurological or behavioral consequences that may be acute or chronic. We report here the amelioration of such complications after liver transplantation in a 14-day-old white boy with CPS-I deficiency and a 35-yr-old Japanese man with ASS deficiency.\n[实体] liver enzymes, urea, ammonium, glutamine, N-acetylglutamate synthetase, carbamyl phosphate synthetase-I, ornithine transcarbamylase",
+    "page_idx": 0,
+    "doc_name": "todo1992",
+    "doc_title": "todo1992",
+    "journal": "",
+    "publication_year": "",
+    "chunk_type": "other",
+    "section_tag": "unknown",
+    "evidence_level": null,
+    "entities": [
+      "liver enzymes",
+      "urea",
+      "ammonium",
+      "glutamine",
+      "N-acetylglutamate synthetase",
+      "carbamyl phosphate synthetase-I",
+      "ornithine transcarbamylase"
+    ],
+    "one_liner": ""
+  },
+  {
+    "type": "text",
+    "text": "[文献] todo1992\nCASE REPORTS\nCase 1. An apparently normal, full-term male child of first-cousin parents became bradycardic and apneic shortly after birth on May 18, 1988, requiring endotracheal intubation. By postpartum day 2, he was unresponsive to pain stimuli, although results of a computed tomographic scan of the head were normal. Serum ammonia level on day 6 was 387 μmol/L, total bilirubin was 202 μmol/L (direct bilirubin = 27.4 μmol/L) and serum transaminases were normal. Peritoneal dialysis on day 7 reduced serum ammonia level from 514 to 160 μmol/L. With the diagnosis of CPS-I urea cycle enzyme deficiency, the patient was treated with an intravenous infusion of arginine, sodium benzoate and sodium phenylacetate supplemented with Intralipid and 5% dextrose (4), and tube feeding with polyxose and protein-free Mead Johnson formula 80056 (Mead Johnson, Evansville, IN). After transfer to the University of Pittsburgh, orthotopic liver transplantation (OLT) was performed with a newborn cadaver liver on June 2, 1988, at 14 days of age. Biliary drainage was performed by choledochojejunostomy (Roux-en-Y anastomosis).\n[实体] CASE REPORTS, full-term male child, bradycardic, apneic, endotracheal intubation",
+    "page_idx": 0,
+    "doc_name": "todo1992",
+    "doc_title": "todo1992",
+    "journal": "",
+    "publication_year": "",
+    "chunk_type": "methods_design",
     "section_tag": "results",
     "evidence_level": 5,
     "entities": [
-      "AMI"
+      "CASE REPORTS",
+      "full-term male child",
+      "bradycardic",
+      "apneic",
+      "endotracheal intubation"
     ],
-    "one_liner": "CASE REPORTS Case 1"
+    "one_liner": ""
   },
   {
     "type": "text",
-    "text": "[文献] todo1992\nThe surgery and subsequent immunosuppression with cyclosporine and prednisone were performed with standard techniques (5). Severe rejection beginning in postoperative wk 3 necessitated augmented steroid dosage and the addition of OKT3. An Aspergillus brain abscess was treated successfully with anti-\n[摘要] The surgery and subsequent immunosuppression with cyclosporine and prednisone were performed with standard techniques (5)",
+    "text": "[文献] todo1992\nThe surgery and subsequent immunosuppression with cyclosporine and prednisone were performed with standard techniques (5). Severe rejection beginning in postoperative wk 3 necessitated augmented steroid dosage and the addition of OKT3. An Aspergillus brain abscess was treated successfully with anti-\n[实体] surgery, immunosuppression, cyclosporine, prednisone, rejection",
     "page_idx": 0,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
     "journal": "",
     "publication_year": "",
-    "chunk_type": "other",
-    "section_tag": "unknown",
-    "evidence_level": null,
-    "entities": [],
-    "one_liner": "The surgery and subsequent immunosuppression with cyclosporine and prednisone were performed with standard techniques (5)"
-  },
-  {
-    "type": "text",
-    "text": "[文献] todo1992\nTABLE 1. Plasma amino acids in patient 1 before and after OLT\nAmino acids Before OLTb After OLTb\nNormal range Normal range As of 5/27/88 Normal range As of 4/12/91\nAspartic acid 1-17a 16 0-4 <10\nGlutamic acid 1-85 72 0-150 30\nGlutamine 337-673 909 320-870 650\nProline 51-271 177 30-400 150\nGlycine 87-323 251 90-430 250\nCitrulline 10-34 ND 0-70 10\nAlpha-amino-N-butyric acid 4-32 34 0-40 40\nValine 78-326 86 70-350 190\nOrnithine 22-94 59 0-120 50\nArginine 15-115 24 10-130 30\nND = not detectable. aMeasured by an automated amino acid analyzer. bMeasured by column chromatography. cAll data expressed as μmol/L. TABLE 2. Plasma amino acids in patient 2 before and after OLT\nAmino acids Normal range Before OLT (5/31/88) After OLT (8/25/90)\nAspartic acid 3.9-6.7a <3 4.5\nGlutamic acid 14-59 57 51\nGlutamine 560-890 641 612\nProline 110-310 98 190\nGlycine 180-370 116 199\nCitrulline 22-52 445 47\nAlanine 280-650 229 424\nValine 180-370 165 204\nOrnithine 40-100 65 124\nArginine 70-160 207 98\naAll data expressed as μmol/L. TABLE 3. Urea cycle enzymes in patient 1\nEnzyme Patient 1 Normal range (sample control)\nCPS-I <0.005a 0.26-1.0\nOTC 28.7 19-38\naAll data expressed as μmol/hr/mg protein.\n[摘要] TABLE 1\n[实体] AMI",
-    "page_idx": 1,
-    "doc_name": "todo1992",
-    "doc_title": "todo1992",
-    "journal": "",
-    "publication_year": "",
-    "chunk_type": "baseline_table",
+    "chunk_type": "methods_design",
     "section_tag": "unknown",
     "evidence_level": null,
     "entities": [
-      "AMI"
+      "surgery",
+      "immunosuppression",
+      "cyclosporine",
+      "prednisone",
+      "rejection"
     ],
-    "one_liner": "TABLE 1"
+    "one_liner": ""
   },
   {
     "type": "text",
-    "text": "[文献] todo1992\nbiotics, open drainage and, ultimately, ventriculoperitoneal shunt. Bacteremia and systemic cytomegalovirus infection further complicated the course, necessitating hospitalization for 7½ mo (6). Subsequently, the child lived at home without special domiciliary care. Growth and development have been uninterrupted during the 40 mo of follow-up, with a weight gain from 2.5 to 20 kg on an unrestricted diet. Normal physical and intellectual milestones have been delayed, presumably because of the cortical injury caused by the brain abscess, meningitis and/or hydrocephalic complications. Liver function is normal, and most the recent blood ammonia level after 37 mo was 34 μmol/L (normal < 39 μmol/L). TABLE 4.\n[摘要] biotics, open drainage and, ultimately, ventriculoperitoneal shunt",
+    "text": "[文献] todo1992\nTABLE 1. Plasma amino acids in patient 1 before and after OLT\nAmino acids Before OLTb After OLTb\nNormal range Normal range As of 5/27/88 Normal range As of 4/12/91\nAspartic acid 1-17a 16 0-4 <10\nGlutamic acid 1-85 72 0-150 30\nGlutamine 337-673 909 320-870 650\nProline 51-271 177 30-400 150\nGlycine 87-323 251 90-430 250\nCitrulline 10-34 ND 0-70 10\nAlpha-amino-N-butyric acid 4-32 34 0-40 40\nValine 78-326 86 70-350 190\nOrnithine 22-94 59 0-120 50\nArginine 15-115 24 10-130 30\nND = not detectable. aMeasured by an automated amino acid analyzer. bMeasured by column chromatography. cAll data expressed as μmol/L. TABLE 2. Plasma amino acids in patient 2 before and after OLT\nAmino acids Normal range Before OLT (5/31/88) After OLT (8/25/90)\nAspartic acid 3.9-6.7a <3 4.5\nGlutamic acid 14-59 57 51\nGlutamine 560-890 641 612\nProline 110-310 98 190\nGlycine 180-370 116 199\nCitrulline 22-52 445 47\nAlanine 280-650 229 424\nValine 180-370 165 204\nOrnithine 40-100 65 124\nArginine 70-160 207 98\naAll data expressed as μmol/L. TABLE 3. Urea cycle enzymes in patient 1\nEnzyme Patient 1 Normal range (sample control)\nCPS-I <0.005a 0.26-1.0\nOTC 28.7 19-38\naAll data expressed as μmol/hr/mg protein.\n[实体] TABLE 1, Plasma amino acids, OLT, Aspartic acid, Glutamic acid",
     "page_idx": 1,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
     "journal": "",
     "publication_year": "",
-    "chunk_type": "safety_outcome",
+    "chunk_type": "outcome_table",
     "section_tag": "unknown",
     "evidence_level": null,
-    "entities": [],
-    "one_liner": "biotics, open drainage and, ultimately, ventriculoperitoneal shunt"
+    "entities": [
+      "TABLE 1",
+      "Plasma amino acids",
+      "OLT",
+      "Aspartic acid",
+      "Glutamic acid"
+    ],
+    "one_liner": ""
   },
   {
     "type": "text",
-    "text": "[文献] todo1992\nUrea cycle enzymes in patient 2\nEnzyme Patient Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range\n[摘要] Urea cycle enzymes in patient 2 Enzyme Patient Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range",
+    "text": "[文献] todo1992\nbiotics, open drainage and, ultimately, ventriculoperitoneal shunt. Bacteremia and systemic cytomegalovirus infection further complicated the course, necessitating hospitalization for 7½ mo (6). Subsequently, the child lived at home without special domiciliary care. Growth and development have been uninterrupted during the 40 mo of follow-up, with a weight gain from 2.5 to 20 kg on an unrestricted diet. Normal physical and intellectual milestones have been delayed, presumably because of the cortical injury caused by the brain abscess, meningitis and/or hydrocephalic complications. Liver function is normal, and most the recent blood ammonia level after 37 mo was 34 μmol/L (normal < 39 μmol/L). TABLE 4.\n[实体] biotics, open drainage, ventriculoperitoneal shunt, Bacteremia, cytomegalovirus infection",
     "page_idx": 1,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
@@ -130,56 +148,63 @@
     "chunk_type": "other",
     "section_tag": "unknown",
     "evidence_level": null,
-    "entities": [],
-    "one_liner": "Urea cycle enzymes in patient 2 Enzyme Patient Normal range Normal range Normal range Normal range Normal range Normal range Normal range Normal range"
+    "entities": [
+      "biotics",
+      "open drainage",
+      "ventriculoperitoneal shunt",
+      "Bacteremia",
+      "cytomegalovirus infection"
+    ],
+    "one_liner": ""
   },
   {
     "type": "text",
-    "text": "[文献] todo1992\nNuzum and Snodgrass (9). The liver tissues from Patient 2 were analyzed for CPS-I, OTC, ASS and AS activity in the Department of Biochemistry of Kagoshima University, Kagoshima, Japan, using a previously described method (10). RESULTS\nPlasma Amino Acids. The pretransplant plasma in Patient 1 had elevated levels of glutamine. Citrulline was undetectable, and the other measured amino acids were relatively normal (Table 1). Plasma amino acids 34 mo after surgery were normal. Citrulline levels became detectable. The plasma amino acids in Patient 2 before and after transplantation are summarized in Table 2. The extremely high preoperative levels of citrulline and the modest elevations of arginine were corrected at all measured postoperative times. However, ornithine level (normal = 40 to 100 μmol/L) was slightly elevated at 3 mo (153 μmol/L) and at 20 mo (124 μmol/L) postoperatively. Tissue Studies. On light microscopy, the native liver of patient 1 had only minor, nonspecific abnormalities. Similarly, electron microscopic studies were normal, except for nonspecific elongation of the mitochondria. CPS-I activity was undetectable in the homogenate of this liver.\n[摘要] Nuzum and Snodgrass (9)\n[实体] AMI",
+    "text": "[文献] todo1992\nNuzum and Snodgrass (9). The liver tissues from Patient 2 were analyzed for CPS-I, OTC, ASS and AS activity in the Department of Biochemistry of Kagoshima University, Kagoshima, Japan, using a previously described method (10). RESULTS\nPlasma Amino Acids. The pretransplant plasma in Patient 1 had elevated levels of glutamine. Citrulline was undetectable, and the other measured amino acids were relatively normal (Table 1). Plasma amino acids 34 mo after surgery were normal. Citrulline levels became detectable. The plasma amino acids in Patient 2 before and after transplantation are summarized in Table 2. The extremely high preoperative levels of citrulline and the modest elevations of arginine were corrected at all measured postoperative times. However, ornithine level (normal = 40 to 100 μmol/L) was slightly elevated at 3 mo (153 μmol/L) and at 20 mo (124 μmol/L) postoperatively. Tissue Studies. On light microscopy, the native liver of patient 1 had only minor, nonspecific abnormalities. Similarly, electron microscopic studies were normal, except for nonspecific elongation of the mitochondria. CPS-I activity was undetectable in the homogenate of this liver.\n[实体] Nuzum and Snodgrass, liver tissues, CPS-I, OTC, ASS, AS activity, Kagoshima University",
     "page_idx": 2,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
     "journal": "",
     "publication_year": "",
-    "chunk_type": "baseline_table",
+    "chunk_type": "methods_design",
     "section_tag": "results",
     "evidence_level": null,
     "entities": [
-      "AMI"
+      "Nuzum and Snodgrass",
+      "liver tissues",
+      "CPS-I",
+      "OTC",
+      "ASS",
+      "AS activity",
+      "Kagoshima University"
     ],
-    "one_liner": "Nuzum and Snodgrass (9)"
+    "one_liner": ""
   },
   {
     "type": "text",
-    "text": "[文献] todo1992\nOTC activity was normal when compared with that of a control liver sample (Table 3). The native liver of patient 2 was enlarged, with cholestasis and massive steatosis and hemosiderosis. Periportal fibrosis, but no cirrhosis, was present. The liver homogenate was devoid of ASS activity, but exhibited significant CPS-1, OTC, and AS activity (Table 4).\n[摘要] OTC activity was normal when compared with that of a control liver sample (Table 3)",
+    "text": "[文献] todo1992\nOTC activity was normal when compared with that of a control liver sample (Table 3). The native liver of patient 2 was enlarged, with cholestasis and massive steatosis and hemosiderosis. Periportal fibrosis, but no cirrhosis, was present. The liver homogenate was devoid of ASS activity, but exhibited significant CPS-1, OTC, and AS activity (Table 4).\n[实体] OTC activity, control liver sample, Table 3, native liver, cholestasis, steatosis, hemosiderosis, Periportal fibrosis",
     "page_idx": 2,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
     "journal": "",
     "publication_year": "",
-    "chunk_type": "other",
+    "chunk_type": "outcome_table",
     "section_tag": "unknown",
     "evidence_level": null,
-    "entities": [],
-    "one_liner": "OTC activity was normal when compared with that of a control liver sample (Table 3)"
+    "entities": [
+      "OTC activity",
+      "control liver sample",
+      "Table 3",
+      "native liver",
+      "cholestasis",
+      "steatosis",
+      "hemosiderosis",
+      "Periportal fibrosis"
+    ],
+    "one_liner": ""
   },
   {
     "type": "text",
-    "text": "[文献] todo1992\nOUTCOME\nAlive/dead\nMental state\nReference\nAlive\nNormal and in school\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\nNormal\n[摘要] OUTCOME Alive/dead Mental state Reference Alive Normal and in school Normal Normal Normal Normal Normal Normal Normal Normal Normal Normal Normal Norm",
-    "page_idx": 2,
-    "doc_name": "todo1992",
-    "doc_title": "todo1992",
-    "journal": "",
-    "publication_year": "",
-    "chunk_type": "other",
-    "section_tag": "unknown",
-    "evidence_level": null,
-    "entities": [],
-    "one_liner": "OUTCOME Alive/dead Mental state Reference Alive Normal and in school Normal Normal Normal Normal Normal Normal Normal Normal Normal Normal Normal Norm"
-  },
-  {
-    "type": "text",
-    "text": "[文献] todo1992\n422\nTODO ET AL. HEPATOLOGY\nThe cumulative experience in our two cases and in the seven others elsewhere establishes the effectiveness of liver transplantation for at least three urea cycle deficiencies. When the operation is successful, the metabolic consequences are corrected to an extent not approached by attempts to activate alternative pathways of waste nitrogen synthesis and excretion or by restriction of dietary protein intake. However, the use of liver transplantation for somatic correction may prove to be only a step toward enzyme replacement. Such therapy with measures other than whole-liver or even isolated hepatocyte transplantation is not hard to envision with recent advances in understanding of the molecular basis for these diseases. Virus-mediated transfer of human ASS has already been accomplished in rodents (17, 18), suggesting that the introduction of a functional complementary DNA into hepatic or nonhepatic autologous cells could be a practical therapeutic possibility in the near future. REFERENCES\n1. Brusilow SW, Horwich AL. Urea cycle enzymes. In: Scriver CR, Beaudet AL, Sly WS, Valle D, eds. The metabolic basis of inherited diseases. 6th ed.\n[摘要] 422 TODO ET AL",
+    "text": "[文献] todo1992\n422\nTODO ET AL. HEPATOLOGY\nThe cumulative experience in our two cases and in the seven others elsewhere establishes the effectiveness of liver transplantation for at least three urea cycle deficiencies. When the operation is successful, the metabolic consequences are corrected to an extent not approached by attempts to activate alternative pathways of waste nitrogen synthesis and excretion or by restriction of dietary protein intake. However, the use of liver transplantation for somatic correction may prove to be only a step toward enzyme replacement. Such therapy with measures other than whole-liver or even isolated hepatocyte transplantation is not hard to envision with recent advances in understanding of the molecular basis for these diseases. Virus-mediated transfer of human ASS has already been accomplished in rodents (17, 18), suggesting that the introduction of a functional complementary DNA into hepatic or nonhepatic autologous cells could be a practical therapeutic possibility in the near future. REFERENCES\n1. Brusilow SW, Horwich AL. Urea cycle enzymes. In: Scriver CR, Beaudet AL, Sly WS, Valle D, eds. The metabolic basis of inherited diseases. 6th ed.\n[实体] cumulative experience, effectiveness, liver transplantation, urea cycle deficiencies",
     "page_idx": 3,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
@@ -188,42 +213,35 @@
     "chunk_type": "discussion",
     "section_tag": "unknown",
     "evidence_level": null,
-    "entities": [],
-    "one_liner": "422 TODO ET AL"
+    "entities": [
+      "cumulative experience",
+      "effectiveness",
+      "liver transplantation",
+      "urea cycle deficiencies"
+    ],
+    "one_liner": ""
   },
   {
     "type": "text",
-    "text": "[文献] todo1992\nNew York: McGraw-Hill, 1989:629-663. 2. Bachmann C, Krahenbuhl S, Colombo JP, Schubiger G, Jaggi KH, Tonz O: N-acetylglutamate synthetase deficiency: a disorder of ammonia detoxication. N Engl J Med 1981:304:543-544. 3. Voorhies TM, Ehrlich ME, Duffy TE, Petito CK, Plum FI. Acute hyperammonemia in the young primate: physiologic and neuropathologic correlates. Pediatr Res 1983;17:971-976. 4. Brusilow SW, Danney M, Waber LJ, Batshaw M, Burton B, Levitsky L, Roth K, et al. Treatment of episodic hyperammonemia in children with inborn errors of urea synthesis. New Engl J Med 1984:310:1630-1634. 5. Starzl TE, Demetris AJ. Liver transplantation. Chicago: Year Book Medical Publishers, Inc., 1990:71-84. 6. Green M, Wald ER, Tzakis A, Todo S, and Starzl TE. Aspergillosis of the CNS in a pediatric liver transplant recipient: case report and review. Rev Infect Dis 1991;13:653-657. 7. Roth M, Hampai A. Column chromatography of amino acids with fluorescence detection. J Chromatograph 1993;83:353-356. 8. Moore S, Speckman DH, Stein WH. Chromatography of amino acids on sulfonated polystyrene resin: an improved system. Anal Chem 1958;30:1185-1190. 9. Nuzum CT, Snodgrass PJ.\n[摘要] New York: McGraw-Hill, 1989:629-663\n[实体] AMI",
+    "text": "[文献] todo1992\nNew York: McGraw-Hill, 1989:629-663. 2. Bachmann C, Krahenbuhl S, Colombo JP, Schubiger G, Jaggi KH, Tonz O: N-acetylglutamate synthetase deficiency: a disorder of ammonia detoxication. N Engl J Med 1981:304:543-544. 3. Voorhies TM, Ehrlich ME, Duffy TE, Petito CK, Plum FI. Acute hyperammonemia in the young primate: physiologic and neuropathologic correlates. Pediatr Res 1983;17:971-976. 4. Brusilow SW, Danney M, Waber LJ, Batshaw M, Burton B, Levitsky L, Roth K, et al. Treatment of episodic hyperammonemia in children with inborn errors of urea synthesis. New Engl J Med 1984:310:1630-1634. 5. Starzl TE, Demetris AJ. Liver transplantation. Chicago: Year Book Medical Publishers, Inc., 1990:71-84. 6. Green M, Wald ER, Tzakis A, Todo S, and Starzl TE. Aspergillosis of the CNS in a pediatric liver transplant recipient: case report and review. Rev Infect Dis 1991;13:653-657. 7. Roth M, Hampai A. Column chromatography of amino acids with fluorescence detection. J Chromatograph 1993;83:353-356. 8. Moore S, Speckman DH, Stein WH. Chromatography of amino acids on sulfonated polystyrene resin: an improved system. Anal Chem 1958;30:1185-1190. 9. Nuzum CT, Snodgrass PJ.\n[实体] New York: McGraw-Hill, 1989:629-663, Bachmann C, N-acetylglutamate synthetase deficiency",
     "page_idx": 3,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
     "journal": "",
     "publication_year": "",
-    "chunk_type": "figure_description",
+    "chunk_type": "references",
     "section_tag": "unknown",
     "evidence_level": 5,
     "entities": [
-      "AMI"
+      "New York: McGraw-Hill, 1989:629-663",
+      "Bachmann C",
+      "N-acetylglutamate synthetase deficiency"
     ],
-    "one_liner": "New York: McGraw-Hill, 1989:629-663"
+    "one_liner": ""
   },
   {
     "type": "text",
-    "text": "[文献] todo1992\nMultiple assays of the five urea-cycle enzymes in human liver homogenates. In: Grisolia S, Baguena R, Mayor F, eds. The urea cycle. New York: Wiley-Interscience, 1976:235-349. 10. Saheki T, Ueda A, Hosoya M, Kusumi K, Takada S, Tsuda M, Katsunuma T. Qualitative and quantitative abnormalities of argininosuccinate synthetase in citrulinemia. Clin Chim Acta 1981;109:325-335. 11. Starzl TE, Demetris AJ, Van Thiel DH. Medical progress: liver transplantation. Part I. N Engl J Med 1989;321:1014-1022. 12. Broelsch CE, Emond JC, Whittington PF, Thistlethwaite JR, Baker AL, Lichto JL. Application of reduced-size liver transplants as split grafts, auxiliary orthotopic grafts, and living related segmental transplants. Ann Surg 1990;212:368-377. 13. Largilliere C, Houssin D, Gottrand F, Mathey C, Checoury A, Alagille D, Farriaux JP. Liver transplantation for ornithine transcarbamylase deficiency in a girl. Pediatrics 1989;115:415-417. 14. Featherston WR, Rogers QR, Freedland RA. Relative importance of the kidney and liver in synthesis of arginine by the rat. Am J Physiol 1973;224:127-129. 15. Windmueller HG, Spaeth AE. Source of fate of circulating citrulline. Am J Physiol 1981;241:E473-E480. 16.\n[摘要] Multiple assays of the five urea-cycle enzymes in human liver homogenates",
-    "page_idx": 3,
-    "doc_name": "todo1992",
-    "doc_title": "todo1992",
-    "journal": "",
-    "publication_year": "",
-    "chunk_type": "discussion",
-    "section_tag": "unknown",
-    "evidence_level": null,
-    "entities": [],
-    "one_liner": "Multiple assays of the five urea-cycle enzymes in human liver homogenates"
-  },
-  {
-    "type": "text",
-    "text": "[文献] todo1992\nWood PA, Partridge CA, O'Brien WE, Beaudet AL. Expression of human argininosuccinate synthetase after retrovirus-mediated gene transfer. Som Cell Mol Genet 1986;12:493-500. 17. Wood PA, Herman GE, Chao CYJ, O'Brien WE, Beaudet AL. Retrovirus-mediated gene transfer of argininosuccinate synthetase into cultured rodent cells and human citrullinemic fibroblasts: Cold Spring Harb Symp Quart Biol 1986;51:1027-1034.\n[摘要] Wood PA, Partridge CA, O'Brien WE, Beaudet AL",
+    "text": "[文献] todo1992\nMultiple assays of the five urea-cycle enzymes in human liver homogenates. In: Grisolia S, Baguena R, Mayor F, eds. The urea cycle. New York: Wiley-Interscience, 1976:235-349. 10. Saheki T, Ueda A, Hosoya M, Kusumi K, Takada S, Tsuda M, Katsunuma T. Qualitative and quantitative abnormalities of argininosuccinate synthetase in citrulinemia. Clin Chim Acta 1981;109:325-335. 11. Starzl TE, Demetris AJ, Van Thiel DH. Medical progress: liver transplantation. Part I. N Engl J Med 1989;321:1014-1022. 12. Broelsch CE, Emond JC, Whittington PF, Thistlethwaite JR, Baker AL, Lichto JL. Application of reduced-size liver transplants as split grafts, auxiliary orthotopic grafts, and living related segmental transplants. Ann Surg 1990;212:368-377. 13. Largilliere C, Houssin D, Gottrand F, Mathey C, Checoury A, Alagille D, Farriaux JP. Liver transplantation for ornithine transcarbamylase deficiency in a girl. Pediatrics 1989;115:415-417. 14. Featherston WR, Rogers QR, Freedland RA. Relative importance of the kidney and liver in synthesis of arginine by the rat. Am J Physiol 1973;224:127-129. 15. Windmueller HG, Spaeth AE. Source of fate of circulating citrulline. Am J Physiol 1981;241:E473-E480. 16.\n[实体] urea-cycle enzymes, human liver homogenates, Grisolia S, Baguena R, Mayor F, The urea cycle, New York: Wiley-Interscience, 1976:235-349",
     "page_idx": 3,
     "doc_name": "todo1992",
     "doc_title": "todo1992",
@@ -232,7 +250,37 @@
     "chunk_type": "references",
     "section_tag": "unknown",
     "evidence_level": null,
-    "entities": [],
-    "one_liner": "Wood PA, Partridge CA, O'Brien WE, Beaudet AL"
+    "entities": [
+      "urea-cycle enzymes",
+      "human liver homogenates",
+      "Grisolia S",
+      "Baguena R",
+      "Mayor F",
+      "The urea cycle",
+      "New York: Wiley-Interscience, 1976:235-349"
+    ],
+    "one_liner": ""
+  },
+  {
+    "type": "text",
+    "text": "[文献] todo1992\nWood PA, Partridge CA, O'Brien WE, Beaudet AL. Expression of human argininosuccinate synthetase after retrovirus-mediated gene transfer. Som Cell Mol Genet 1986;12:493-500. 17. Wood PA, Herman GE, Chao CYJ, O'Brien WE, Beaudet AL. Retrovirus-mediated gene transfer of argininosuccinate synthetase into cultured rodent cells and human citrullinemic fibroblasts: Cold Spring Harb Symp Quart Biol 1986;51:1027-1034.\n[实体] Wood PA, Partridge CA, O'Brien WE, Beaudet AL, argininosuccinate synthetase, retrovirus-mediated gene transfer, Som Cell Mol Genet 1986;12:493-500",
+    "page_idx": 3,
+    "doc_name": "todo1992",
+    "doc_title": "todo1992",
+    "journal": "",
+    "publication_year": "",
+    "chunk_type": "references",
+    "section_tag": "unknown",
+    "evidence_level": null,
+    "entities": [
+      "Wood PA",
+      "Partridge CA",
+      "O'Brien WE",
+      "Beaudet AL",
+      "argininosuccinate synthetase",
+      "retrovirus-mediated gene transfer",
+      "Som Cell Mol Genet 1986;12:493-500"
+    ],
+    "one_liner": ""
   }
 ]

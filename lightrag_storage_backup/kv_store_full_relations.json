@@ -1,0 +1,206 @@
+{
+  "doc-9ebe05d1758d67db88c4f1da095d49b1": {
+    "relation_pairs": [
+      [
+        "Federal Reserve",
+        "Rising Interest Rates"
+      ],
+      [
+        "Alex",
+        "Jordan"
+      ],
+      [
+        "IABP",
+        "Impella"
+      ],
+      [
+        "Noah Carter",
+        "World Athletics Federation"
+      ],
+      [
+        "Investor Concerns",
+        "Market Selloff"
+      ],
+      [
+        "World Athletics Championship",
+        "World Athletics Federation"
+      ],
+      [
+        "Federal Reserve",
+        "Financial Experts"
+      ],
+      [
+        "Cruz",
+        "Jordan"
+      ],
+      [
+        "100m Sprint Record",
+        "World Athletics Federation"
+      ],
+      [
+        "Investor Concerns",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Federal Reserve Policy Announcement",
+        "Financial Experts"
+      ],
+      [
+        "Investor Concerns",
+        "Rising Interest Rates"
+      ],
+      [
+        "Alex",
+        "Taylor"
+      ],
+      [
+        "Federal Reserve",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Jordan",
+        "Taylor"
+      ]
+    ],
+    "count": 15,
+    "create_time": 1780045977,
+    "update_time": 1780045977,
+    "_id": "doc-9ebe05d1758d67db88c4f1da095d49b1"
+  },
+  "doc-1132aec3ad214aa005de3f3337ee9e5d": {
+    "relation_pairs": [
+      [
+        "Alex",
+        "Jordan"
+      ],
+      [
+        "Investor Concerns",
+        "Market Selloff"
+      ],
+      [
+        "Federal Reserve",
+        "Federal Reserve Policy Announcement"
+      ],
+      [
+        "World Athletics Championship",
+        "World Athletics Federation"
+      ],
+      [
+        "Cruz",
+        "Jordan"
+      ],
+      [
+        "Federal Reserve",
+        "Financial Experts"
+      ],
+      [
+        "Investor Concerns",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Investor Concerns",
+        "Rising Interest Rates"
+      ],
+      [
+        "Alex",
+        "Taylor"
+      ],
+      [
+        "Genetics in Medicine",
+        "Shchelochkov2019"
+      ],
+      [
+        "Jordan",
+        "Taylor"
+      ]
+    ],
+    "count": 11,
+    "create_time": 1780045996,
+    "update_time": 1780045996,
+    "_id": "doc-1132aec3ad214aa005de3f3337ee9e5d"
+  },
+  "doc-872c497852ea624e235fe148d0f8950e": {
+    "relation_pairs": [
+      [
+        "Jordan",
+        "The Device"
+      ],
+      [
+        "Alex",
+        "Jordan"
+      ],
+      [
+        "Federal Reserve",
+        "Rising Interest Rates"
+      ],
+      [
+        "Investor Concerns",
+        "Market Selloff"
+      ],
+      [
+        "Cruz",
+        "Jordan"
+      ],
+      [
+        "Cruz",
+        "Taylor"
+      ],
+      [
+        "Investor Concerns",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Omega Energy",
+        "Rising Oil Prices"
+      ],
+      [
+        "World Athletics Championship",
+        "World Athletics Federation"
+      ],
+      [
+        "Market Selloff",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Investor Concerns",
+        "Rising Interest Rates"
+      ],
+      [
+        "Federal Reserve",
+        "Regulatory Uncertainty"
+      ],
+      [
+        "Crude Oil",
+        "Omega Energy"
+      ],
+      [
+        "Alex",
+        "Cruz"
+      ],
+      [
+        "Jordan",
+        "Taylor"
+      ],
+      [
+        "Nexon Technologies",
+        "Quarterly Earnings"
+      ],
+      [
+        "100m Sprint Record",
+        "World Athletics Federation"
+      ],
+      [
+        "Taylor",
+        "The Device"
+      ],
+      [
+        "Market Selloff",
+        "Rising Interest Rates"
+      ]
+    ],
+    "count": 19,
+    "create_time": 1780046015,
+    "update_time": 1780046015,
+    "_id": "doc-872c497852ea624e235fe148d0f8950e"
+  }
+}

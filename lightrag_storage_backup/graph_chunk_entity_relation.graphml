@@ -1,0 +1,1789 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d13" for="edge" attr.name="truncate" attr.type="string"/>
+<key id="d12" for="edge" attr.name="created_at" attr.type="long"/>
+<key id="d11" for="edge" attr.name="file_path" attr.type="string"/>
+<key id="d10" for="edge" attr.name="source_id" attr.type="string"/>
+<key id="d9" for="edge" attr.name="keywords" attr.type="string"/>
+<key id="d8" for="edge" attr.name="description" attr.type="string"/>
+<key id="d7" for="edge" attr.name="weight" attr.type="double"/>
+<key id="d6" for="node" attr.name="truncate" attr.type="string"/>
+<key id="d5" for="node" attr.name="created_at" attr.type="long"/>
+<key id="d4" for="node" attr.name="file_path" attr.type="string"/>
+<key id="d3" for="node" attr.name="source_id" attr.type="string"/>
+<key id="d2" for="node" attr.name="description" attr.type="string"/>
+<key id="d1" for="node" attr.name="entity_type" attr.type="string"/>
+<key id="d0" for="node" attr.name="entity_id" attr.type="string"/>
+<graph edgedefault="undirected"><node id="AMI">
+  <data key="d0">AMI</data>
+  <data key="d1">concept</data>
+  <data key="d2">AMI stands for acute myocardial infarction, a medical condition involving heart attack.&lt;SEP&gt;AMI is a concept or entity referenced in the input text, possibly standing for Acute Myocardial Infarction or another medical term.&lt;SEP&gt;A medical entity referenced in the text, likely standing for Acute Myocardial Infarction or a similar condition.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-83724ab6403639b1149ca8570bc6e741&lt;SEP&gt;chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="CI">
+  <data key="d0">CI</data>
+  <data key="d1">concept</data>
+  <data key="d2">CI stands for cardiac index, a hemodynamic parameter measuring cardiac output relative to body surface area.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="CPI">
+  <data key="d0">CPI</data>
+  <data key="d1">concept</data>
+  <data key="d2">CPI stands for cardiac power index, a measure of cardiac function.&lt;SEP&gt;CPI stands for Cardiac Power Index, a measure used to estimate hemodynamic support offered by a device.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-cd12a4d42988a0cbef608f813b7db575</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="CS">
+  <data key="d0">CS</data>
+  <data key="d1">concept</data>
+  <data key="d2">CS stands for cardiogenic shock, a life-threatening condition where the heart fails to pump enough blood.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="IABP">
+  <data key="d0">IABP</data>
+  <data key="d1">artifact</data>
+  <data key="d2">IABP stands for intra-aortic balloon pump, a medical device used for hemodynamic support in patients with cardiogenic shock.&lt;SEP&gt;IABP stands for intra-aortic balloon pump, a mechanical device used to support heart function.&lt;SEP&gt;IABP (Intra-aortic Balloon Pump) is a mechanical device used for hemodynamic support, compared against Impella in the clinical trial.&lt;SEP&gt;IABP (intra-aortic balloon pump) is a cardiac assist device used as a comparator to Impella in the clinical trial.&lt;SEP&gt;IABP is an intra-aortic balloon pump used for hemodynamic support in cardiogenic shock patients.&lt;SEP&gt;IABP (Intra-Aortic Balloon Pump) is a medical device used for cardiac support, compared against Impella in a survival probability study.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-cd12a4d42988a0cbef608f813b7db575&lt;SEP&gt;chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-1855c52c9abac15b97446b5b78a35eb2&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="LVAD">
+  <data key="d0">LVAD</data>
+  <data key="d1">artifact</data>
+  <data key="d2">LVAD stands for left ventricular assist device, a mechanical pump supporting the left ventricle.&lt;SEP&gt;LVAD (Left Ventricular Assist Device) is a mechanical device used to support heart function, mentioned in the context of additional work for patients.&lt;SEP&gt;LVAD is a left ventricular assist device used for hemodynamic support in cardiogenic shock patients.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-cd12a4d42988a0cbef608f813b7db575&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="MAP">
+  <data key="d0">MAP</data>
+  <data key="d1">concept</data>
+  <data key="d2">MAP stands for mean arterial pressure, a measure of average blood pressure in arteries.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="MODS">
+  <data key="d0">MODS</data>
+  <data key="d1">concept</data>
+  <data key="d2">MODS stands for Multiple Organ Dysfunction Score, a scoring system for organ failure.&lt;SEP&gt;MODS (Multiple Organ Dysfunction Score) is a scoring system used to assess organ dysfunction in the study.&lt;SEP&gt;MODS stands for Multiple Organ Dysfunction Score, a scoring system used to evaluate organ dysfunction.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-cd12a4d42988a0cbef608f813b7db575&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="SOFA">
+  <data key="d0">SOFA</data>
+  <data key="d1">concept</data>
+  <data key="d2">SOFA stands for Sepsis-related Organ Failure Assessment, a scoring system for organ dysfunction.&lt;SEP&gt;SOFA (Sequential Organ Failure Assessment) is a scoring system used to assess organ failure in the&lt;SEP&gt;SOFA stands for Sepsis-related Organ Failure Assessment, a scoring system used to evaluate organ failure.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-cd12a4d42988a0cbef608f813b7db575&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Impella LP2.5">
+  <data key="d0">Impella LP2.5</data>
+  <data key="d1">artifact</data>
+  <data key="d2">The Impella LP2.5 is a catheter-based, impeller-driven, axial-flow pump manufactured by Abiomed Europe GmbH, capable of providing up to 2.5 l/min of flow from the left ventricle to the ascending aorta and is implantable via a percutaneous approach.&lt;SEP&gt;Impella LP2.5 is a type of ventricular assist device used in a clinical trial for cardiogenic shock.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-1855c52c9abac15b97446b5b78a35eb2</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="LVEF">
+  <data key="d0">LVEF</data>
+  <data key="d1">concept</data>
+  <data key="d2">LVEF stands for left ventricular ejection fraction, a measure</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="World Athletics Federation">
+  <data key="d0">World Athletics Federation</data>
+  <data key="d1">organization</data>
+  <data key="d2">The World Athletics Federation is the governing body overseeing the World Athletics Championship and record validations.&lt;SEP&gt;The World Athletics Federation is the governing body overseeing the World Athletics Championship and record validations.&lt;SEP&gt;The World Athletics Federation is the governing body overseeing the World Athletics Championship and record validations.</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-cd12a4d42988a0cbef608f813b7db575&lt;SEP&gt;chunk-1855c52c9abac15b97446b5b78a35eb2&lt;SEP&gt;chunk-61463c7b12c07a431ba8cba59dce8f00&lt;SEP&gt;chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Impella">
+  <data key="d0">Impella</data>
+  <data key="d1">artifact</data>
+  <data key="d2">Impella is a catheter-based miniaturized rotary blood pump, specifically the Impella LP2.5 model, used for hemodynamic support in patients with cardiogenic shock.&lt;SEP&gt;Impella is a ventricular assist device used in patients with cardiogenic shock, associated with higher hemolysis and blood product administration compared to IABP.&lt;SEP&gt;Impella is a catheter-based, miniaturized rotary blood pump used as a new LVAD for percutaneous access in cardiogenic shock patients.&lt;SEP&gt;Impella is a medical device used as a treatment in a clinical trial, compared against intra-aortic balloon pump.&lt;SEP&gt;Impella is a medical device used for cardiac support, compared against IABP in a survival probability study.</data>
+  <data key="d3">chunk-cd12a4d42988a0cbef608f813b7db575&lt;SEP&gt;chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Cardiogenic Shock">
+  <data key="d0">Cardiogenic Shock</data>
+  <data key="d1">concept</data>
+  <data key="d2">Cardiogenic shock is a medical condition characterized by the heart's inability to pump sufficient blood, often caused by acute myocardial infarction.</data>
+  <data key="d3">chunk-cd12a4d42988a0cbef608f813b7db575</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Serum Lactate">
+  <data key="d0">Serum Lactate</data>
+  <data key="d1">data</data>
+  <data key="d2">Serum lactate is a metabolic parameter measured in patients, with lower levels observed in the Impella group during the first 48 hours.&lt;SEP&gt;Serum lactate is a biomarker of tissue perfusion and shock, measured over time in Impella and IABP patients.&lt;SEP&gt;Serum lactate is a biomarker measured to assess tissue hypoxia and metabolic status in patients.</data>
+  <data key="d3">chunk-cd12a4d42988a0cbef608f813b7db575&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Acute Myocardial Infarction">
+  <data key="d0">Acute Myocardial Infarction</data>
+  <data key="d1">event</data>
+  <data key="d2">Acute myocardial infarction is a medical event causing cardiogenic shock, studied in the clinical trial.</data>
+  <data key="d3">chunk-cd12a4d42988a0cbef608f813b7db575</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Randomized Clinical Trial">
+  <data key="d0">Randomized Clinical Trial</data>
+  <data key="d1">event</data>
+  <data key="d2">A randomized clinical trial is the study&lt;SEP&gt;A Randomized Clinical Trial is the study design comparing Impella and Intra-Aortic Balloon Pump treatments.</data>
+  <data key="d3">chunk-cd12a4d42988a0cbef608f813b7db575&lt;SEP&gt;chunk-c33f31a24de4f3032f5ab5311fd13365</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Survival Probability">
+  <data key="d0">Survival Probability</data>
+  <data key="d1">data</data>
+  <data key="d2">Survival Probability is a statistical measure shown on the y-axis of the Kaplan-Meier curves, comparing outcomes between Impella and IABP groups.</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Days After Randomization">
+  <data key="d0">Days After Randomization</data>
+  <data key="d1">concept</data>
+  <data key="d2">Days After Randomization is the time variable on the x-axis of the survival curves, ranging from 0 to 30 days.</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Baseline">
+  <data key="d0">Baseline</data>
+  <data key="d1">event</data>
+  <data key="d2">Baseline is the initial time point at which MODS and SOFA scores were measured before treatment.&lt;SEP&gt;Baseline is the starting point (Day 0) in the survival analysis before treatment randomization.</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-c33f31a24de4f3032f5ab5311fd13365</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="30 Days">
+  <data key="d0">30 Days</data>
+  <data key="d1">event</data>
+  <data key="d2">30 Days is the follow-up time point at which MODS and SOFA scores were measured and survival was assessed.&lt;SEP&gt;30 Days is the endpoint time point in the survival analysis following randomization.</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-c33f31a24de4f3032f5ab5311fd13365</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Log-Rank P=0.97">
+  <data key="d0">Log-Rank P=0.97</data>
+  <data key="d1">data</data>
+  <data key="d2">Log-Rank P=0.97 is the statistical test result indicating no significant difference in survival between the Impella and IABP groups.</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Investor Concerns">
+  <data key="d0">Investor Concerns</data>
+  <data key="d1">concept</data>
+  <data key="d2">Investor concerns refer to the worries of investors regarding rising interest rates and regulatory uncertainty, which contributed to the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty are a key factor driving the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty are a key factor driving the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty are driving the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty are a key factor driving the market selloff.</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60&lt;SEP&gt;chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-2a40dc31e02c5c0febdae8449f769db0&lt;SEP&gt;chunk-b8a835d63382015bc0073fd6f79ae0ba&lt;SEP&gt;chunk-344323b918fd0a2f63161ea908593c80&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Rising Interest Rates">
+  <data key="d0">Rising Interest Rates</data>
+  <data key="d1">concept</data>
+  <data key="d2">Rising interest rates are a macroeconomic factor that has become a key concern for investors, contributing to widespread investor anxiety and market volatility. This phenomenon is identified as a primary driver behind the stock market downturn and the broader market selloff, as it directly influences investor sentiment and financial market stability.</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-21216935d007e96698b174a5337c6463&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60&lt;SEP&gt;chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-2a40dc31e02c5c0febdae8449f769db0&lt;SEP&gt;chunk-b8a835d63382015bc0073fd6f79ae0ba&lt;SEP&gt;chunk-344323b918fd0a2f63161ea908593c80&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d&lt;SEP&gt;chunk-10880be99377e9a685fe866bbe47008f&lt;SEP&gt;chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046014</data>
+  <data key="d6"></data>
+</node>
+<node id="Regulatory Uncertainty">
+  <data key="d0">Regulatory Uncertainty</data>
+  <data key="d1">concept</data>
+  <data key="d2">Regulatory uncertainty refers to the lack of clarity or the presence of unclear and changing government policies and regulations that affect business operations. This ambiguity is a key factor driving investor concerns, as it makes it difficult to predict future compliance costs, operational constraints, and the overall business environment. Consequently, regulatory uncertainty is a significant contributor to market volatility, often leading to market downturns, selloffs, and declines in specific sectors such as technology stocks. The absence of stable and predictable rules creates an environment of risk that prompts cautious investor behavior and negatively impacts market stability.&lt;SEP&gt;Regulatory uncertainty refers to unclear or changing regulations that negatively impact investor sentiment and market performance.&lt;SEP&gt;Regulatory uncertainty is a factor contributing to investor concerns and the decline in tech stocks.</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-21216935d007e96698b174a5337c6463&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60&lt;SEP&gt;chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-2a40dc31e02c5c0febdae8449f769db0&lt;SEP&gt;chunk-b8a835d63382015bc0073fd6f79ae0ba&lt;SEP&gt;chunk-344323b918fd0a2f63161ea908593c80&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d&lt;SEP&gt;chunk-10880be99377e9a685fe866bbe47008f&lt;SEP&gt;chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Federal Reserve">
+  <data key="d0">Federal Reserve</data>
+  <data key="d1">organization</data>
+  <data key="d2">The Federal Reserve is the central banking system and central bank of the United States. Its policy decisions are closely watched by financial experts and are expected to influence both investor confidence and overall market stability. The institution’s upcoming policy announcement is a key event anticipated to have a significant impact on these areas.</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-21216935d007e96698b174a5337c6463&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60&lt;SEP&gt;chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c&lt;SEP&gt;chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-2a40dc31e02c5c0febdae8449f769db0&lt;SEP&gt;chunk-b8a835d63382015bc0073fd6f79ae0ba&lt;SEP&gt;chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046013</data>
+  <data key="d6"></data>
+</node>
+<node id="Financial Experts">
+  <data key="d0">Financial Experts</data>
+  <data key="d1">person</data>
+  <data key="d2">Financial experts are analysts and professionals who monitor market conditions and the actions of the Federal Reserve. Their primary focus is on closely watching the Federal Reserve's next move, particularly regarding potential rate hikes, and analyzing the subsequent impact on market stability and overall financial markets.</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60&lt;SEP&gt;chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-2a40dc31e02c5c0febdae8449f769db0&lt;SEP&gt;chunk-b8a835d63382015bc0073fd6f79ae0ba&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046013</data>
+  <data key="d6"></data>
+</node>
+<node id="ISAR-SHOCK Trial">
+  <data key="d0">ISAR-SHOCK Trial</data>
+  <data key="d1">event</data>
+  <data key="d2">The ISAR-SHOCK trial is a prospective, 2-center, randomized clinical trial comparing the Impella LP2.5 to IABP in patients with cardiogenic shock caused by acute myocardial infarction.</data>
+  <data key="d3">chunk-1855c52c9abac15b97446b5b78a35eb2</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Abiomed Europe GmbH">
+  <data key="d0">Abiomed Europe GmbH</data>
+  <data key="d1">organization</data>
+  <data key="d2">Abiomed Europe GmbH is the manufacturer of the Impella LP2.5 device and provided support for the ISAR-SHOCK trial.</data>
+  <data key="d3">chunk-1855c52c9abac15b97446b5b78a35eb2</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Acute Myocardial Infarction (AMI)">
+  <data key="d0">Acute Myocardial Infarction (AMI)</data>
+  <data key="d1">concept</data>
+  <data key="d2">Acute myocardial infarction is a medical condition characterized by a sudden blockage of blood flow to the heart muscle, causing cardiogenic shock in the study patients.&lt;SEP&gt;Acute Myocardial Infarction (AMI) is a medical condition</data>
+  <data key="d3">chunk-1855c52c9abac15b97446b5b78a35eb2&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Cardiogenic Shock (CS)">
+  <data key="d0">Cardiogenic Shock (CS)</data>
+  <data key="d1">concept</data>
+  <data key="d2">Cardiogenic shock is a condition of inadequate blood flow due to heart dysfunction, which the Impella LP2.5 and IABP are used to treat.</data>
+  <data key="d3">chunk-1855c52c9abac15b97446b5b78a35eb2</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Hemodynamic Support">
+  <data key="d0">Hemodynamic Support</data>
+  <data key="d1">concept</data>
+  <data key="d2">Hemodynamic support refers to the use of devices like Impella LP2.5 and IABP to improve blood flow</data>
+  <data key="d3">chunk-1855c52c9abac15b97446b5b78a35eb2</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Cardiac Index (CI)">
+  <data key="d0">Cardiac Index (CI)</data>
+  <data key="d1">data</data>
+  <data key="d2">Cardiac Index (CI) is a hemodynamic parameter defined as the primary end point of the study, measuring change from baseline after device implantation.</data>
+  <data key="d3">chunk-a62a3411d190c14c03fad25d62150ba2</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Mean Arterial Pressure (MAP)">
+  <data key="d0">Mean Arterial Pressure (MAP)</data>
+  <data key="d1">data</data>
+  <data key="d2">Mean Arterial Pressure (MAP) is a hemodynamic parameter used to calculate Cardiac Power Index (CPI), with changes observed in both Impella and IABP groups.</data>
+  <data key="d3">chunk-a62a3411d190c14c03fad25d62150ba2</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Cardiac Power Index (CPI)">
+  <data key="d0">Cardiac Power Index (CPI)</data>
+  <data key="d1">data</data>
+  <data key="d2">Cardiac Power Index (CPI) is a calculated hemodynamic parameter derived from CI and MAP, used to assess cardiac function.&lt;SEP&gt;Cardiac Power Index is a hemodynamic parameter measured over time after device implantation in the clinical trial.</data>
+  <data key="d3">chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Intra-Aortic Balloon Pump">
+  <data key="d0">Intra-Aortic Balloon Pump</data>
+  <data key="d1">artifact</data>
+  <data key="d2">Intra-Aortic Balloon Pump (IABP) is a medical device used as a control treatment in a clinical trial, compared against Impella.</data>
+  <data key="d3">chunk-c33f31a24de4f3032f5ab5311fd13365</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Multiple Organ Dysfunction Score">
+  <data key="d0">Multiple Organ Dysfunction Score</data>
+  <data key="d1">concept</data>
+  <data key="d2">Multiple Organ Dysfunction Score (MODS) is a scoring system used to assess organ dysfunction severity, measured at baseline and 30 days.</data>
+  <data key="d3">chunk-c33f31a24de4f3032f5ab5311fd13365</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Sepsis-Related Organ Failure Assessment">
+  <data key="d0">Sepsis-Related Organ Failure Assessment</data>
+  <data key="d1">concept</data>
+  <data key="d2">Sepsis-Related Organ Failure Assessment (SOFA) is a scoring system used to assess organ failure, measured at baseline and 30 days.</data>
+  <data key="d3">chunk-c33f31a24de4f3032f5ab5311fd13365</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Mortality">
+  <data key="d0">Mortality</data>
+  <data key="d1">concept</data>
+  <data key="d2">Mortality refers to death as an outcome, assessed via 30-day survival curves in the clinical trial.</data>
+  <data key="d3">chunk-c33f31a24de4f3032f5ab5311fd13365</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Hemolysis">
+  <data key="d0">Hemolysis</data>
+  <data key="d1">concept</data>
+  <data key="d2">Hemolysis is the breakdown of red blood cells, assessed by free hemoglobin levels, which were significantly higher in Impella patients.&lt;SEP&gt;Hemolysis is a potential adverse event or complication associated with Impella use.</data>
+  <data key="d3">chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Alex">
+  <data key="d0">Alex</data>
+  <data key="d1">person</data>
+  <data key="d2">Alex is a character who experiences frustration and is observant of the dynamics among other characters.&lt;SEP&gt;Alex is a character who experiences frustration and is observant of the dynamics among other characters.</data>
+  <data key="d3">chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5&lt;SEP&gt;chunk-83724ab6403639b1149ca8570bc6e741&lt;SEP&gt;chunk-795f0f50f5083382c49b397ac4a29a01&lt;SEP&gt;chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Taylor">
+  <data key="d0">Taylor</data>
+  <data key="d1">person</data>
+  <data key="d2">Taylor is portrayed with authoritarian certainty and shows a moment of reverence towards a device, indicating a change in perspective.&lt;SEP&gt;Taylor is portrayed with authoritarian certainty and shows a moment of reverence towards a device, indicating a change in perspective.</data>
+  <data key="d3">chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5&lt;SEP&gt;chunk-83724ab6403639b1149ca8570bc6e741&lt;SEP&gt;chunk-795f0f50f5083382c49b397ac4a29a01&lt;SEP&gt;chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Jordan">
+  <data key="d0">Jordan</data>
+  <data key="d1">person</data>
+  <data key="d2">Jordan shares a commitment to discovery and has a significant interaction with Taylor regarding a device.&lt;SEP&gt;Jordan shares a commitment to discovery and has a significant interaction with Taylor regarding a device.</data>
+  <data key="d3">chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5&lt;SEP&gt;chunk-83724ab6403639b1149ca8570bc6e741&lt;SEP&gt;chunk-795f0f50f5083382c49b397ac4a29a01&lt;SEP&gt;chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Cruz">
+  <data key="d0">Cruz</data>
+  <data key="d1">person</data>
+  <data key="d2">Cruz is associated with a vision of control and order, influencing the dynamics among other characters.&lt;SEP&gt;Cruz is associated with a vision of control and order, influencing the dynamics among other characters.&lt;SEP&gt;Cruz is associated with a vision of control and order, influencing the dynamics among other characters.</data>
+  <data key="d3">chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5&lt;SEP&gt;chunk-83724ab6403639b1149ca8570bc6e741&lt;SEP&gt;chunk-795f0f50f5083382c49b397ac4a29a01&lt;SEP&gt;chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="The Device">
+  <data key="d0">The Device</data>
+  <data key="d1">artifact</data>
+  <data key="d2">The Device is central to the story, with potential game-changing implications, and is revered by Taylor.&lt;SEP&gt;The Device is a technological artifact central to the story, with potential game-changing implications, and is revered by Taylor.&lt;SEP&gt;The Device is central to the story, with potential game-changing implications, and is revered by Taylor.&lt;SEP&gt;The Device is a piece of technology central to the story, with potential game-changing implications, and is revered by Taylor.&lt;SEP&gt;The Device is central to the story, with potential game-changing implications, and is revered by Taylor.</data>
+  <data key="d3">chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5&lt;SEP&gt;chunk-83724ab6403639b1149ca8570bc6e741&lt;SEP&gt;chunk-795f0f50f5083382c49b397ac4a29a01&lt;SEP&gt;chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="A Randomized Clinical Trial to Evaluate the Safety and Efficacy of a Percutaneous Left Ventricular Assist Device Versus Intra-Aortic Balloon Pumping for Treatment of Cardiogenic Shock Caused by Myocardial Infarction">
+  <data key="d0">A Randomized Clinical Trial to Evaluate the Safety and Efficacy of a Percutaneous Left Ventricular Assist Device Versus Intra-Aortic Balloon Pumping for Treatment of Cardiogenic Shock Caused by Myocardial Infarction</data>
+  <data key="d1">event</data>
+  <data key="d2">A clinical trial comparing the safety and efficacy of a percutaneous left ventricular assist device (Impella LP2.5) versus intra-aortic balloon pumping for treating cardiogenic shock caused by myocardial infarction.</data>
+  <data key="d3">chunk-21216935d007e96698b174a5337c6463</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="Journal of the American College of Cardiology">
+  <data key="d0">Journal of the American College of Cardiology</data>
+  <data key="d1">content</data>
+  <data key="d2">A peer-reviewed medical journal that published the clinical trial results.</data>
+  <data key="d3">chunk-21216935d007e96698b174a5337c6463</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045976</data>
+  <data key="d6"></data>
+</node>
+<node id="American College of Cardiology Foundation">
+  <data key="d0">American College of Cardiology Foundation</data>
+  <data key="d1">organization</data>
+  <data key="d2">The foundation that holds the copyright for the published article.</data>
+  <data key="d3">chunk-21216935d007e96698b174a5337c6463</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Elsevier Inc.">
+  <data key="d0">Elsevier Inc.</data>
+  <data key="d1">organization</data>
+  <data key="d2">The publisher of the Journal of the American College of Cardiology.</data>
+  <data key="d3">chunk-21216935d007e96698b174a5337c6463</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Melchior Seyfarth">
+  <data key="d0">Melchior Seyfarth</data>
+  <data key="d1">person</data>
+  <data key="d2">An author of the clinical trial who received lecture fees from Abiomed.</data>
+  <data key="d3">chunk-21216935d007e96698b174a5337c6463</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Dirk Sibbing">
+  <data key="d0">Dirk Sibbing</data>
+  <data key="d1">person</data>
+  <data key="d2">An author of the clinical trial.</data>
+  <data key="d3">chunk-21216935d007e96698b174a5337c6463</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Iris Bauer">
+  <data key="d0">Iris Bauer</data>
+  <data key="d1">person</data>
+  <data key="d2">An author of the clinical trial.</data>
+  <data key="d3">chunk-21216935d007e96698b174a5337c6463</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Georg Fröhlich">
+  <data key="d0">Georg Fröhlich</data>
+  <data key="d1">person</data>
+  <data key="d2">An author of the clinical trial.</data>
+  <data key="d3">chunk-21216935d007e96698b174a5337c6463</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Lorenz Bott-Flügel">
+  <data key="d0">Lorenz Bott-Flügel</data>
+  <data key="d1">person</data>
+  <data key="d2">An author of the clinical trial.</data>
+  <data key="d3">chunk-21216935d007e96698b174a5337c6463</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Robert Byrne">
+  <data key="d0">Robert Byrne</data>
+  <data key="d1">person</data>
+  <data key="d2">An author of the clinical trial.</data>
+  <data key="d3">chunk-21216935d007e96698b174a5337c6463</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Acute Limb Ischemia">
+  <data key="d0">Acute Limb Ischemia</data>
+  <data key="d1">event</data>
+  <data key="d2">Acute limb ischemia is a complication requiring surgery that occurred in one patient after Impella device explantation.</data>
+  <data key="d3">chunk-2c61ba2f73cda3eb90b84f74f9851e60</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Free Hemoglobin">
+  <data key="d0">Free Hemoglobin</data>
+  <data key="d1">data</data>
+  <data key="d2">Free hemoglobin is a biomarker used to assess hemolysis, measured in the study to compare Impella and IABP patients.</data>
+  <data key="d3">chunk-2c61ba2f73cda3eb90b84f74f9851e60</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="World Athletics Championship">
+  <data key="d0">World Athletics Championship</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-cd12a4d42988a0cbef608f813b7db575&lt;SEP&gt;chunk-1855c52c9abac15b97446b5b78a35eb2&lt;SEP&gt;chunk-61463c7b12c07a431ba8cba59dce8f00&lt;SEP&gt;chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d2">The World Athletics Federation governs and oversees the World Athletics Championship.&lt;SEP&gt;The World Athletics Federation governs the World Athletics Championship.</data>
+  <data key="d1">UNKNOWN</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Market Selloff">
+  <data key="d0">Market Selloff</data>
+  <data key="d3">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60&lt;SEP&gt;chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-2a40dc31e02c5c0febdae8449f769db0&lt;SEP&gt;chunk-344323b918fd0a2f63161ea908593c80&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d&lt;SEP&gt;chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d2">Investor concerns over interest rates and regulations are a primary cause of the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty triggered the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty are the primary cause of the market selloff.</data>
+  <data key="d1">UNKNOWN</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Federal Reserve Policy Announcement">
+  <data key="d0">Federal Reserve Policy Announcement</data>
+  <data key="d3">chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d2">Financial experts are closely watching the Federal Reserve's upcoming policy announcement for its impact on markets.</data>
+  <data key="d1">UNKNOWN</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="100m Sprint Record">
+  <data key="d0">100m Sprint Record</data>
+  <data key="d3">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-1855c52c9abac15b97446b5b78a35eb2&lt;SEP&gt;chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d2">The World Athletics Federation validates and officially recognizes the 100m sprint record.&lt;SEP&gt;The World Athletics Federation validates and recognizes the 100m sprint record.</data>
+  <data key="d1">UNKNOWN</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Noah Carter">
+  <data key="d0">Noah Carter</data>
+  <data key="d3">chunk-cd12a4d42988a0cbef608f813b7db575</data>
+  <data key="d2">Noah Carter's record is validated by the World Athletics Federation.</data>
+  <data key="d1">UNKNOWN</data>
+  <data key="d4">seyfarth2008.pdf</data>
+  <data key="d5">1780045977</data>
+  <data key="d6"></data>
+</node>
+<node id="Engl J Med">
+  <data key="d0">Engl J Med</data>
+  <data key="d1">content</data>
+  <data key="d2">Engl J Med is a medical journal referenced in the text.</data>
+  <data key="d3">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Rosenbaum DM">
+  <data key="d0">Rosenbaum DM</data>
+  <data key="d1">person</data>
+  <data key="d2">Rosenbaum DM is an author of a study on sonographic assessment of renal length in normal children.</data>
+  <data key="d3">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Korngold E">
+  <data key="d0">Korngold E</data>
+  <data key="d1">person</data>
+  <data key="d2">Korngold E is an author of a study on sonographic assessment of renal length in normal children.</data>
+  <data key="d3">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Teele RL">
+  <data key="d0">Teele RL</data>
+  <data key="d1">person</data>
+  <data key="d2">Teele RL is an author of a study on sonographic assessment of renal length in normal children.</data>
+  <data key="d3">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Sonographic Assessment Of Renal Length In Normal Children">
+  <data key="d0">Sonographic Assessment Of Renal Length In Normal Children</data>
+  <data key="d1">content</data>
+  <data key="d2">Sonographic Assessment Of Renal Length In Normal Children is a study published in AJR Am J Roentgenol.</data>
+  <data key="d3">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="AJR Am J Roentgenol">
+  <data key="d0">AJR Am J Roentgenol</data>
+  <data key="d1">content</data>
+  <data key="d2">AJR Am J Roentgenol is a medical journal referenced in the text.</data>
+  <data key="d3">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Johner SA">
+  <data key="d0">Johner SA</data>
+  <data key="d1">person</data>
+  <data key="d2">Johner SA is an author of a study on urinary 24-h creatinine excretion in adults.</data>
+  <data key="d3">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Boeing H">
+  <data key="d0">Boeing H</data>
+  <data key="d1">person</data>
+  <data key="d2">Boeing H is an author of a study on urinary 24-h creatinine excretion in adults.</data>
+  <data key="d3">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Thamm M">
+  <data key="d0">Thamm M</data>
+  <data key="d1">person</data>
+  <data key="d2">Thamm M is an author of a study on urinary 24-h creatinine excretion in adults.</data>
+  <data key="d3">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Remer T">
+  <data key="d0">Remer T</data>
+  <data key="d1">person</data>
+  <data key="d2">Remer T is an author of studies</data>
+  <data key="d3">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Shchelochkov2019">
+  <data key="d0">Shchelochkov2019</data>
+  <data key="d1">content</data>
+  <data key="d2">Shchelochkov2019 is a brief communication article published in the journal Genetics in Medicine.&lt;SEP&gt;Shchelochkov2019 is a cited reference or study identifier in the text, associated with research on propionic acidemia (PA).&lt;SEP&gt;Shchelochkov2019 is a research study or publication that provides the clinical data and analysis described in the input text.</data>
+  <data key="d3">chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5&lt;SEP&gt;chunk-83724ab6403639b1149ca8570bc6e741</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Genetics in Medicine">
+  <data key="d0">Genetics in Medicine</data>
+  <data key="d1">content</data>
+  <data key="d2">Genetics in Medicine is a journal that published the brief communication article Shchelochkov2019.</data>
+  <data key="d3">chunk-9a4a995063bc2bf1c53d9019501ce065</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Quarterly Earnings">
+  <data key="d0">Quarterly Earnings</data>
+  <data key="d1">data</data>
+  <data key="d2">Nexon Technologies reported lower-than-expected quarterly earnings, leading to a stock decline.</data>
+  <data key="d3">chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Rising Oil Prices">
+  <data key="d0">Rising Oil Prices</data>
+  <data key="d1">concept</data>
+  <data key="d2">Rising oil prices, driven by supply constraints and strong demand, benefited Omega Energy's stock.&lt;SEP&gt;Rising oil prices are a market condition that positively impacted Omega Energy's stock and crude oil futures.&lt;SEP&gt;Rising oil prices are a market condition that benefits energy companies like Omega Energy.</data>
+  <data key="d3">chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-344323b918fd0a2f63161ea908593c80&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Supply Constraints">
+  <data key="d0">Supply Constraints</data>
+  <data key="d1">concept</data>
+  <data key="d2">Supply constraints are a factor supporting the rally in crude oil prices.&lt;SEP&gt;Supply constraints are a factor supporting the rally in crude oil prices.</data>
+  <data key="d3">chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-344323b918fd0a2f63161ea908593c80&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Strong Demand">
+  <data key="d0">Strong Demand</data>
+  <data key="d1">concept</data>
+  <data key="d2">Strong demand is a factor supporting the rally in crude oil prices.&lt;SEP&gt;Strong demand is a factor supporting the rally in crude oil prices.</data>
+  <data key="d3">chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-344323b918fd0a2f63161ea908593c80&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Safe-Haven Assets">
+  <data key="d0">Safe-Haven Assets</data>
+  <data key="d1">concept</data>
+  <data key="d2">Safe-haven assets like gold are sought by investors during market downturns.</data>
+  <data key="d3">chunk-9a4a995063bc2bf1c53d9019501ce065</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Investor Confidence">
+  <data key="d0">Investor Confidence</data>
+  <data key="d1">concept</data>
+  <data key="d2">Investor confidence is expected to be influenced by the Federal Reserve's upcoming policy announcement.&lt;SEP&gt;Investor confidence is a market sentiment factor expected to be influenced by the Federal Reserve's policy announcement.</data>
+  <data key="d3">chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Market Stability">
+  <data key="d0">Market Stability</data>
+  <data key="d1">concept</data>
+  <data key="d2">Market stability is expected to be influenced by the Federal Reserve's upcoming policy announcement.&lt;SEP&gt;Market stability is a condition expected to be influenced by the Federal Reserve's policy announcement.</data>
+  <data key="d3">chunk-9a4a995063bc2bf1c53d9019501ce065&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Propionic Acidemia (PA)">
+  <data key="d0">Propionic Acidemia (PA)</data>
+  <data key="d1">concept</data>
+  <data key="d2">Propionic Acidemia (PA) is a medical condition studied in the referenced research, involving chronic kidney disease (CKD) manifestations.&lt;SEP&gt;Propionic Acidemia is a metabolic disorder characterized by minimal hepatic capacity to metabolize propionic acid, requiring renal excretion to clear toxic metabolites.&lt;SEP&gt;Propionic Acidemia is a metabolic disorder studied in the context of chronic kidney disease, affecting whole-body creatine synthesis and renal function.</data>
+  <data key="d3">chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-61463c7b12c07a431ba8cba59dce8f00&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Chronic Kidney Disease (CKD)">
+  <data key="d0">Chronic Kidney Disease (CKD)</data>
+  <data key="d1">concept</data>
+  <data key="d2">Chronic Kidney Disease (CKD) is a medical condition observed in PA patients, as described in the research.&lt;SEP&gt;Chronic Kidney Disease is a condition involving progressive loss of kidney function, with surveillance parameters including cystatin C, plasma uric acid, and 24-hour protein excretion.&lt;SEP&gt;Chronic Kidney Disease is a long-term complication observed in PA patients, defined by eGFR &lt;60 mL/min/1.73 m2.</data>
+  <data key="d3">chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-61463c7b12c07a431ba8cba59dce8f00&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Cystatin C">
+  <data key="d0">Cystatin C</data>
+  <data key="d1">data</data>
+  <data key="d2">Cystatin C is a biomarker used to estimate glomerular filtration rate (eGFR) and assess kidney function, measured in the study.</data>
+  <data key="d3">chunk-518d22241c7304c17fbdf836ee4ebc04</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Creatinine">
+  <data key="d0">Creatinine</data>
+  <data key="d1">data</data>
+  <data key="d2">Creatinine is a serum biomarker used to estimate GFR, but its levels in PA patients are influenced by diet, sarcopenia, and impaired synthesis.&lt;SEP&gt;Creatinine is a biomarker for kidney function, but its levels can be affected by factors in organic acidemias and renal tubular secretion.</data>
+  <data key="d3">chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-61463c7b12c07a431ba8cba59dce8f00</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Glomerular Filtration Rate (GFR)">
+  <data key="d0">Glomerular Filtration Rate (GFR)</data>
+  <data key="d1">concept</data>
+  <data key="d2">Glomerular Filtration Rate is a measure of kidney function, estimated using cystatin C and creatinine, but not directly measured in this study.</data>
+  <data key="d3">chunk-518d22241c7304c17fbdf836ee4ebc04</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Tubulointerstitial Pathology">
+  <data key="d0">Tubulointerstitial Pathology</data>
+  <data key="d1">concept</data>
+  <data key="d2">Tubulointerstitial Pathology refers to damage to the tubules and interstitium of the kidney, observed in a case report related to PA.</data>
+  <data key="d3">chunk-518d22241c7304c17fbdf836ee4ebc04</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Glomerular Sclerosis">
+  <data key="d0">Glomerular Sclerosis</data>
+  <data key="d1">concept</data>
+  <data key="d2">Glomerular Sclerosis is a pathological condition involving scarring of the glomeruli in the kidney.</data>
+  <data key="d3">chunk-518d22241c7304c17fbdf836ee4ebc04</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Lipocalin-2">
+  <data key="d0">Lipocalin-2</data>
+  <data key="d1">data</data>
+  <data key="d2">Lipocalin-2 is a plasma biomarker associated with tubular injury, linked to serum creatinine and cystatin C levels.</data>
+  <data key="d3">chunk-518d22241c7304c17fbdf836ee4ebc04</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Cystatin C eGFR">
+  <data key="d0">Cystatin C eGFR</data>
+  <data key="d1">data</data>
+  <data key="d2">Cystatin C eGFR is an estimate of kidney function based on cystatin C levels, used in propionic acidemia patients.&lt;SEP&gt;Cystatin C eGFR is a measure of kidney function based on cystatin C levels, used to estimate GFR in PA patients.</data>
+  <data key="d3">chunk-61463c7b12c07a431ba8cba59dce8f00&lt;SEP&gt;chunk-b8a835d63382015bc0073fd6f79ae0ba</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Serum Uric Acid">
+  <data key="d0">Serum Uric Acid</data>
+  <data key="d1">data</data>
+  <data key="d2">Serum uric acid is a factor associated with CKD that rises with decreasing cystatin C eGFR in PA patients.</data>
+  <data key="d3">chunk-61463c7b12c07a431ba8cba59dce8f00</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Plasma Lipocalin 2">
+  <data key="d0">Plasma Lipocalin 2</data>
+  <data key="d1">data</data>
+  <data key="d2">Plasma lipocalin 2 is a biomarker associated with tubular injury in the etiology of CKD in PA.</data>
+  <data key="d3">chunk-61463c7b12c07a431ba8cba59dce8f00</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Whole-Body Creatine Synthesis">
+  <data key="d0">Whole-Body Creatine Synthesis</data>
+  <data key="d1">concept</data>
+  <data key="d2">Whole-body creatine synthesis is a metabolic process that is reduced in PA patients due to dietary and metabolic factors.</data>
+  <data key="d3">chunk-61463c7b12c07a431ba8cba59dce8f00</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Sarcopenia">
+  <data key="d0">Sarcopenia</data>
+  <data key="d1">concept</data>
+  <data key="d2">Sarcopenia is a condition of muscle wasting that contributes to lower serum creatinine levels in PA patients.</data>
+  <data key="d3">chunk-61463c7b12c07a431ba8cba59dce8f00</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="Genetics InMedicine">
+  <data key="d0">Genetics InMedicine</data>
+  <data key="d1">content</data>
+  <data key="d2">Genetics InMedicine is a journal or publication title repeatedly mentioned in the text, associated with brief communications.</data>
+  <data key="d3">chunk-a3829da11ddccd396403f1961385f8e5</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="BriEF COMMUNICATION">
+  <data key="d0">BriEF COMMUNICATION</data>
+  <data key="d1">content</data>
+  <data key="d2">BriEF COMMUNICATION is a repeated phrase in the text, likely referring to a type of article or section in the Genetics InMedicine journal.</data>
+  <data key="d3">chunk-a3829da11ddccd396403f1961385f8e5</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="National Institutes of Health (NIH)">
+  <data key="d0">National Institutes of Health (NIH)</data>
+  <data key="d1">organization</data>
+  <data key="d2">The National Institutes of Health (NIH) is a research organization that reviewed and approved the study protocol and provided clinical data.</data>
+  <data key="d3">chunk-a3829da11ddccd396403f1961385f8e5</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="NIH Clinical Research Center">
+  <data key="d0">NIH Clinical Research Center</data>
+  <data key="d1">organization</data>
+  <data key="d2">The NIH Clinical Research Center is a facility where patients with PA were evaluated.</data>
+  <data key="d3">chunk-a3829da11ddccd396403f1961385f8e5</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="ClinicalTrials.gov Identifier: NCT02890342">
+  <data key="d0">ClinicalTrials.gov Identifier: NCT02890342</data>
+  <data key="d1">data</data>
+  <data key="d2">ClinicalTrials.gov Identifier: NCT02890342 is a unique identifier for a natural history study on PA.</data>
+  <data key="d3">chunk-a3829da11ddccd396403f1961385f8e5</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045994</data>
+  <data key="d6"></data>
+</node>
+<node id="PCCB">
+  <data key="d0">PCCB</data>
+  <data key="d1">concept</data>
+  <data key="d2">PCCB is a gene associated with propionic acidemia, with various mutations listed in the input text.</data>
+  <data key="d3">chunk-2a40dc31e02c5c0febdae8449f769db0</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="PCCA">
+  <data key="d0">PCCA</data>
+  <data key="d1">concept</data>
+  <data key="d2">PCCA is a gene associated with propionic acidemia, with mutations listed in the input text.</data>
+  <data key="d3">chunk-2a40dc31e02c5c0febdae8449f769db0</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="c.1259_1260insT p.Glu421Ter">
+  <data key="d0">c.1259_1260insT p.Glu421Ter</data>
+  <data key="d1">data</data>
+  <data key="d2">c.1259_1260insT p.Glu421Ter is a specific mutation in the PCCB gene resulting in a premature stop codon.</data>
+  <data key="d3">chunk-2a40dc31e02c5c0febdae8449f769db0</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="c.337C&gt;T p.Arg113Ter">
+  <data key="d0">c.337C&gt;T p.Arg113Ter</data>
+  <data key="d1">data</data>
+  <data key="d2">c.337C&gt;T p.Arg113Ter is a specific mutation in the PCCB gene resulting in a premature stop codon.</data>
+  <data key="d3">chunk-2a40dc31e02c5c0febdae8449f769db0</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="c.1225_1227delATC p.Ile409del">
+  <data key="d0">c.1225_1227delATC p.Ile409del</data>
+  <data key="d1">data</data>
+  <data key="d2">c.1225_1227delATC p.Ile409del is a specific deletion mutation in the PCCB gene.</data>
+  <data key="d3">chunk-2a40dc31e02c5c0febdae8449f769db0</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="c.386_387delTinsAAC p.Phe129Ter">
+  <data key="d0">c.386_387delTinsAAC p.Phe129Ter</data>
+  <data key="d1">data</data>
+  <data key="d2">c.386_387delTinsAAC p.Phe129Ter is a complex mutation in the PCCB gene resulting in a premature stop codon.</data>
+  <data key="d3">chunk-2a40dc31e02c5c0febdae8449f769db0</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="c.1552delG p.Asp538Thrfs*33">
+  <data key="d0">c.1552delG p.Asp538Thrfs*33</data>
+  <data key="d1">data</data>
+  <data key="d2">c.1552delG p.Asp538Thrfs*33 is a deletion mutation in the PCCB gene causing a frameshift.</data>
+  <data key="d3">chunk-2a40dc31e02c5c0febdae8449f769db0</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="eGFR">
+  <data key="d0">eGFR</data>
+  <data key="d1">concept</data>
+  <data key="d2">eGFR (estimated Glomerular Filtration Rate) is a measure of kidney function, with values classified as &lt;90 mL/min/1.73 m2 indicating reduced function.</data>
+  <data key="d3">chunk-b8a835d63382015bc0073fd6f79ae0ba</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="Creatinine eGFR">
+  <data key="d0">Creatinine eGFR</data>
+  <data key="d1">concept</data>
+  <data key="d2">Creatinine eGFR is an estimate of kidney function based on serum creatinine levels, used in propionic acidemia patients.</data>
+  <data key="d3">chunk-b8a835d63382015bc0073fd6f79ae0ba</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="Propionic Acidemia (PA) Patients">
+  <data key="d0">Propionic Acidemia (PA) Patients</data>
+  <data key="d1">person</data>
+  <data key="d2">Propionic acidemia patients are individuals with a genetic metabolic disorder, studied for renal function in the NIH cohort.</data>
+  <data key="d3">chunk-b8a835d63382015bc0073fd6f79ae0ba</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="National Institutes of Health (NIH) Propionic Acidemia Cohort">
+  <data key="d0">National Institutes of Health (NIH) Propionic Acidemia Cohort</data>
+  <data key="d1">organization</data>
+  <data key="d2">The NIH Propionic Acidemia Cohort is a study group of patients with propionic acidemia, providing demographics, genetics, and renal-related findings.</data>
+  <data key="d3">chunk-b8a835d63382015bc0073fd6f79ae0ba</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="Fisher's Exact Test">
+  <data key="d0">Fisher's Exact Test</data>
+  <data key="d1">method</data>
+  <data key="d2">Fisher's exact test is a statistical method used to analyze the classification of eGFR values, yielding a P value &lt;0.0001.</data>
+  <data key="d3">chunk-b8a835d63382015bc0073fd6f79ae0ba</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="Regression Lines">
+  <data key="d0">Regression Lines</data>
+  <data key="d1">method</data>
+  <data key="d2">Regression lines compare creatinine eGFR and cystatin C eGFR in nontransplanted patients, showing differences in intercepts and slopes.</data>
+  <data key="d3">chunk-b8a835d63382015bc0073fd6f79ae0ba</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="Nontransplanted Patients">
+  <data key="d0">Nontransplanted Patients</data>
+  <data key="d1">person</data>
+  <data key="d2">Nontransplanted patients are propionic acidemia patients who have not undergone liver transplantation, analyzed for eGFR trends.</data>
+  <data key="d3">chunk-b8a835d63382015bc0073fd6f79ae0ba</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="1,25-OH-Vitamin D">
+  <data key="d0">1,25-OH-Vitamin D</data>
+  <data key="d1">data</data>
+  <data key="d2">1,25-OH-Vitamin D is a laboratory parameter measured in the study, with low levels found in 2 out of 31 participants.</data>
+  <data key="d3">chunk-83724ab6403639b1149ca8570bc6e741</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="Intact Parathyroid Hormone (PTH)">
+  <data key="d0">Intact Parathyroid Hormone (PTH)</data>
+  <data key="d1">data</data>
+  <data key="d2">Intact parathyroid hormone (PTH) is a laboratory parameter measured in the study, with elevated levels found in 3 out of 31 participants.</data>
+  <data key="d3">chunk-83724ab6403639b1149ca8570bc6e741</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="Erythropoietin">
+  <data key="d0">Erythropoietin</data>
+  <data key="d1">data</data>
+  <data key="d2">Erythropoietin is a laboratory parameter measured in the study, with elevated levels found in 7 out of 27 subjects, correlating with bone marrow suppression.</data>
+  <data key="d3">chunk-83724ab6403639b1149ca8570bc6e741</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="24-Hour Creatinine Clearance">
+  <data key="d0">24-Hour Creatinine Clearance</data>
+  <data key="d1">data</data>
+  <data key="d2">24-hour creatinine clearance is a laboratory parameter used to assess renal function in the study.</data>
+  <data key="d3">chunk-83724ab6403639b1149ca8570bc6e741</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="Abdominal Ultrasound">
+  <data key="d0">Abdominal Ultrasound</data>
+  <data key="d1">method</data>
+  <data key="d2">Abdominal ultrasound is an imaging technique used in the study to examine renal anatomy.</data>
+  <data key="d3">chunk-83724ab6403639b1149ca8570bc6e741</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="Transthoracic Echocardiography">
+  <data key="d0">Transthoracic Echocardiography</data>
+  <data key="d1">method</data>
+  <data key="d2">Transthoracic echocardiography is an imaging technique used in the study to assess cardiac function.</data>
+  <data key="d3">chunk-83724ab6403639b1149ca8570bc6e741</data>
+  <data key="d4">shchelochkov2019.pdf</data>
+  <data key="d5">1780045995</data>
+  <data key="d6"></data>
+</node>
+<node id="Ilow SW">
+  <data key="d0">Ilow SW</data>
+  <data key="d1">person</data>
+  <data key="d2">Ilow SW is an author of the work "Urea cycle enzymes" published in "The metabolic basis of inherited diseases".</data>
+  <data key="d3">chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Horwich AL">
+  <data key="d0">Horwich AL</data>
+  <data key="d1">person</data>
+  <data key="d2">Horwich AL is a co-author of the work "Urea cycle enzymes" published in "The metabolic basis of inherited diseases".</data>
+  <data key="d3">chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Scriver CR">
+  <data key="d0">Scriver CR</data>
+  <data key="d1">person</data>
+  <data key="d2">Scriver CR is an editor of the book "The metabolic basis of inherited diseases".</data>
+  <data key="d3">chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Beaudet AL">
+  <data key="d0">Beaudet AL</data>
+  <data key="d1">person</data>
+  <data key="d2">Beaudet AL is an editor of "The metabolic basis of inherited diseases" and a co-author of works on argininosuccinate synthetase and gene transfer.</data>
+  <data key="d3">chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Sly WS">
+  <data key="d0">Sly WS</data>
+  <data key="d1">person</data>
+  <data key="d2">Sly WS is an editor of the book "The metabolic basis of inherited diseases".</data>
+  <data key="d3">chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Valle D">
+  <data key="d0">Valle D</data>
+  <data key="d1">person</data>
+  <data key="d2">Valle D is an editor of the book "The metabolic basis of inherited diseases".</data>
+  <data key="d3">chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="The Metabolic Basis of Inherited Diseases">
+  <data key="d0">The Metabolic Basis of Inherited Diseases</data>
+  <data key="d1">content</data>
+  <data key="d2">The Metabolic Basis of Inherited Diseases is a book, 6th edition, published by McGraw-Hill in 1989, containing the chapter "Urea cycle enzymes".</data>
+  <data key="d3">chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Bachmann C">
+  <data key="d0">Bachmann C</data>
+  <data key="d1">person</data>
+  <data key="d2">Bachmann C is an author of the article on N-acetylglutamate synthetase deficiency published in the New England Journal of Medicine.</data>
+  <data key="d3">chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Krahenbuhl S">
+  <data key="d0">Krahenbuhl S</data>
+  <data key="d1">person</data>
+  <data key="d2">Krahenbuhl S is a co-author of</data>
+  <data key="d3">chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Liver Transplantation">
+  <data key="d0">Liver Transplantation</data>
+  <data key="d1">method</data>
+  <data key="d2">Liver transplantation is a surgical procedure used to correct metabolic consequences of urea cycle deficiencies, as established by cumulative experience in multiple cases.</data>
+  <data key="d3">chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Urea Cycle Deficiencies">
+  <data key="d0">Urea Cycle Deficiencies</data>
+  <data key="d1">concept</data>
+  <data key="d2">Urea cycle deficiencies are metabolic disorders for which liver transplantation has been shown to be effective, correcting metabolic consequences beyond alternative therapies.</data>
+  <data key="d3">chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Enzyme Replacement Therapy">
+  <data key="d0">Enzyme Replacement Therapy</data>
+  <data key="d1">concept</data>
+  <data key="d2">Enzyme replacement therapy is a potential future treatment approach for urea cycle deficiencies, envisioned as a step beyond whole-liver transplantation.</data>
+  <data key="d3">chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Virus-Mediated Gene Transfer">
+  <data key="d0">Virus-Mediated Gene Transfer</data>
+  <data key="d1">method</data>
+  <data key="d2">Virus-mediated gene transfer is a technique involving the introduction of functional complementary DNA into cells, accomplished in rodents for human ASS.</data>
+  <data key="d3">chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Human ASS">
+  <data key="d0">Human ASS</data>
+  <data key="d1">concept</data>
+  <data key="d2">Human ASS (argininosuccinate synthetase) is a gene that has been successfully transferred via virus-mediated methods in rodents, suggesting potential therapeutic applications.</data>
+  <data key="d3">chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Hepatocyte Transplantation">
+  <data key="d0">Hepatocyte Transplantation</data>
+  <data key="d1">method</data>
+  <data key="d2">Hepatocyte transplantation is a cell-based therapy considered as an alternative to whole-liver transplantation for treating metabolic diseases.</data>
+  <data key="d3">chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Dietary Protein Restriction">
+  <data key="d0">Dietary Protein Restriction</data>
+  <data key="d1">method</data>
+  <data key="d2">Dietary protein restriction is a conventional treatment for urea cycle deficiencies, but is less effective than liver transplantation in correcting metabolic consequences.</data>
+  <data key="d3">chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Alternative Pathways of Waste Nitrogen Synthesis">
+  <data key="d0">Alternative Pathways of Waste Nitrogen Synthesis</data>
+  <data key="d1">method</data>
+  <data key="d2">Alternative pathways of waste nitrogen synthesis and excretion are therapeutic approaches that are less effective than liver transplantation for correcting metabolic consequences.</data>
+  <data key="d3">chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Hyperammonemia">
+  <data key="d0">Hyperammonemia</data>
+  <data key="d1">concept</data>
+  <data key="d2">Hyperammonemia is a metabolic condition characterized by elevated ammonia levels in the blood, corrected by liver transplantation in the patients described.</data>
+  <data key="d3">chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Plasma Amino Acid Abnormalities">
+  <data key="d0">Plasma Amino Acid Abnormalities</data>
+  <data key="d1">concept</data>
+  <data key="d2">Plasma amino acid abnormalities refer to deviations from normal levels of amino acids in the blood, corrected by orthotopic liver transplantation.</data>
+  <data key="d3">chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Standard Liver Function Abnormalities">
+  <data key="d0">Standard Liver Function Abnormalities</data>
+  <data key="d1">concept</data>
+  <data key="d2">Standard liver function abnormalities are deviations in typical liver function tests, corrected by orthotopic liver transplantation.</data>
+  <data key="d3">chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Orthotopic Liver Transplantation">
+  <data key="d0">Orthotopic Liver Transplantation</data>
+  <data key="d1">method</data>
+  <data key="d2">Orthotopic liver transplantation is a surgical procedure that replaces a diseased liver with a healthy donor liver, used to correct metabolic abnormalities.</data>
+  <data key="d3">chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="14-Day-Old Boy">
+  <data key="d0">14-Day-Old Boy</data>
+  <data key="d1">person</data>
+  <data key="d2">A 14-day-old boy with carbamyl phosphate synthetase-I deficiency who underwent orthotopic liver transplantation.</data>
+  <data key="d3">chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Carbamyl Phosphate Synthetase-I Deficiency">
+  <data key="d0">Carbamyl Phosphate Synthetase-I Deficiency</data>
+  <data key="d1">concept</data>
+  <data key="d2">Carbamyl phosphate synthetase-I deficiency is a urea cycle enzyme deficiency causing hyperammonemia and metabolic abnormalities.</data>
+  <data key="d3">chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="35-Year-Old Man">
+  <data key="d0">35-Year-Old Man</data>
+  <data key="d1">person</data>
+  <data key="d2">A 35-year-old man with argininosuccinic acid synthetase deficiency who underwent orthotopic liver transplantation.</data>
+  <data key="d3">chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Argininosuccinic Acid Synthetase Deficiency">
+  <data key="d0">Argininosuccinic Acid Synthetase Deficiency</data>
+  <data key="d1">concept</data>
+  <data key="d2">Argininosuccinic acid synthetase deficiency is a urea cycle enzyme deficiency causing hyperammonemia and metabolic abnormalities.</data>
+  <data key="d3">chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Patient 1">
+  <data key="d0">Patient 1</data>
+  <data key="d1">person</data>
+  <data key="d2">Patient 1 is a subject who underwent surgery and had normal plasma amino acid levels 34 months post-surgery, with detectable citrulline levels. The native liver showed minor nonspecific abnormalities on light microscopy and normal electron microscopy except for nonspecific mitochondrial elongation. CPS-I activity was undetectable in the liver homogenate.</data>
+  <data key="d3">chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Patient 2">
+  <data key="d0">Patient 2</data>
+  <data key="d1">person</data>
+  <data key="d2">Patient 2 is a subject whose plasma amino acids before and after transplantation are summarized in Table 2. Preoperative high citrulline and modest arginine elevations were corrected postoperatively, but ornithine levels were slightly elevated at 3 and 20 months. The native liver was enlarged with cholestasis, massive steatosis, and hemosiderosis, with periportal fibrosis but no cirrhosis. The liver homogenate was devoid of ASS activity but had significant CPS-1, OTC, and AS activity.&lt;SEP&gt;Patient 2 is a subject whose urea cycle enzyme activities and plasma amino acid levels were analyzed before and after liver transplantation.</data>
+  <data key="d3">chunk-fc8300849246981a965ff70c583daf4d&lt;SEP&gt;chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Citrulline">
+  <data key="d0">Citrulline</data>
+  <data key="d1">data</data>
+  <data key="d2">Citrulline is an amino acid that became detectable in Patient 1 after surgery and was present at extremely high preoperative levels in Patient 2, which were corrected postoperatively.</data>
+  <data key="d3">chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Arginine">
+  <data key="d0">Arginine</data>
+  <data key="d1">data</data>
+  <data key="d2">Arginine is an amino acid that showed modest elevations preoperatively in Patient 2, which were corrected at all measured postoperative times.</data>
+  <data key="d3">chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Ornithine">
+  <data key="d0">Ornithine</data>
+  <data key="d1">data</data>
+  <data key="d2">Ornithine is an amino acid with a normal range of 40 to 100 μmol/L. In Patient 2, it was slightly elevated at 3 months (153 μmol/L) and 20 months (124 μmol/L) postoperatively.</data>
+  <data key="d3">chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046011</data>
+  <data key="d6"></data>
+</node>
+<node id="Urea Cycle Enzymes">
+  <data key="d0">Urea Cycle Enzymes</data>
+  <data key="d1">concept</data>
+  <data key="d2">Urea cycle enzymes include CPS-I, OTC, ASS, and AS, which were analyzed in liver tissues from Patient 2.</data>
+  <data key="d3">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="CPS-I">
+  <data key="d0">CPS-I</data>
+  <data key="d1">concept</data>
+  <data key="d2">CPS-I is a urea cycle enzyme whose activity was measured in the liver tissue of Patient 2.</data>
+  <data key="d3">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="OTC">
+  <data key="d0">OTC</data>
+  <data key="d1">concept</data>
+  <data key="d2">OTC is a urea cycle enzyme whose activity was measured in the liver tissue of Patient 2.</data>
+  <data key="d3">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="ASS">
+  <data key="d0">ASS</data>
+  <data key="d1">concept</data>
+  <data key="d2">ASS is a urea cycle enzyme whose activity was measured in the liver tissue of Patient 2.</data>
+  <data key="d3">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="AS">
+  <data key="d0">AS</data>
+  <data key="d1">concept</data>
+  <data key="d2">AS is a urea cycle enzyme whose activity was measured in the liver tissue of Patient 2.</data>
+  <data key="d3">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Department of Biochemistry of Kagoshima University">
+  <data key="d0">Department of Biochemistry of Kagoshima University</data>
+  <data key="d1">organization</data>
+  <data key="d2">The Department of Biochemistry of Kagoshima University is the institution where the liver tissues from Patient 2 were analyzed for urea cycle enzyme activities.</data>
+  <data key="d3">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Kagoshima">
+  <data key="d0">Kagoshima</data>
+  <data key="d1">location</data>
+  <data key="d2">Kagoshima is a city in Japan where the Department of Biochemistry of Kagoshima University is located.</data>
+  <data key="d3">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Japan">
+  <data key="d0">Japan</data>
+  <data key="d1">location</data>
+  <data key="d2">Japan is the country where the analysis of liver tissues from Patient 2 was conducted.</data>
+  <data key="d3">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="The Federal Reserve">
+  <data key="d0">The Federal Reserve</data>
+  <data key="d1">organization</data>
+  <data key="d2">The Federal Reserve is the central bank of the United States whose upcoming policy announcement is expected to influence investor confidence and market stability.</data>
+  <data key="d3">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Case 1">
+  <data key="d0">Case 1</data>
+  <data key="d1">event</data>
+  <data key="d2">A medical case report describing a patient who underwent surgery and immunosuppression, experienced severe rejection, and developed an Aspergillus brain abscess.</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="todo1992">
+  <data key="d0">todo1992</data>
+  <data key="d1">content</data>
+  <data key="d2">A literature reference or citation identifier for a medical publication from 1992.</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Surgery">
+  <data key="d0">Surgery</data>
+  <data key="d1">method</data>
+  <data key="d2">A medical procedure performed on the patient, likely an organ transplant (OLT).</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Immunosuppression">
+  <data key="d0">Immunosuppression</data>
+  <data key="d1">method</data>
+  <data key="d2">A medical treatment involving cyclosporine and prednisone to prevent organ rejection.</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Cyclosporine">
+  <data key="d0">Cyclosporine</data>
+  <data key="d1">artifact</data>
+  <data key="d2">An immunosuppressive drug used in the patient's treatment.</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Prednisone">
+  <data key="d0">Prednisone</data>
+  <data key="d1">artifact</data>
+  <data key="d2">A corticosteroid drug used in the patient's immunosuppression regimen.</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Severe Rejection">
+  <data key="d0">Severe Rejection</data>
+  <data key="d1">event</data>
+  <data key="d2">A serious medical complication beginning in postoperative week 3, requiring augmented steroid dosage and OKT3.</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="OKT3">
+  <data key="d0">OKT3</data>
+  <data key="d1">artifact</data>
+  <data key="d2">A monoclonal antibody drug added to treat severe rejection.</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Aspergillus Brain Abscess">
+  <data key="d0">Aspergillus Brain Abscess</data>
+  <data key="d1">event</data>
+  <data key="d2">A fungal infection in the brain that was successfully treated with antibiotics, open drainage, and a ventriculoperitoneal shunt.</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Bacteremia">
+  <data key="d0">Bacteremia</data>
+  <data key="d1">event</data>
+  <data key="d2">A bloodstream infection</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046012</data>
+  <data key="d6"></data>
+</node>
+<node id="Omega Energy">
+  <data key="d0">Omega Energy</data>
+  <data key="d3">chunk-344323b918fd0a2f63161ea908593c80&lt;SEP&gt;chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d2">Rising oil prices contributed to Omega Energy's stock gain.</data>
+  <data key="d1">UNKNOWN</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046014</data>
+  <data key="d6"></data>
+</node>
+<node id="Nexon Technologies">
+  <data key="d0">Nexon Technologies</data>
+  <data key="d3">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d2">Nexon Technologies' stock plummeted after reporting lower-than-expected quarterly earnings.</data>
+  <data key="d1">UNKNOWN</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046014</data>
+  <data key="d6"></data>
+</node>
+<node id="Crude Oil">
+  <data key="d0">Crude Oil</data>
+  <data key="d3">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d2">Omega Energy's stock gain is driven by rising crude oil prices, reflecting a positive correlation between the company and the commodity.</data>
+  <data key="d1">UNKNOWN</data>
+  <data key="d4">todo1992.pdf</data>
+  <data key="d5">1780046014</data>
+  <data key="d6"></data>
+</node>
+<edge source="IABP" target="Impella">
+  <data key="d7">1.0</data>
+  <data key="d8">Impella and IABP are compared in a survival probability study with a Log-Rank P-value of 0.97.</data>
+  <data key="d9">clinical trial,comparison</data>
+  <data key="d10">chunk-ff0702c16a40074abed0254fa2987a4d</data>
+  <data key="d11">seyfarth2008.pdf</data>
+  <data key="d12">1780045977</data>
+  <data key="d13"></data>
+</edge>
+<edge source="World Athletics Federation" target="World Athletics Championship">
+  <data key="d7">5.0</data>
+  <data key="d8">The World Athletics Federation governs and oversees the World Athletics Championship.&lt;SEP&gt;The World Athletics Federation governs the World Athletics Championship.&lt;SEP&gt;The World Athletics Federation governs and oversees the World Athletics Championship.&lt;SEP&gt;The World Athletics Federation governs the World Athletics Championship.</data>
+  <data key="d9">governance,organization,oversight</data>
+  <data key="d10">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-cd12a4d42988a0cbef608f813b7db575&lt;SEP&gt;chunk-1855c52c9abac15b97446b5b78a35eb2&lt;SEP&gt;chunk-61463c7b12c07a431ba8cba59dce8f00&lt;SEP&gt;chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="World Athletics Federation" target="100m Sprint Record">
+  <data key="d7">3.0</data>
+  <data key="d8">The World Athletics Federation validates and officially recognizes the 100m sprint record.&lt;SEP&gt;The World Athletics Federation validates and recognizes the 100m sprint record.&lt;SEP&gt;The World Athletics Federation validates and recognizes the 100m sprint record set by Noah Carter.</data>
+  <data key="d9">official recognition,record validation</data>
+  <data key="d10">chunk-991db3b8f843321a27cc49183034d5f4&lt;SEP&gt;chunk-1855c52c9abac15b97446b5b78a35eb2&lt;SEP&gt;chunk-5cae78531cd9206479ead804b11684d1</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="World Athletics Federation" target="Noah Carter">
+  <data key="d7">1.0</data>
+  <data key="d8">Noah Carter's record is validated by the World Athletics Federation.</data>
+  <data key="d9">athlete recognition,record validation</data>
+  <data key="d10">chunk-cd12a4d42988a0cbef608f813b7db575</data>
+  <data key="d11">seyfarth2008.pdf</data>
+  <data key="d12">1780045977</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Investor Concerns" target="Market Selloff">
+  <data key="d7">7.0</data>
+  <data key="d8">Investor concerns over interest rates and regulations are a primary cause of the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty triggered the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty are the primary cause of the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty are causing the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty are a primary cause of the market selloff.&lt;SEP&gt;Investor concerns over rising interest rates and regulatory uncertainty are a primary cause of the market selloff.&lt;SEP&gt;Investor concerns over interest rates and regulations are the primary cause of the market selloff.</data>
+  <data key="d9">causal relationship,causation,cause and effect,investor sentiment,market driver,market dynamics,market sentiment</data>
+  <data key="d10">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60&lt;SEP&gt;chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-2a40dc31e02c5c0febdae8449f769db0&lt;SEP&gt;chunk-344323b918fd0a2f63161ea908593c80&lt;SEP&gt;chunk-fc8300849246981a965ff70c583daf4d</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Investor Concerns" target="Rising Interest Rates">
+  <data key="d7">6.0</data>
+  <data key="d8">Rising interest rates are a key concern for investors, contributing to the selloff.&lt;SEP&gt;Rising interest rates are a primary driver of investor concerns in the current market.&lt;SEP&gt;Rising interest rates are a key factor fueling investor concerns.&lt;SEP&gt;Rising interest rates are a primary driver of investor concerns.&lt;SEP&gt;Rising interest rates contribute to investor concerns about borrowing costs and economic growth.&lt;SEP&gt;Rising interest rates are a key component of investor concerns.</data>
+  <data key="d9">causation,economic factor,investor sentiment,market anxiety,market impact,market sentiment</data>
+  <data key="d10">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60&lt;SEP&gt;chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-2a40dc31e02c5c0febdae8449f769db0&lt;SEP&gt;chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Investor Concerns" target="Regulatory Uncertainty">
+  <data key="d7">6.0</data>
+  <data key="d8">Regulatory uncertainty adds to investor concerns, affecting market stability.&lt;SEP&gt;Regulatory uncertainty has heightened investor concerns and contributed to market instability.&lt;SEP&gt;Regulatory uncertainty is another factor contributing to investor concerns.&lt;SEP&gt;Regulatory uncertainty is a primary driver of investor concerns.&lt;SEP&gt;Regulatory uncertainty adds to investor concerns by creating unpredictability in business environments.&lt;SEP&gt;Regulatory uncertainty is a key component of investor concerns.</data>
+  <data key="d9">causation,economic factor,investor sentiment,market sentiment,market volatility,policy risk,regulatory environment</data>
+  <data key="d10">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-a62a3411d190c14c03fad25d62150ba2&lt;SEP&gt;chunk-2c61ba2f73cda3eb90b84f74f9851e60&lt;SEP&gt;chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-2a40dc31e02c5c0febdae8449f769db0&lt;SEP&gt;chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Rising Interest Rates" target="Federal Reserve">
+  <data key="d7">3.0</data>
+  <data key="d8">The Federal Reserve's potential rate hikes are a source of rising interest rates affecting the market.&lt;SEP&gt;The Federal Reserve's policy decisions are expected to influence interest rates.&lt;SEP&gt;The Federal Reserve's potential rate hikes are a primary cause of rising interest rates, which in turn affect market stability.</data>
+  <data key="d9">interest rate hikes,market influence,monetary policy,policy influence</data>
+  <data key="d10">chunk-ff0702c16a40074abed0254fa2987a4d&lt;SEP&gt;chunk-21216935d007e96698b174a5337c6463&lt;SEP&gt;chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Rising Interest Rates" target="Market Selloff">
+  <data key="d7">1.0</data>
+  <data key="d8">The market selloff is attributed to investor concerns over rising interest rates.</data>
+  <data key="d9">investor concern,market impact</data>
+  <data key="d10">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d11">todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Regulatory Uncertainty" target="Federal Reserve">
+  <data key="d7">2.0</data>
+  <data key="d8">The Federal Reserve's upcoming policy announcement contributes to regulatory uncertainty in the financial markets.&lt;SEP&gt;The Federal Reserve's upcoming policy announcement contributes to regulatory uncertainty, influencing investor confidence.</data>
+  <data key="d9">market impact,policy decisions</data>
+  <data key="d10">chunk-21216935d007e96698b174a5337c6463&lt;SEP&gt;chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Regulatory Uncertainty" target="Market Selloff">
+  <data key="d7">1.0</data>
+  <data key="d8">The market selloff is attributed to investor concerns over regulatory uncertainty.</data>
+  <data key="d9">investor concern,market impact</data>
+  <data key="d10">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d11">todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Federal Reserve" target="Financial Experts">
+  <data key="d7">3.0</data>
+  <data key="d8">Financial experts are closely watching the Federal Reserve's next move to gauge its impact on the market.&lt;SEP&gt;Financial experts are closely watching the Federal Reserve's next move regarding potential rate hikes.</data>
+  <data key="d9">monitoring,policy analysis,policy anticipation</data>
+  <data key="d10">chunk-2c61ba2f73cda3eb90b84f74f9851e60&lt;SEP&gt;chunk-518d22241c7304c17fbdf836ee4ebc04&lt;SEP&gt;chunk-2a40dc31e02c5c0febdae8449f769db0</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf</data>
+  <data key="d12">1780045996</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Federal Reserve" target="Federal Reserve Policy Announcement">
+  <data key="d7">1.0</data>
+  <data key="d8">The Federal Reserve's upcoming policy announcement is expected to impact investor confidence and overall market stability.</data>
+  <data key="d9">market influence,monetary policy</data>
+  <data key="d10">chunk-0f3aa4a7c7719cac1f9550ae1f1ae67c</data>
+  <data key="d11">shchelochkov2019.pdf</data>
+  <data key="d12">1780045996</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Financial Experts" target="Federal Reserve Policy Announcement">
+  <data key="d7">1.0</data>
+  <data key="d8">Financial experts are closely watching the Federal Reserve's upcoming policy announcement for its impact on markets.</data>
+  <data key="d9">market analysis,policy monitoring</data>
+  <data key="d10">chunk-a62a3411d190c14c03fad25d62150ba2</data>
+  <data key="d11">seyfarth2008.pdf</data>
+  <data key="d12">1780045977</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Alex" target="Taylor">
+  <data key="d7">2.0</data>
+  <data key="d8">Alex observes Taylor's authoritarian behavior and notes changes in Taylor's attitude toward the device.&lt;SEP&gt;Alex observes Taylor's authoritarian behavior and notes changes in Taylor's attitude toward the device.</data>
+  <data key="d9">observation,power dynamics</data>
+  <data key="d10">chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf</data>
+  <data key="d12">1780045996</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Alex" target="Jordan">
+  <data key="d7">4.0</data>
+  <data key="d8">Alex and Jordan share a commitment to discovery, which contrasts with Cruz's vision.&lt;SEP&gt;Alex and Jordan share a commitment to discovery, which contrasts with Cruz's vision.&lt;SEP&gt;Alex and Jordan share a commitment to discovery, which contrasts with Cruz's vision.</data>
+  <data key="d9">rebellion,shared goals</data>
+  <data key="d10">chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5&lt;SEP&gt;chunk-83724ab6403639b1149ca8570bc6e741&lt;SEP&gt;chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Alex" target="Cruz">
+  <data key="d7">1.0</data>
+  <data key="d8">Alex's shared commitment to discovery with Jordan is an unspoken rebellion against Cruz's narrowing vision of control and order.</data>
+  <data key="d9">ideological conflict,rebellion</data>
+  <data key="d10">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d11">todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Taylor" target="Jordan">
+  <data key="d7">4.0</data>
+  <data key="d8">Taylor and Jordan interact directly regarding the device, leading to a moment of mutual respect and an uneasy truce.&lt;SEP&gt;Taylor and Jordan interact directly regarding the device, leading to a moment of mutual respect and an uneasy truce.&lt;SEP&gt;Taylor and Jordan interact directly regarding the device, leading to a moment of mutual respect and an uneasy truce.</data>
+  <data key="d9">conflict resolution,mutual respect</data>
+  <data key="d10">chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5&lt;SEP&gt;chunk-83724ab6403639b1149ca8570bc6e741&lt;SEP&gt;chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Taylor" target="The Device">
+  <data key="d7">1.0</data>
+  <data key="d8">Taylor shows reverence towards the device, indicating its importance and potential impact.</data>
+  <data key="d9">reverence,technological significance</data>
+  <data key="d10">chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d11">todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Taylor" target="Cruz">
+  <data key="d7">1.0</data>
+  <data key="d8">Taylor's authoritarian certainty contrasts with Cruz's vision of control and order.</data>
+  <data key="d9">control,power dynamics</data>
+  <data key="d10">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d11">todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Jordan" target="Cruz">
+  <data key="d7">4.0</data>
+  <data key="d8">Jordan's commitment to discovery is in rebellion against Cruz's vision of control and order.&lt;SEP&gt;Jordan's commitment to discovery is in rebellion against Cruz's vision of control and order.&lt;SEP&gt;Jordan's commitment to discovery is in rebellion against Cruz's vision of control and order.</data>
+  <data key="d9">ideological conflict,rebellion</data>
+  <data key="d10">chunk-c33f31a24de4f3032f5ab5311fd13365&lt;SEP&gt;chunk-a3829da11ddccd396403f1961385f8e5&lt;SEP&gt;chunk-83724ab6403639b1149ca8570bc6e741&lt;SEP&gt;chunk-795f0f50f5083382c49b397ac4a29a01</data>
+  <data key="d11">seyfarth2008.pdf&lt;SEP&gt;shchelochkov2019.pdf&lt;SEP&gt;todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Jordan" target="The Device">
+  <data key="d7">1.0</data>
+  <data key="d8">Jordan is observed by Taylor while holding the device, and Taylor shows reverence for the device.</data>
+  <data key="d9">observation,reverence</data>
+  <data key="d10">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d11">todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Shchelochkov2019" target="Genetics in Medicine">
+  <data key="d7">1.0</data>
+  <data key="d8">The article Shchelochkov2019 is published in the journal Genetics in Medicine.</data>
+  <data key="d9">journal article,publication</data>
+  <data key="d10">chunk-9a4a995063bc2bf1c53d9019501ce065</data>
+  <data key="d11">shchelochkov2019.pdf</data>
+  <data key="d12">1780045996</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Quarterly Earnings" target="Nexon Technologies">
+  <data key="d7">1.0</data>
+  <data key="d8">Nexon Technologies' stock plummeted after reporting lower-than-expected quarterly earnings.</data>
+  <data key="d9">company performance,stock impact</data>
+  <data key="d10">chunk-1e776f44c2a2b63585778263cf8b4315</data>
+  <data key="d11">todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Rising Oil Prices" target="Omega Energy">
+  <data key="d7">1.0</data>
+  <data key="d8">Rising oil prices contributed to Omega Energy's stock gain.</data>
+  <data key="d9">benefit,market performance</data>
+  <data key="d10">chunk-344323b918fd0a2f63161ea908593c80</data>
+  <data key="d11">todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+<edge source="Omega Energy" target="Crude Oil">
+  <data key="d7">1.0</data>
+  <data key="d8">Omega Energy's stock gain is driven by rising crude oil prices, reflecting a positive correlation between the company and the commodity.</data>
+  <data key="d9">commodity prices,company performance</data>
+  <data key="d10">chunk-10880be99377e9a685fe866bbe47008f</data>
+  <data key="d11">todo1992.pdf</data>
+  <data key="d12">1780046014</data>
+  <data key="d13"></data>
+</edge>
+</graph></graphml>
