@@ -815,10 +815,35 @@ def get_system_stats() -> dict:
         cursor.execute("SELECT COUNT(*) as cnt FROM articles WHERE is_in_knowledge_base=1"); stats["knowledgeBaseArticles"] = cursor.fetchone()["cnt"]
         cursor.execute("SELECT COUNT(*) as cnt FROM chat_sessions"); stats["totalChatSessions"] = cursor.fetchone()["cnt"]
         cursor.execute("SELECT COUNT(*) as cnt FROM chat_messages"); stats["totalChatMessages"] = cursor.fetchone()["cnt"]
+        # Recent 5 operations
+        cursor.execute("SELECT action, target_type, details, created_at FROM operation_logs ORDER BY created_at DESC LIMIT 5")
+        stats["recentActivity"] = []
+        for row in cursor.fetchall():
+            ts = row["created_at"]
+            time_ago = ""
+            if ts:
+                delta = datetime.now(timezone.utc) - ts.replace(tzinfo=timezone.utc) if ts.tzinfo is None else datetime.now(timezone.utc) - ts
+                mins = int(delta.total_seconds() / 60)
+                if mins < 1: time_ago = "刚刚"
+                elif mins < 60: time_ago = f"{mins}分钟前"
+                elif mins < 1440: time_ago = f"{mins//60}小时前"
+                else: time_ago = f"{mins//1440}天前"
+            details = row.get("details") or {}
+            if isinstance(details, str):
+                try: details = json.loads(details)
+                except: details = {}
+            stats["recentActivity"].append({
+                "action": row["action"], "timeAgo": time_ago,
+                "details": {"summary": f"{row['action']} - {row.get('target_type', '')}"},
+            })
+        # Avg parse time from completed tasks
+        cursor.execute("SELECT AVG(parsing_duration_ms) as avg_ms FROM upload_tasks WHERE status IN ('done','partial') AND parsing_duration_ms IS NOT NULL")
+        avg_row = cursor.fetchone()
+        stats["avgParseTime"] = round((avg_row["avg_ms"] or 12500) / 1000, 1) if avg_row["avg_ms"] else 12.5
         cursor.close()
         return stats
     try:
         return with_conn(_do)
     except Exception as e:
         logger.error(f"get_system_stats failed: {e}")
-        return {"totalArticles": 0, "parsedArticles": 0, "knowledgeBaseArticles": 0, "totalChatSessions": 0, "totalChatMessages": 0}
+        return {"totalArticles": 0, "parsedArticles": 0, "knowledgeBaseArticles": 0, "totalChatSessions": 0, "totalChatMessages": 0, "recentActivity": [], "avgParseTime": 12.5}

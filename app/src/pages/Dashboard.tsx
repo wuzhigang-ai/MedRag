@@ -29,13 +29,14 @@ export default function Dashboard() {
     { icon: <FiMessageSquare size={16} />, label: "医疗问答", desc: "基于知识库的问答", path: "/admin/chat", color: "var(--m-gold)", bg: "rgba(212,168,83,0.08)" },
   ];
 
-  const recentActivity = [
-    { icon: <FiUpload size={12} />, text: "新文献上传《糖尿病治疗新进展》", time: "2分钟前", color: "var(--m-primary)" },
-    { icon: <FiCheckCircle size={12} />, text: "文献《NSCLC免疫治疗》已入库", time: "15分钟前", color: "var(--m-green)" },
-    { icon: <FiDatabase size={12} />, text: "知识图谱新增 3 个节点、5 条关系", time: "1小时前", color: "var(--m-cyan)" },
-    { icon: <FiMessageSquare size={12} />, text: "新问答会话：房颤抗凝方案", time: "2小时前", color: "var(--m-gold)" },
-    { icon: <FiAlertCircle size={12} />, text: "《高血压指南2024》解析完成待审核", time: "3小时前", color: "var(--m-orange)" },
-  ];
+  const recentActivity = (stats?.recentActivity || []).length > 0
+    ? stats.recentActivity.map((a: any) => ({
+        icon: a.action === "upload" ? <FiUpload size={12}/> : a.action === "approve" ? <FiCheckCircle size={12}/> : a.action === "login" ? <FiActivity size={12}/> : <FiMessageSquare size={12}/>,
+        text: a.details?.summary || a.action,
+        time: a.timeAgo || "",
+        color: "var(--m-primary)",
+      }))
+    : [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>

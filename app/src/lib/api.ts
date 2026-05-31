@@ -5,6 +5,22 @@
 
 const BASE = ""; // Same-origin; Vite proxies /api to backend
 
+// Snake_case → camelCase recursive converter. Ensures frontend always
+// receives camelCase keys regardless of backend naming convention.
+function toCamel<T>(obj: any): T {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(toCamel) as unknown as T;
+  if (typeof obj === "object" && obj.constructor === Object) {
+    const result: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      const camelKey = k.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+      result[camelKey] = toCamel(v);
+    }
+    return result as T;
+  }
+  return obj;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const url = BASE + path;
     const headers: Record<string, string> = {
@@ -25,7 +41,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
         throw new Error(msg || `HTTP ${res.status}`);
     }
     if (res.status === 204) return undefined as T;
-    return res.json();
+    const data = await res.json();
+    return toCamel(data) as T;
 }
 
 function get<T>(path: string): Promise<T> {

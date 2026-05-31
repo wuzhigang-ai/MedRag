@@ -63,7 +63,7 @@ export default function LibraryPage() {
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-          {[{l:"文献总量",v:stats?.total??0,i:<FiBook size={15}/>,c:"var(--m-primary)"},{l:"已入库",v:stats?.approved??0,i:<FiCheckCircle size={15}/>,c:"var(--m-green)"},{l:"解析完成",v:stats?.parsed??0,i:<FiImage size={15}/>,c:"var(--m-cyan)"},{l:"知识节点",v:stats?.inKb??0,i:<FiDatabase size={15}/>,c:"var(--m-gold)"}].map((s,i)=>(
+          {[{l:"文献总量",v:stats?.total??0,i:<FiBook size={15}/>,c:"var(--m-primary)"},{l:"已入库",v:stats?.byStatus?.approved??0,i:<FiCheckCircle size={15}/>,c:"var(--m-green)"},{l:"解析完成",v:stats?.byStatus?.parsed??0,i:<FiImage size={15}/>,c:"var(--m-cyan)"},{l:"知识节点",v:stats?.inKnowledgeBase??0,i:<FiDatabase size={15}/>,c:"var(--m-gold)"}].map((s,i)=>(
             <div key={i} className="m-card" style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
               <div className="m-icon-box" style={{ width: 34, height: 34, background: `${s.c}10`, color: s.c, borderRadius: 9 }}>{s.i}</div>
               <div><div style={{ fontSize: 18, fontWeight: 700, color: "var(--tx-900)" }}>{s.v}</div><div style={{ fontSize: 10, color: "var(--tx-100)" }}>{s.l}</div></div>

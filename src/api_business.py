@@ -308,16 +308,22 @@ def stats_system():
     graph_data = gm.build()
     graph_nodes = graph_data.get("stats", {}).get("total_nodes", len(graph_data.get("nodes", [])))
     graph_edges = graph_data.get("stats", {}).get("total_edges", len(graph_data.get("edges", [])))
+    # Real recent activity from operation_logs
+    recent_activity = s.get("recentActivity", [])
+    # Calculate real average parse time from completed tasks
+    avg_parse_time = s.get("avgParseTime", 0)
     return {
-        "totalArticles": gs.get("total_documents", 0),  # FAISS indexed docs (canonical count)
+        "totalArticles": gs.get("total_documents", 0),
         "parsedArticles": s.get("parsedArticles", 0),
-        "knowledgeBaseArticles": gs.get("total_documents", 0),  # FAISS indexed docs
+        "knowledgeBaseArticles": gs.get("total_documents", 0),
         "totalNodes": graph_nodes,
         "totalEdges": graph_edges,
         "totalChatSessions": s.get("totalChatSessions", 0),
         "totalChatMessages": s.get("totalChatMessages", 0),
         "faissVectors": gs.get("faiss_index_size", 0),
         "totalDocuments": gs.get("total_documents", 0),
+        "recentActivity": recent_activity,
+        "avgParseTime": avg_parse_time,
     }
 
 @router.get("/stats/trends")
