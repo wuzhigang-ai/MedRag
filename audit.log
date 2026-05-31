@@ -1,0 +1,90 @@
+{"ts": "2026-05-31T11:20:04.965230+00:00", "type": "system_startup", "pid": 81244}
+{"ts": "2026-05-31T11:20:04.965539+00:00", "type": "system_health"}
+{"ts": "2026-05-31T11:20:07.194683+00:00", "type": "api", "method": "POST", "path": "/api/auth/login", "status": 200, "duration_ms": 2228}
+{"ts": "2026-05-31T11:20:07.195233+00:00", "type": "login", "username": "admin", "success": true, "ip": "127.0.0.1"}
+{"ts": "2026-05-31T11:20:09.420818+00:00", "type": "api", "method": "POST", "path": "/api/auth/login", "status": 401, "duration_ms": 2225}
+{"ts": "2026-05-31T11:20:11.456817+00:00", "type": "api", "method": "POST", "path": "/api/auth/login", "status": 401, "duration_ms": 2035}
+{"ts": "2026-05-31T11:20:13.475530+00:00", "type": "api", "method": "GET", "path": "/api/auth/me", "status": 200, "duration_ms": 2018}
+{"ts": "2026-05-31T11:20:15.486841+00:00", "type": "api", "method": "GET", "path": "/api/auth/me", "status": 200, "duration_ms": 2010}
+{"ts": "2026-05-31T11:20:17.512947+00:00", "type": "api", "method": "POST", "path": "/api/articles", "status": 401, "duration_ms": 2025}
+{"ts": "2026-05-31T11:20:19.539871+00:00", "type": "api", "method": "DELETE", "path": "/api/articles/1", "status": 401, "duration_ms": 2026}
+{"ts": "2026-05-31T11:20:21.592041+00:00", "type": "api", "method": "GET", "path": "/api/articles", "status": 200, "duration_ms": 2051}
+{"ts": "2026-05-31T11:20:23.621879+00:00", "type": "api", "method": "POST", "path": "/api/auth/register", "status": 400, "duration_ms": 2029}
+{"ts": "2026-05-31T11:20:25.649889+00:00", "type": "api", "method": "POST", "path": "/api/auth/register", "status": 400, "duration_ms": 2027}
+{"ts": "2026-05-31T11:20:27.681753+00:00", "type": "api", "method": "GET", "path": "/api/articles", "status": 200, "duration_ms": 2031}
+{"ts": "2026-05-31T11:20:29.716624+00:00", "type": "api", "method": "GET", "path": "/api/articles/stats", "status": 200, "duration_ms": 2034}
+{"ts": "2026-05-31T11:20:31.775480+00:00", "type": "api", "method": "GET", "path": "/api/articles/1", "status": 200, "duration_ms": 2058}
+{"ts": "2026-05-31T11:20:33.824197+00:00", "type": "api", "method": "GET", "path": "/api/articles/999", "status": 404, "duration_ms": 2048}
+{"ts": "2026-05-31T11:20:35.865602+00:00", "type": "api", "method": "GET", "path": "/api/graph", "status": 200, "duration_ms": 2040}
+{"ts": "2026-05-31T11:20:37.900002+00:00", "type": "api", "method": "GET", "path": "/api/graph/stats", "status": 200, "duration_ms": 2030}
+{"ts": "2026-05-31T11:20:39.958561+00:00", "type": "api", "method": "GET", "path": "/api/graph/nodes/search?query=blood", "status": 200, "duration_ms": 2058}
+{"ts": "2026-05-31T11:20:42.023135+00:00", "type": "api", "method": "GET", "path": "/api/stats/system", "status": 200, "duration_ms": 2064}
+{"ts": "2026-05-31T11:20:44.057267+00:00", "type": "api", "method": "GET", "path": "/api/chat/sessions", "status": 200, "duration_ms": 2033}
+{"ts": "2026-05-31T11:20:46.097734+00:00", "type": "api", "method": "GET", "path": "/api/upload/history", "status": 200, "duration_ms": 2039}
+{"ts": "2026-05-31T11:20:48.134707+00:00", "type": "api", "method": "POST", "path": "/api/auth/logout", "status": 200, "duration_ms": 2036}
+{"ts": "2026-05-31T11:20:50.162957+00:00", "type": "api", "method": "GET", "path": "/api/articles", "status": 200, "duration_ms": 2027}
+{"ts": "2026-05-31T11:20:52.203772+00:00", "type": "api", "method": "GET", "path": "/api/articles/stats", "status": 200, "duration_ms": 2040}
+{"ts": "2026-05-31T11:20:54.258023+00:00", "type": "api", "method": "GET", "path": "/api/stats/system", "status": 200, "duration_ms": 2053}
+{"ts": "2026-05-31T11:20:56.303618+00:00", "type": "api", "method": "GET", "path": "/api/graph/stats", "status": 200, "duration_ms": 2045}
+{"ts": "2026-05-31T11:20:58.336190+00:00", "type": "api", "method": "GET", "path": "/api/upload/history", "status": 200, "duration_ms": 2032}
+{"ts": "2026-05-31T11:33:14.720722+00:00", "type": "system_startup", "pid": 76168}
+{"ts": "2026-05-31T11:33:14.721247+00:00", "type": "system_health"}
+{"ts": "2026-05-31T11:33:16.953564+00:00", "type": "api", "method": "POST", "path": "/api/auth/login", "status": 200, "duration_ms": 2231}
+{"ts": "2026-05-31T11:33:16.954128+00:00", "type": "login", "username": "admin", "success": true, "ip": "127.0.0.1"}
+{"ts": "2026-05-31T11:33:19.147658+00:00", "type": "api", "method": "POST", "path": "/api/auth/login", "status": 401, "duration_ms": 2193}
+{"ts": "2026-05-31T11:33:21.177278+00:00", "type": "api", "method": "POST", "path": "/api/auth/login", "status": 401, "duration_ms": 2028}
+{"ts": "2026-05-31T11:33:23.194046+00:00", "type": "api", "method": "GET", "path": "/api/auth/me", "status": 200, "duration_ms": 2016}
+{"ts": "2026-05-31T11:33:25.216799+00:00", "type": "api", "method": "GET", "path": "/api/auth/me", "status": 200, "duration_ms": 2021}
+{"ts": "2026-05-31T11:33:27.234457+00:00", "type": "api", "method": "POST", "path": "/api/articles", "status": 401, "duration_ms": 2017}
+{"ts": "2026-05-31T11:33:29.273359+00:00", "type": "api", "method": "DELETE", "path": "/api/articles/1", "status": 401, "duration_ms": 2037}
+{"ts": "2026-05-31T11:33:31.327060+00:00", "type": "api", "method": "GET", "path": "/api/articles", "status": 200, "duration_ms": 2052}
+{"ts": "2026-05-31T11:33:33.364831+00:00", "type": "api", "method": "POST", "path": "/api/auth/register", "status": 400, "duration_ms": 2037}
+{"ts": "2026-05-31T11:33:35.419024+00:00", "type": "api", "method": "POST", "path": "/api/auth/register", "status": 400, "duration_ms": 2053}
+{"ts": "2026-05-31T11:33:37.506329+00:00", "type": "api", "method": "GET", "path": "/api/articles", "status": 200, "duration_ms": 2086}
+{"ts": "2026-05-31T11:33:39.557204+00:00", "type": "api", "method": "GET", "path": "/api/articles/stats", "status": 200, "duration_ms": 2050}
+{"ts": "2026-05-31T11:33:41.589939+00:00", "type": "api", "method": "GET", "path": "/api/articles/1", "status": 200, "duration_ms": 2032}
+{"ts": "2026-05-31T11:33:43.655856+00:00", "type": "api", "method": "GET", "path": "/api/articles/999", "status": 404, "duration_ms": 2065}
+{"ts": "2026-05-31T11:33:48.216770+00:00", "type": "api", "method": "GET", "path": "/api/graph", "status": 200, "duration_ms": 4560}
+{"ts": "2026-05-31T11:33:50.241431+00:00", "type": "api", "method": "GET", "path": "/api/graph/stats", "status": 200, "duration_ms": 2023}
+{"ts": "2026-05-31T11:33:52.285605+00:00", "type": "api", "method": "GET", "path": "/api/graph/nodes/search?query=blood", "status": 200, "duration_ms": 2043}
+{"ts": "2026-05-31T11:33:54.327700+00:00", "type": "api", "method": "GET", "path": "/api/stats/system", "status": 200, "duration_ms": 2041}
+{"ts": "2026-05-31T11:33:56.354840+00:00", "type": "api", "method": "GET", "path": "/api/chat/sessions", "status": 200, "duration_ms": 2026}
+{"ts": "2026-05-31T11:33:58.386908+00:00", "type": "api", "method": "GET", "path": "/api/upload/history", "status": 200, "duration_ms": 2031}
+{"ts": "2026-05-31T11:34:00.408662+00:00", "type": "api", "method": "POST", "path": "/api/auth/logout", "status": 200, "duration_ms": 2020}
+{"ts": "2026-05-31T11:34:02.451622+00:00", "type": "api", "method": "GET", "path": "/api/articles", "status": 200, "duration_ms": 2042}
+{"ts": "2026-05-31T11:34:04.499526+00:00", "type": "api", "method": "GET", "path": "/api/articles/stats", "status": 200, "duration_ms": 2047}
+{"ts": "2026-05-31T11:34:06.551819+00:00", "type": "api", "method": "GET", "path": "/api/stats/system", "status": 200, "duration_ms": 2051}
+{"ts": "2026-05-31T11:34:08.598681+00:00", "type": "api", "method": "GET", "path": "/api/graph/stats", "status": 200, "duration_ms": 2046}
+{"ts": "2026-05-31T11:34:10.652948+00:00", "type": "api", "method": "GET", "path": "/api/upload/history", "status": 200, "duration_ms": 2053}
+{"ts": "2026-05-31T13:17:57.366163+00:00", "type": "system_startup", "pid": 30984}
+{"ts": "2026-05-31T13:17:57.366728+00:00", "type": "system_health"}
+{"ts": "2026-05-31T13:17:59.588583+00:00", "type": "api", "method": "POST", "path": "/api/auth/login", "status": 200, "duration_ms": 2221}
+{"ts": "2026-05-31T13:17:59.589368+00:00", "type": "login", "username": "admin", "success": true, "ip": "127.0.0.1"}
+{"ts": "2026-05-31T13:18:01.774795+00:00", "type": "api", "method": "POST", "path": "/api/auth/login", "status": 401, "duration_ms": 2185}
+{"ts": "2026-05-31T13:18:03.802303+00:00", "type": "api", "method": "POST", "path": "/api/auth/login", "status": 401, "duration_ms": 2026}
+{"ts": "2026-05-31T13:18:05.823729+00:00", "type": "api", "method": "GET", "path": "/api/auth/me", "status": 200, "duration_ms": 2020}
+{"ts": "2026-05-31T13:18:07.838543+00:00", "type": "api", "method": "GET", "path": "/api/auth/me", "status": 200, "duration_ms": 2014}
+{"ts": "2026-05-31T13:18:09.878389+00:00", "type": "api", "method": "POST", "path": "/api/articles", "status": 401, "duration_ms": 2039}
+{"ts": "2026-05-31T13:18:11.922935+00:00", "type": "api", "method": "DELETE", "path": "/api/articles/1", "status": 401, "duration_ms": 2044}
+{"ts": "2026-05-31T13:18:13.938364+00:00", "type": "api", "method": "GET", "path": "/api/articles", "status": 401, "duration_ms": 2014}
+{"ts": "2026-05-31T13:18:15.969196+00:00", "type": "api", "method": "POST", "path": "/api/auth/register", "status": 400, "duration_ms": 2030}
+{"ts": "2026-05-31T13:18:17.994950+00:00", "type": "api", "method": "POST", "path": "/api/auth/register", "status": 400, "duration_ms": 2025}
+{"ts": "2026-05-31T13:18:20.035979+00:00", "type": "api", "method": "GET", "path": "/api/articles", "status": 200, "duration_ms": 2040}
+{"ts": "2026-05-31T13:18:22.080842+00:00", "type": "api", "method": "GET", "path": "/api/articles/stats", "status": 200, "duration_ms": 2044}
+{"ts": "2026-05-31T13:18:24.108235+00:00", "type": "api", "method": "GET", "path": "/api/articles/1", "status": 200, "duration_ms": 2026}
+{"ts": "2026-05-31T13:18:26.145742+00:00", "type": "api", "method": "GET", "path": "/api/articles/999", "status": 404, "duration_ms": 2036}
+{"ts": "2026-05-31T13:18:28.190955+00:00", "type": "api", "method": "GET", "path": "/api/graph", "status": 200, "duration_ms": 2044}
+{"ts": "2026-05-31T13:18:30.247071+00:00", "type": "api", "method": "GET", "path": "/api/graph/stats", "status": 200, "duration_ms": 2055}
+{"ts": "2026-05-31T13:18:32.281123+00:00", "type": "api", "method": "GET", "path": "/api/graph/nodes/search?query=blood", "status": 200, "duration_ms": 2033}
+{"ts": "2026-05-31T13:18:34.312691+00:00", "type": "api", "method": "GET", "path": "/api/stats/system", "status": 200, "duration_ms": 2030}
+{"ts": "2026-05-31T13:18:36.352822+00:00", "type": "api", "method": "GET", "path": "/api/chat/sessions", "status": 200, "duration_ms": 2039}
+{"ts": "2026-05-31T13:18:38.394538+00:00", "type": "api", "method": "GET", "path": "/api/upload/history", "status": 200, "duration_ms": 2040}
+{"ts": "2026-05-31T13:18:40.427440+00:00", "type": "api", "method": "POST", "path": "/api/auth/logout", "status": 200, "duration_ms": 2032}
+{"ts": "2026-05-31T13:18:42.442100+00:00", "type": "api", "method": "GET", "path": "/api/articles", "status": 200, "duration_ms": 2014}
+{"ts": "2026-05-31T13:18:44.471989+00:00", "type": "api", "method": "GET", "path": "/api/articles/stats", "status": 200, "duration_ms": 2029}
+{"ts": "2026-05-31T13:18:46.518817+00:00", "type": "api", "method": "GET", "path": "/api/stats/system", "status": 200, "duration_ms": 2046}
+{"ts": "2026-05-31T13:18:48.557127+00:00", "type": "api", "method": "GET", "path": "/api/graph/stats", "status": 200, "duration_ms": 2037}
+{"ts": "2026-05-31T13:18:50.591335+00:00", "type": "api", "method": "GET", "path": "/api/upload/history", "status": 200, "duration_ms": 2033}
+{"ts": "2026-05-31T14:59:59.058212+00:00", "type": "parse_start", "uuid": "1d10dfd5-6e4", "filename": "子宫内膜异位症超声评估中国专家共识.pdf", "engine": "mineru25pro"}
+{"ts": "2026-05-31T15:12:37.574757+00:00", "type": "parse_start", "uuid": "63f0f5e6-51a", "filename": "Stanford+B+型主动脉夹层诊断和治疗中国专家共识（2022版）(1).pdf", "engine": "mineru25pro"}
+{"ts": "2026-05-31T15:22:37.596553+00:00", "type": "parse_start", "uuid": "976f4137-58d", "filename": "Stanford+B+型主动脉夹层诊断和治疗中国专家共识（2022版）(1).pdf", "engine": "mineru25pro"}

@@ -214,7 +214,21 @@
       "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(d['data']['value']\\)\")",
       "Bash(powershell -Command \"Stop-Process -Name python -Force\")",
       "Bash(python3 gen_pdf.py)",
-      "Bash(python3 *)"
+      "Bash(python3 *)",
+      "Bash(powershell -Command \"Get-Process -Name python,node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "Bash(powershell -Command \"Stop-Process -Id 64144 -Force\")",
+      "Bash(powershell -Command \"Get-Process -Name python -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "Bash(echo \"Backend: $\\(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/api/graph/stats\\)\")",
+      "Bash(powershell -Command 'Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host '\\\\''Killing PID:'\\\\'' $_.OwningProcess; Stop-Process -Id $_.OwningProcess -Force }')",
+      "Bash(git show *)",
+      "Bash(git rm *)",
+      "Bash(git mv *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(powershell -Command \"Compress-Archive -Path 'app/src','app/public','app/package.json','app/package-lock.json','app/tsconfig.json','app/tsconfig.app.json','app/tsconfig.node.json','app/vite.config.ts','app/tailwind.config.ts','app/index.html','app/components.json' -DestinationPath 'frontend.zip' -Force\")",
+      "Bash(powershell -Command \"Compress-Archive -Path 'src','api.py','requirements.txt','.env.example' -DestinationPath 'backend.zip' -Force\")",
+      "Bash(powershell -Command \"Compress-Archive -Path 'src','app','scripts','docs','README.md','api.py','requirements.txt','.env.example' -DestinationPath 'source.zip' -Force\")",
+      "Bash(powershell -Command \"Compress-Archive -Path 'app/src','app/public','app/package.json','app/tsconfig.json','app/tsconfig.app.json','app/vite.config.ts','app/index.html' -DestinationPath 'frontend.zip' -Force\")"
     ]
   }
 }
