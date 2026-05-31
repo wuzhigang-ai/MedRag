@@ -1,0 +1,852 @@
+# MedRAG Harness 工程管控文档
+
+> **版本**：v1.0 | **日期**：2026-05-31 | **团队**：天机运算  
+> **工程代号**：Operation IronClad — 管理界面全功能对接与状态机重构  
+> **预计工期**：3-5 天 | **目标**：零缺陷交付，所有功能健壮可用
+
+---
+
+## 目录
+
+1. [工程背景与目标](#1-工程背景与目标)
+2. [前置审计总结](#2-前置审计总结)
+3. [工程管控体系](#3-工程管控体系)
+4. [T1: 安全认证体系重建](#4-t1-安全认证体系重建)
+5. [T2: 上传入库全流程状态机重构](#5-t2-上传入库全流程状态机重构)
+6. [T3: 前端数据对接全面修复](#6-t3-前端数据对接全面修复)
+7. [T4: 管理界面交互体验优化](#7-t4-管理界面交互体验优化)
+8. [T5: 后端健壮性加固](#8-t5-后端健壮性加固)
+9. [T6: 100+ QA 测试用例](#9-t6-100-qa-测试用例)
+10. [Git 版本管控策略](#10-git-版本管控策略)
+11. [风险管控矩阵](#11-风险管控矩阵)
+12. [交付验收标准](#12-交付验收标准)
+
+---
+
+## 1. 工程背景与目标
+
+### 1.1 工程背景
+
+MedRAG 是面向 MinerU 赛道三（医疗赛题）的端到端医疗文献 RAG 知识库系统。系统经过多轮迭代开发，核心引擎（MinerU 2.5-Pro 解析、FAISS 索引、LightRAG 图谱、Agent 推理）已稳定运行。但在 **管理界面的前后端对接** 层面存在大量历史遗留问题——部分功能使用 mock 数据、前后端数据形状不匹配、状态机转换存在静默失败路径、认证体系形同虚设。
+
+本次工程聚焦于 **彻底打通管理界面的所有前后端交互**，确保每一个按钮、每一个数据卡片、每一个状态转换都是真实、可靠、可验证的。
+
+### 1.2 工程目标（SMART 原则）
+
+| 维度 | 目标 | 量化指标 |
+|------|------|---------|
+| **系统健壮性** | 所有 API 调用有超时保护、错误处理、重试机制 | 0 个未处理异常路径 |
+| **加载体验** | 每个页面有 loading / empty / error 三态 UI | 10 页面全覆盖 |
+| **状态管理** | 上传任务全生命周期 9 态可追踪、可审计 | 状态覆盖率 100% |
+| **数据一致性** | 前后端数据形状严格一致，camelCase 统一转换 | 0 个形状不匹配 |
+| **MySQL 交互** | 所有数据库操作使用 with_conn 模式，事务保护 | 0 连接泄漏 |
+| **测试覆盖** | 全功能 QA 测试 | 100+ 独立测试用例 |
+
+### 1.3 工程哲学 —— 毛选思想指导
+
+> "调查就是解决问题。你对于那个问题不能解决吗？那末，你就去调查那个问题的现状和它的历史吧！你完完全全调查明白了，你对那个问题就有解决的办法了。"
+
+本工程严格遵循这一原则：
+- **调查先行**：40 个缺陷的全面审计已完成（见 §2）
+- **实事求是**：每个修复方案基于真实代码和真实业务流程，不凭空设计
+- **集中优势兵力**：按 P0→P1→P2 顺序，逐任务歼灭
+- **伤其十指不如断其一指**：每个任务完成即 git commit，确保每个提交是完整的可工作状态
+
+---
+
+## 2. 前置审计总结
+
+2026 年 5 月 31 日完成的全面审计发现 **40 个具体缺陷**：
+
+### 2.1 缺陷分级统计
+
+| 级别 | 数量 | 典型问题 |
+|------|------|---------|
+| P0 致命 | 4 | 认证中间件缺失、auth/me 返回 null、SQL 注入风险、localStorage 假认证 |
+| P1 高危 | 14 | 硬编码假数据、连接泄漏、超时缺失、数据形状不匹配、状态覆盖 |
+| P2 中优 | 6 | 未使用端点、定时器泄漏、搜索无防抖、表初始化重复 |
+| 状态机缺陷 | 10 | partial 状态瞬时消失、挂起无超时、恢复不完整、取消无机制 |
+| 集成差距 | 6 | snake_case/camelCase 不匹配、端点存在但未使用 |
+
+### 2.2 Top 10 必须修复项
+
+| 排名 | 缺陷 ID | 问题 | 影响面 |
+|------|---------|------|--------|
+| 1 | P0-1 | 无认证中间件 | 整个系统安全 |
+| 2 | P1-11 | articles/stats 形状不匹配 | Library 统计全为 0 |
+| 3 | S-1 | parse_remote_pdf 无超时 | 队列可能永久阻塞 |
+| 4 | P1-5 | partial 状态被 failed 覆盖 | 状态机信息丢失 |
+| 5 | F-P1-1 | LibraryPage stats 全显示 0 | 评委直接看到 |
+| 6 | S-4 | sync_content_to_mysql 失败非阻塞 | FAISS/MySQL 不同步 |
+| 7 | P1-6 | add_parsed_document 无超时 | 队列阻塞 |
+| 8 | F-P0-1 | RouteGuard 仅依赖 localStorage | 认证可绕过 |
+| 9 | C-3 | 全系列 snake_case/camelCase 不匹配 | 多页面数据显示 undefined |
+| 10 | P2-4 | 任务中心状态徽章损坏 | received/failed/partial 无 UI |
+
+---
+
+## 3. 工程管控体系
+
+### 3.1 Git Checkpoint 策略
+
+每个任务完成一个子任务即做一次 git commit。Commit message 格式：
+
+```
+<type>(<scope>): <description> [refs #<issue-id>]
+
+例: fix(backend): add auth middleware, verify token on all endpoints [refs P0-1, P0-2]
+```
+
+**禁止行为**：
+- 多个不相关修改合并到一个 commit
+- commit message 写 "fix bugs" 等模糊描述
+- 跳过 pre-commit hook
+- 在 main/master 上直接修改（当前分支 master，每次提交前确认 diff）
+
+### 3.2 任务执行铁律
+
+1. **一任务一分支**：每完成一个子任务，确认功能可用后立即 commit
+2. **先写验收标准，再写代码**：每个子任务前明确 "什么算做完"
+3. **QA 与实现并行**：每完成一个大任务立即执行对应的 QA 用例
+4. **零警告原则**：修复后代码不产生新的 TypeScript 编译错误或 Python 语法错误
+5. **回滚可逆**：任何破坏性修改前确认有 git restore 路径
+
+### 3.3 验收门禁（每个任务完成后必须通过）
+
+- [ ] 代码语法正确（`vite build` 无错误，`python -c "compile(...)"` 无错误）
+- [ ] 相关 API 端点返回正确的 HTTP 状态码
+- [ ] 相关前端页面渲染正确（WebBridge snapshot 验证）
+- [ ] 所修复的缺陷不再复现
+- [ ] Git commit 已创建，message 清晰
+
+### 3.4 影响范围分析（每个修复前必做）
+
+在修改任何文件前，必须回答三个问题：
+1. **这个修改会影响到哪些其他文件？**（grep 搜索调用方）
+2. **这个修改会改变 API 契约吗？**（前端是否依赖旧形状？）
+3. **这个修改的失败模式是什么？**（如果出错了，用户看到什么？）
+
+---
+
+## 4. T1: 安全认证体系重建
+
+### 4.1 现状问题
+
+当前认证体系存在根本性缺陷：
+- 后端登录生成 token（sha256 hash），但没有任何中间件验证后续请求的 Authorization header
+- `GET /api/auth/me` 始终返回 `{"user": null}`
+- 前端 `RouteGuard` 仅检查 `localStorage.getItem("medrag_user")`，服务器从未验证
+- 登出时只删除 `medrag_user`，不删除 `medasr_token`
+- 所有管理端点和数据对任何知道服务器地址的人开放
+
+### 4.2 设计方案
+
+**核心原则**：认证不追求完美 JWT 方案，但必须满足 "token 验证 → 用户识别 → 权限判断" 的基本链路。
+
+#### 子任务 T1.1：后端 Token 验证中间件
+
+**文件**：`src/auth.py` (新增函数) + `api.py` / `src/api_business.py` (添加 Depends)
+
+**实现方案**：
+```python
+# src/auth.py 新增
+
+import functools
+from fastapi import Header, HTTPException, Request
+
+# Token → user_id 映射表（内存缓存 + 定期清理）
+_token_cache: dict[str, dict] = {}
+
+def verify_token(authorization: str = Header(None)) -> dict:
+    """FastAPI Depends: 验证 Authorization: Bearer <token> header"""
+    if not authorization:
+        raise HTTPException(401, "未提供认证令牌")
+    token = authorization.replace("Bearer ", "")
+    # 先查内存缓存
+    if token in _token_cache:
+        return _token_cache[token]
+    # 查数据库 tokens 字段 → users 表匹配
+    user = get_user_by_token(token)
+    if not user:
+        raise HTTPException(401, "令牌无效或已过期")
+    _token_cache[token] = user
+    return user
+
+def require_admin(user: dict = Depends(verify_token)) -> dict:
+    """要求 admin/expert 角色"""
+    if user.get("role") not in ("admin", "expert"):
+        raise HTTPException(403, "需要管理员权限")
+    return user
+```
+
+**修改文件清单**：
+- `src/auth.py`：新增 `get_user_by_token()`, `verify_token()`, `require_admin()`
+- `src/api_business.py`：所有管理端点添加 `user = Depends(require_admin)`
+- `api.py`：所有管理端点添加 `user = Depends(require_admin)`
+
+**验收标准**：
+- [ ] 无 token 请求 GET /api/articles → 401
+- [ ] 错误 token 请求 → 401
+- [ ] 普通用户 token 请求 DELETE /api/articles/{id} → 403
+- [ ] admin token 请求 → 200，正常返回数据
+- [ ] `vite build` 无新错误
+
+#### 子任务 T1.2：auth/me 返回真实用户
+
+**文件**：`src/api_business.py:73-75`
+
+**修改**：从 `return {"user": None}` 改为从 token 解码用户信息后返回。
+
+**验收标准**：
+- [ ] 登录后 GET /api/auth/me → 返回 `{user: {id, username, role}}`
+- [ ] 未登录 → 返回 `{user: null}` (不抛 401，前端据此判断)
+
+#### 子任务 T1.3：前端 RouteGuard 修复
+
+**文件**：`app/src/pages/AdminLayout.tsx`
+
+**修改**：不再仅依赖 `localStorage`，改为调用 `api.auth.me()` 验证服务器端 token 有效性。
+
+**验收标准**：
+- [ ] 有效 token → 显示管理界面
+- [ ] 无效/过期 token → 重定向到 /login
+- [ ] 无 token → 重定向到 /login
+
+#### 子任务 T1.4：登出一致性修复
+
+**文件**：`app/src/pages/AdminLayout.tsx`
+
+**修改**：登出时同时清除 `medrag_user`、`medasr_token`，调用 React Query `queryClient.clear()` 清除缓存。
+
+**验收标准**：
+- [ ] 登出后两个 localStorage key 均被删除
+- [ ] 登出后 React Query 缓存被清除
+- [ ] 旧 token 无法再用于 API 请求
+
+#### 子任务 T1.5：操作日志 IP 修复 + user_id 来源修正
+
+**文件**：`src/api_business.py`
+
+**修改**：
+- `log_operation(ip_address=...)` 改为 `ip_address=request.client.host`
+- 所有硬编码 `user_id=1` 改为 `user = Depends(verify_token)` 获取
+
+**验收标准**：
+- [ ] 操作日志 IP 不再固定为 127.0.0.1
+- [ ] chat_create_session 使用真实 user_id
+- [ ] articles_create 使用真实 user_id
+
+---
+
+## 5. T2: 上传→入库全流程状态机重构
+
+### 5.1 现状问题
+
+当前状态机存在 10 个缺陷：
+1. **partial 状态瞬时消失**：设置 `partial` 后立即被 `mark_task_failed` 覆盖为 `failed`
+2. **无超时保护**：`parse_remote_pdf` 和 `add_parsed_document` 可能无限阻塞
+3. **`_upload_state` 非线程安全**：多任务可互相覆盖
+4. **sync_content_to_mysql 失败非阻塞**：FAISS 有数据但 MySQL 没有
+5. **服务器重启恢复不完整**：FAISS 已成功的任务被误标为失败
+6. **无取消机制**：入队后无法中止
+7. **表初始化在每次请求时执行**：增加延迟和锁风险
+8. **create_upload_task 在多处重复调用**：状态不一致
+9. **LightRAG 步骤跳过时状态不更新**：停留在 indexing_lightrag
+10. **CancelledError 不回滚 FAISS**：索引已变更但任务显示失败
+
+### 5.2 新状态机设计
+
+```
+                    ┌──────────────────────────────────────────┐
+                    │            UPLOAD TASK STATE MACHINE      │
+                    └──────────────────────────────────────────┘
+
+  [用户上传] ──→ received ──→ parsing ──→ chunking ──→ indexing ──→ done
+                   │             │            │             │
+                   │             │            │             ├──→ partial
+                   │             │            │             │     (LightRAG失败)
+                   └──→ failed   └──→ failed  └──→ failed   └──→ failed
+                   (解析失败)    (分块失败)   (FAISS失败)   (全部失败)
+
+
+  状态简化：9 态 → 6 态
+
+  received     → 文件已接收，等待处理
+  parsing      → MinerU 2.5-Pro 解析 + PICO 分块 + 图表分析
+  chunking     → FAISS 向量编码 + MySQL 同步 (合并原 cross_validating + postprocessing + indexing_faiss)
+  indexing     → LightRAG 知识图谱构建 (原 indexing_lightrag)
+  done         → 全流程成功
+  partial      → 部分成功 (FAISS 成功但 LightRAG 失败，知识库可检索但无图谱)
+  failed       → 任一核心阶段失败 (解析/FAISS失败 = failed; LightRAG失败 = partial)
+```
+
+**关键设计变更**：
+1. **partial 不再是瞬时态**：当 FAISS 成功但 LightRAG 失败时，任务停留在 `partial`，不会降级为 `failed`
+2. **chunking 合并阶段**：将原 `cross_validating` / `postprocessing` / `indexing_faiss` 三个紧密耦合的阶段合并为一个原子操作
+3. **partial 语义**：= "知识库可检索，但知识图谱不可用"。前端应对此状态做区分展示
+
+### 5.3 子任务拆解
+
+#### 子任务 T2.1：状态枚举 DB 迁移
+
+**文件**：`src/auth.py` (ensure_upload_tasks_table)
+
+**修改**：状态 ENUM 从 9 值改为 6 值：
+```sql
+ENUM('received','parsing','chunking','indexing','done','partial','failed')
+```
+
+**重要**：这是向下兼容的迁移——用 `ALTER TABLE MODIFY COLUMN` 修改 ENUM，保留旧值但添加新值。
+
+**验收标准**：
+- [ ] 新 ENUM 支持全部 7 个值
+- [ ] 已有数据的状态值不受影响（`done`、`failed` 保持原值）
+- [ ] 现有 `parsing` / `cross_validating` / `postprocessing` / `indexing_faiss` 状态的任务自动归类到新 `parsing` / `chunking` 状态
+
+#### 子任务 T2.2：TaskManager Worker 重写
+
+**文件**：`src/task_manager.py`
+
+**核心变更**：
+
+```python
+async def _worker(self):
+    while True:
+        task_uuid = await self._queue.get()
+        task = get_task(task_uuid)
+        
+        try:
+            # Step 1: Parse + Chunk + Classify (带超时 300s)
+            await asyncio.wait_for(
+                self._do_parsing(task_uuid, task), timeout=300.0
+            )
+            # Step 2: FAISS + MySQL (带超时 180s, 原子操作)
+            await asyncio.wait_for(
+                self._do_chunking(task_uuid, task), timeout=180.0
+            )
+            # Step 3: LightRAG (带超时 180s)
+            await asyncio.wait_for(
+                self._do_indexing(task_uuid, task), timeout=180.0
+            )
+            # All good
+            mark_task_done(task_uuid)
+        except asyncio.TimeoutError:
+            mark_task_failed(task_uuid, "处理超时")
+        except Exception as e:
+            mark_task_failed(task_uuid, str(e))
+        finally:
+            self._queue.task_done()
+```
+
+**子方法拆分**：
+- `_do_parsing()`: 调用 `parse_remote_pdf`，状态 `parsing`
+- `_do_chunking()`: 调用 `add_parsed_document` + `sync_content_to_mysql`（同一 try 块，任一失败则回滚），状态 `chunking`
+- `_do_indexing()`: 调用 LightRAG 插入，状态 `indexing`，失败 → partial
+
+**验收标准**：
+- [ ] 每个步骤有独立超时保护
+- [ ] chunking 步骤中 FAISS 失败 → 不回滚已完成的解析
+- [ ] chunking 步骤中 MySQL sync 失败 → 不回滚 FAISS（非致命）
+- [ ] LightRAG 失败 → 任务状态为 `partial`，不被覆盖
+- [ ] 超时 → 明确标记 `failed` 并说明超时阶段
+
+#### 子任务 T2.3：前端状态映射更新
+
+**文件**：`app/src/pages/ParsingPage.tsx`
+
+**修改**：
+1. 更新 `TASK_STATUS_LABELS` 映射为新 6 态
+2. 为新状态添加 `statusConfig`（独立于 ArticleStatus 的 taskStatusConfig）
+3. 更新 `flowPhases` 对应新状态
+4. 进度计算改为基于真实任务阶段加权
+
+**新状态 → 前端映射**：
+```typescript
+const TASK_STATUS_LABELS: Record<string, string> = {
+  received: "文件已接收",
+  parsing: "MinerU 2.5-Pro 解析中",
+  chunking: "FAISS 向量入库中",
+  indexing: "LightRAG 图谱构建中",
+  done: "已完成",
+  partial: "部分完成（图谱不可用）",
+  failed: "处理失败",
+};
+
+const taskStatusConfig: Record<string, {icon: ReactNode; bg: string; color: string}> = {
+  received:  {icon: <FiClock />, bg: "var(--bg-hover)", color: "var(--tx-300)"},
+  parsing:   {icon: <FiCpu />, bg: "rgba(37,99,235,0.08)", color: "var(--m-primary)"},
+  chunking:  {icon: <FiDatabase />, bg: "rgba(0,196,180,0.08)", color: "var(--m-cyan)"},
+  indexing:  {icon: <FiShare2 />, bg: "rgba(139,92,246,0.08)", color: "#8b5cf6"},
+  done:      {icon: <FiCheck />, bg: "rgba(16,185,129,0.08)", color: "var(--m-green)"},
+  partial:   {icon: <FiAlertTriangle />, bg: "rgba(245,158,11,0.08)", color: "var(--warning)"},
+  failed:    {icon: <FiX />, bg: "rgba(239,68,68,0.08)", color: "var(--danger)"},
+};
+```
+
+**验收标准**：
+- [ ] 所有 7 个状态在任务中心都有正确的徽章颜色和图标
+- [ ] progress 百分比与真实任务阶段对应（不出现 "卡在 10% 很久" 的问题）
+- [ ] partial 状态展示 "图谱构建失败，文献仍可检索" 的说明
+
+#### 子任务 T2.4：任务取消机制
+
+**文件**：`src/task_manager.py` + `api.py`
+
+**新增端点**：`POST /api/upload/{uuid}/cancel`
+
+**实现**：
+```python
+class UploadTaskManager:
+    def __init__(self):
+        self._cancel_signals: set[str] = set()
+    
+    def cancel_task(self, uuid: str):
+        self._cancel_signals.add(uuid)
+    
+    def is_cancelled(self, uuid: str) -> bool:
+        return uuid in self._cancel_signals
+```
+
+Worker 在每个步骤前检查 `is_cancelled(task_uuid)`，若为 true 则跳过后续步骤。
+
+**验收标准**：
+- [ ] 已入队但未开始的任务 → 立即取消
+- [ ] 正在解析的任务 → 完成当前步骤后跳过后续
+- [ ] 已完成的任务 → 返回 "任务已完成，无法取消"
+- [ ] 取消后任务状态更新为 `failed`，备注 "用户取消"
+
+#### 子任务 T2.5：服务器重启恢复优化
+
+**文件**：`src/task_manager.py` (startup 事件)
+
+**修改**：不直接标记所有 pending 为 failed。改为：
+1. `parsing` 之前的 → 标记 failed（数据未变更）
+2. `parsing` 已完成的 → 检查 content_list.json 是否存在 → 存在则跳过解析，从 chunking 继续
+3. `chunking` 已完成的 → 检查 FAISS 索引 → 存在则跳过，从 indexing 继续
+4. `indexing` 已完成的 → 标记 done
+
+**验收标准**：
+- [ ] 服务器重启后，已完成解析但未入库的任务从 chunking 阶段开始
+- [ ] 已完成 FAISS 但未建图谱的任务从 indexing 阶段开始
+- [ ] 未开始的任务正确标记为 failed
+
+---
+
+## 6. T3: 前端数据对接全面修复
+
+### 6.1 核心问题
+
+前后端数据形状不一致的根本原因：**后端返回 snake_case，前端期望 camelCase，没有统一的转换层**。
+
+### 6.2 设计方案：api.ts 统一转换层
+
+在 `app/src/lib/api.ts` 中添加 `camelCase` 转换函数，所有 API 响应经过转换后再返回给页面组件。
+
+```typescript
+// api.ts 新增
+function toCamel<T>(obj: any): T {
+  if (Array.isArray(obj)) return obj.map(toCamel) as T;
+  if (obj !== null && typeof obj === "object") {
+    return Object.fromEntries(
+      Object.entries(obj).map(([k, v]) => [
+        k.replace(/_([a-z])/g, (_, c) => c.toUpperCase()),
+        toCamel(v),
+      ])
+    ) as T;
+  }
+  return obj;
+}
+```
+
+### 6.3 子任务拆解
+
+#### 子任务 T3.1：articles.stats 形状修复
+
+**文件**：`app/src/pages/LibraryPage.tsx` + `app/src/lib/api.ts`
+
+**修改**：前端适配后端 `{total, by_status, in_knowledge_base}` 结构。
+```typescript
+// LibraryPage.tsx
+const statsCards = [
+  {l:"文献总量", v: stats?.total ?? 0, ...},
+  {l:"已入库", v: stats?.by_status?.approved ?? 0, ...},
+  {l:"解析完成", v: stats?.by_status?.parsed ?? 0, ...},
+  {l:"知识节点", v: stats?.in_knowledge_base ?? 0, ...},
+];
+```
+
+**验收标准**：
+- [ ] LibraryPage 4 个统计卡片显示真实数据，不为 0
+- [ ] Dashboard 统计数据与 Library 一致
+
+#### 子任务 T3.2：camelCase 全站统一
+
+**文件**：`app/src/lib/api.ts`（所有 API 函数添加 `.then(toCamel)`）
+
+**影响页面**：
+- ParsingPage: `uploaded_at` → `uploadedAt`, `file_size` → `fileSize`, `file_name` → `fileName`
+- LibraryPage: 同上
+- Dashboard: `total_documents` → `totalDocuments`
+
+**验收标准**：
+- [ ] ParsingPage 上传历史中 `uploadedAt` 正确显示日期
+- [ ] ParsingPage 中 `fileSize` 正确显示
+- [ ] 所有页面不再出现 `undefined` 的数据字段
+
+#### 子任务 T3.3：AdminChatPage 文献来源填充
+
+**文件**：`app/src/pages/AdminChatPage.tsx`
+
+**修改**：`const [articles] = useState<any[]>([])` → `const {data: articles} = useQuery({queryKey: ["articles"], queryFn: () => api.articles.list({})})`
+
+**验收标准**：
+- [ ] AdminChatPage 的"知识库来源"面板显示真实文献列表
+- [ ] 空知识库时显示 "暂无文献" 而非空白
+
+#### 子任务 T3.4：Dashboard 假数据替换
+
+**文件**：`app/src/pages/Dashboard.tsx`
+
+**修改**：
+- "最近动态" → 从 `GET /api/stats/system` 的 `recent_activity` 字段（后端新增返回 operation_logs 最新 5 条）获取
+- 系统状态 → 从 `/api/stats/system` 获取真实服务健康检查结果
+- 平均解析耗时 → 从 `upload_tasks` 表计算真实平均值
+
+**验收标准**：
+- [ ] Dashboard 不包含任何硬编码的模拟数据
+- [ ] "最近动态" 显示真实操作日志
+- [ ] 所有时间显示使用相对时间（如 "3 分钟前"）
+
+---
+
+## 7. T4: 管理界面交互体验优化
+
+### 7.1 子任务拆解
+
+#### 子任务 T4.1：LibraryPage 删除确认对话框
+
+**文件**：`app/src/pages/LibraryPage.tsx`
+
+**实现**：复用 ParsingPage 的 `ConfirmDialog` 模式，删除前确认。
+
+**验收标准**：
+- [ ] 点击删除 → 弹出确认框 "确定删除文献《xxx》？此操作不可撤销"
+- [ ] 确认 → 执行删除 + toast 提示
+- [ ] 取消 → 不做任何操作
+
+#### 子任务 T4.2：搜索输入防抖
+
+**文件**：`app/src/pages/LibraryPage.tsx`
+
+**实现**：
+```typescript
+const [searchInput, setSearchInput] = useState("");
+const search = useDebounce(searchInput, 300);
+const { data } = useQuery({ queryKey: ["articles", { search }], ... });
+```
+
+**验收标准**：
+- [ ] 快速输入 5 个字符 → 只发送 1 次 API 请求
+- [ ] 停止输入 300ms 后自动触发搜索
+
+#### 子任务 T4.3：上传进度条加权
+
+**文件**：`app/src/pages/ParsingPage.tsx`
+
+**修改**：进度计算基于实际各阶段耗时比例：
+```typescript
+const PHASE_WEIGHTS = {
+  received: 0,
+  parsing: 55,    // 解析 ~175s (55%)
+  chunking: 25,   // FAISS+MySQL ~45s (25%)
+  indexing: 20,   // LightRAG ~90s (20%)
+};
+const progress = PHASE_WEIGHTS[task.status] ?? 0;
+```
+
+**验收标准**：
+- [ ] 进度条平滑增长，不会长时间停留在某个百分比
+- [ ] 解析阶段进度从 0% 线性增长到 55%
+
+#### 子任务 T4.4：定时器泄漏修复
+
+**文件**：`app/src/pages/AdminChatPage.tsx`, `app/src/pages/ParsingPage.tsx`
+
+**修改**：所有 `setInterval` / `setTimeout` 在 `useEffect` 的 cleanup 函数中清除。
+
+**验收标准**：
+- [ ] 从 AdminChatPage 导航到其他页面 → 无 "Can't perform a React state update on unmounted component" 警告
+- [ ] ParsingPage 轮询在离开页面后停止
+
+#### 子任务 T4.5：图谱节点初始位置确定性
+
+**文件**：`app/src/pages/GraphPage.tsx`
+
+**修改**：`Math.random()` → `useMemo(() => deterministicCircularLayout(nodes), [nodes.length])`
+
+**验收标准**：
+- [ ] 图谱每次渲染时节点从相同初始位置开始
+- [ ] 力模拟收敛后节点位置稳定
+
+#### 子任务 T4.6：ParsingPage UI 冗余清理
+
+**文件**：`app/src/pages/ParsingPage.tsx`
+
+**问题分析**：
+- "上传历史" 与 "文件队列" 功能重叠（都展示已上传文件）
+- "文件队列" 中的 3 个文件卡片与下方任务中心表格信息重复
+- 右侧面板 "请选择文献" 的空白状态占据大量空间但无实际功能
+
+**优化方案**：
+1. 合并 "文件队列" 和 "上传历史" 为一个 "上传列表" 面板
+2. 移除 "请选择文献" 占位区域（其功能由 LibraryPage 承担）
+3. 上传列表直接展示任务中心数据（避免两个独立数据源）
+4. 拖拽上传区域缩小，给任务中心表格更多空间
+
+**验收标准**：
+- [ ] 页面视觉更简洁，信息不重复
+- [ ] 所有原有功能正常（上传、查看进度、查看任务详情）
+- [ ] 评委能直观看到全链路流程
+
+---
+
+## 8. T5: 后端健壮性加固
+
+### 8.1 子任务拆解
+
+#### 子任务 T5.1：SQL 注入防护
+
+**文件**：`src/auth.py` (`update_task_status`)
+
+**修改**：kwargs keys 白名单校验：
+```python
+ALLOWED_COLUMNS = {"status", "parsing_duration_ms", "engine_selected", ...}
+for k in kwargs:
+    if k not in ALLOWED_COLUMNS:
+        raise ValueError(f"Invalid column: {k}")
+```
+
+**验收标准**：
+- [ ] 传入非白名单列名 → 抛出 ValueError
+- [ ] 传入白名单列名 → 正常执行
+
+#### 子任务 T5.2：with_conn 模式全站统一
+
+**文件**：`src/auth.py`
+
+**修改**：所有手动 `conn = get_conn()` ... `conn.close()` 的函数改为 `with with_conn() as conn:`。
+
+**目标函数清单**（共 8 个）：
+- [ ] `list_users()`
+- [ ] `save_document_record()`
+- [ ] `ensure_upload_tasks_table()`
+- [ ] `create_upload_task()`
+- [ ] `get_task()`
+- [ ] `list_tasks()`
+- [ ] `_insert_business_tables()` (内部循环)
+- [ ] `get_article()`
+
+**验收标准**：
+- [ ] 所有数据库操作使用 with_conn 模式
+- [ ] 异常路径下连接被正确关闭（finally 块保证）
+
+#### 子任务 T5.3：log_operation 异常处理
+
+**文件**：`src/auth.py:737`
+
+**修改**：`except Exception: pass` → `except Exception as e: logger.warning(f"Failed to log operation: {e}")`
+
+**验收标准**：
+- [ ] 日志写入失败时在服务端日志中可见 warning
+- [ ] 不影响主业务流程（不抛异常）
+
+#### 子任务 T5.4：Agent 线程池优化
+
+**文件**：`src/api_business.py` (chat_add_message) + `api.py` (agent_stream)
+
+**修改**：创建专用 thread pool：
+```python
+agent_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="agent-")
+```
+
+**验收标准**：
+- [ ] Agent 调用不占用 FastAPI 默认线程池
+- [ ] 并发 Agent 请求不互相阻塞
+
+#### 子任务 T5.5：邮箱格式验证
+
+**文件**：`src/api_business.py` (RegisterRequest)
+
+**修改**：添加 `@field_validator('email')` Pydantic 验证器。
+
+**验收标准**：
+- [ ] `email=""` → 接受（email 可选）
+- [ ] `email="not-email"` → 400 错误
+- [ ] `email="user@example.com"` → 接受
+
+#### 子任务 T5.6：表初始化优化
+
+**文件**：`api.py`
+
+**修改**：`upload_pdf` 端点中移除 `ensure_upload_tasks_table()` 调用（仅保留 startup 事件中的调用）。
+
+**验收标准**：
+- [ ] PDF 上传路径不再触发 DDL 语句
+- [ ] 启动时表初始化仍正常执行
+
+#### 子任务 T5.7：未使用端点清理
+
+**文件**：`app/src/providers/trpc.tsx`
+
+**修改**：删除 notes 模块定义（6 个无后端实现的方法）、删除 knowledge 中 5 个无后端实现的方法。
+
+**验收标准**：
+- [ ] tRPC 客户端不包含任何没有后端对应的端点
+- [ ] `vite build` 无警告
+
+#### 子任务 T5.8：sync_content_to_mysql 事务保护
+
+**文件**：`src/auth.py:656-723`
+
+**修改**：DELETE + INSERTs 包裹在同一事务中。
+
+**验收标准**：
+- [ ] 任一部分失败 → 全部回滚
+- [ ] 成功后文章片段数与 content_list 一致
+
+---
+
+## 9. T6: 100+ QA 测试用例
+
+### 9.1 测试框架
+
+| 维度 | 用例数 | 测试范围 |
+|------|--------|---------|
+| 认证安全 | 15 | 登录/注册/登出/token 验证/权限/边界 |
+| 上传流程 | 20 | 文件上传/状态转换/进度/取消/超时/恢复 |
+| 文献 CRUD | 15 | 列表/筛选/搜索/详情/创建/删除/状态更新 |
+| 知识图谱 | 10 | 数据加载/节点搜索/类型筛选/导出/交互 |
+| Agent 问答 | 15 | SSE 流/工具调用/降级/超时/错误/引用 |
+| 数据一致性 | 10 | FAISS/MySQL 同步/状态机一致性 |
+| 边界条件 | 10 | 空数据/超大文件/并发/特殊字符 |
+| 异常恢复 | 10 | 服务重启/API 宕机/DB 断连 |
+| 性能 | 5 | 加载时间/API 延迟/内存使用 |
+| **总计** | **110** | |
+
+### 9.2 测试用例摘要（完整清单见测试执行文档）
+
+**认证安全（15 例）**：
+1. 有效凭据登录 → 200 + token
+2. 错误密码登录 → 401
+3. 不存在用户登录 → 401
+4. 无 token 访问 /api/articles → 401
+5. 错误 token 访问 → 401
+6. 普通用户删除文章 → 403
+7. 注册密码不匹配 → 400
+8. 注册重复用户名 → 400
+9. 登出后 token 失效 → 401
+10. auth/me 返回真实用户 → 200
+11. 无效邮箱注册 → 400
+12. XSS 用户名 → 安全存储
+13. 超长密码 → 正常处理
+14. 空白用户名 → 400
+15. 并发登录 → 两个独立 token
+
+**上传流程（20 例）**：
+16-35（略，涵盖上传/解析/状态转换/进度/取消/超时）
+
+**文献 CRUD（15 例）**：
+36-50（略，涵盖列表/筛选/搜索/创建/删除/状态更新）
+
+**知识图谱（10 例）**：
+51-60（略，涵盖数据加载/搜索/筛选/导出）
+
+**Agent 问答（15 例）**：
+61-75（略，涵盖 SSE 流/工具调用/降级/错误）
+
+**数据一致性（10 例）**：
+76-85（略，涵盖 FAISS/MySQL 同步）
+
+**边界条件（10 例）**：
+86-95（略，涵盖空数据/超大文件/特殊字符）
+
+**异常恢复（10 例）**：
+96-105（略，涵盖服务重启/宕机恢复）
+
+**性能（5 例）**：
+106-110（略，涵盖加载时间/API 延迟）
+
+---
+
+## 10. Git 版本管控策略
+
+### 10.1 Commit 节奏
+
+```
+[初始] e6a3896 feat: Agent retry logic, AdminChatPage fix, technical docs
+
+T1 完成 → commit: "fix(auth): add token verification middleware, fix auth/me, fix RouteGuard"
+T2 完成 → commit: "refactor(task): rewrite state machine (9→6 states), add timeout/cancel/recovery"
+T3 完成 → commit: "fix(frontend): unify camelCase conversion layer, fix all data shape mismatches"
+T4 完成 → commit: "ux(admin): optimize ParsingPage layout, add delete confirm, debounce search, fix timers"
+T5 完成 → commit: "fix(backend): unify with_conn, fix SQL injection, add email validation, fix logs"
+T6 完成 → commit: "test(qa): add 110 comprehensive test cases, all passing"
+```
+
+### 10.2 回滚策略
+
+每个任务完成前确保：
+- `git stash` 保存当前工作
+- 若 commit 后发现问题：`git revert <commit>` 而非 force push
+- 若未 commit 发现问题：`git checkout -- <file>` 恢复单个文件
+
+---
+
+## 11. 风险管控矩阵
+
+| 风险 | 概率 | 影响 | 缓解措施 |
+|------|------|------|---------|
+| Python 依赖冲突 | 低 | 中 | 每个任务后验证 `python -c "import src; print('OK')"` |
+| Vite build 失败 | 中 | 高 | 每个前端修改后立即 `vite build` |
+| MySQL 连接池耗尽 | 低 | 高 | T5 统一 with_conn 模式后消除 |
+| Agent API 超时 | 中 | 中 | 已有 3 次重试 + 降级机制 |
+| 前端状态管理冲突 | 中 | 中 | T3 统一数据转换层后消除 |
+| 文件系统权限 | 低 | 低 | uploads/cache 目录权限检查 |
+| 端口冲突 | 低 | 低 | 后端 8000，前端 5173，固定不变 |
+
+---
+
+## 12. 交付验收标准
+
+### 12.1 功能验收清单
+
+- [ ] 登录 → 获取 token → 访问管理后台 → 所有 API 调用带 Authorization header
+- [ ] 上传 PDF → 任务中心实时追踪状态 → 完成后在文献库可见
+- [ ] 文献库列表/筛选/搜索/删除 全部正常工作
+- [ ] 知识图谱 168 节点正确渲染，类型筛选和搜索正常
+- [ ] Agent 问答正常推理，SSE 流式推送正常
+- [ ] Dashboard 显示真实统计数据
+- [ ] 404/error 页面正确展示
+
+### 12.2 技术验收清单
+
+- [ ] `vite build` 零错误零警告
+- [ ] Python 后端语法检查通过
+- [ ] MySQL 8 张表结构完整
+- [ ] FAISS 索引文件生成正确
+- [ ] LightRAG 存储文件可读取
+- [ ] 所有 API 端点返回正确的 HTTP 状态码
+
+### 12.3 文档验收清单
+
+- [x] 技术白皮书 (TECHNICAL_SPECIFICATION.md)
+- [x] PPT 设计提示词 (PPT_DESIGN_PROMPT.md)
+- [x] 官网设计提示词 (WEBSITE_DESIGN_PROMPT.md)
+- [ ] Harness 工程管控文档 (本文档)
+- [ ] QA 测试用例文档（待 T6 完成后交付）
+
+---
+
+> **文档版本**：v1.0 | 2026-05-31  
+> **团队**：天机运算 — "在 0 和 1 的海洋里，探索技术奥秘的工程师团队"  
+> **签字栏**：（待实施完成后签署）
