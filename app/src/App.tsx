@@ -1,18 +1,16 @@
 import { Routes, Route } from 'react-router';
-import { Suspense, lazy } from 'react';
-
-// Lazy load pages for code splitting
-const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
-const Welcome = lazy(() => import('./pages/Welcome'));
-const AdminLayout = lazy(() => import('./pages/AdminLayout'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const ParsingPage = lazy(() => import('./pages/ParsingPage'));
-const LibraryPage = lazy(() => import('./pages/LibraryPage'));
-const GraphPage = lazy(() => import('./pages/GraphPage'));
-const ChatPage = lazy(() => import('./pages/AdminChatPage'));
-const UserChatPage = lazy(() => import('./pages/UserChatPage'));
-const NotFound = lazy(() => import('./pages/NotFound'));
+// Direct imports — more reliable than React.lazy() with Vite HMR
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Welcome from './pages/Welcome';
+import AdminLayout from './pages/AdminLayout';
+import Dashboard from './pages/Dashboard';
+import ParsingPage from './pages/ParsingPage';
+import LibraryPage from './pages/LibraryPage';
+import GraphPage from './pages/GraphPage';
+import AdminChatPage from './pages/AdminChatPage';
+import UserChatPage from './pages/UserChatPage';
+import NotFound from './pages/NotFound';
 
 function LoadingFallback() {
   return (
@@ -42,21 +40,19 @@ function LoadingFallback() {
 
 export default function App() {
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/" element={<Welcome />} />
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="parsing" element={<ParsingPage />} />
-          <Route path="library" element={<LibraryPage />} />
-          <Route path="graph" element={<GraphPage />} />
-          <Route path="chat" element={<ChatPage />} />
-        </Route>
-        <Route path="/chat" element={<UserChatPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/" element={<Welcome />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="parsing" element={<ParsingPage />} />
+        <Route path="library" element={<LibraryPage />} />
+        <Route path="graph" element={<GraphPage />} />
+        <Route path="chat" element={<AdminChatPage />} />
+      </Route>
+      <Route path="/chat" element={<UserChatPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }

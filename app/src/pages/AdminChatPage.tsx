@@ -237,10 +237,6 @@ export default function AdminChatPage() {
     setMsgs(p => [...p, { id: aiMsgId, role: "assistant", content: aiContent, citations: aiCitations }]);
     setGenerating(false);
   };
-    }
-    setMsgs(p => [...p, { id: Date.now() + 1, role: "assistant", content: resp, citations }]);
-    setGenerating(false);
-  };
 
   const copyContent = (content: string) => {
     navigator.clipboard.writeText(content);

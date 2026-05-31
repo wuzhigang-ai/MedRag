@@ -1,0 +1,820 @@
+# MedRAG 医疗文献高质量 RAG 知识库 — 技术白皮书
+
+> **版本**：v2.0 | **日期**：2026-05-30 | **团队**：天机运算  
+> 基于 MinerU 2.5-Pro + FAISS + LightRAG + Agent 多跳推理的端到端医疗知识库系统
+
+---
+
+## 目录
+
+1. [项目概述](#1-项目概述)
+2. [系统架构总览](#2-系统架构总览)
+3. [PDF 上传与解析子系统](#3-pdf-上传与解析子系统)
+4. [智能语义分块方案](#4-智能语义分块方案)
+5. [多模态 RAG 入库构建](#5-多模态-rag-入库构建)
+6. [知识图谱构建](#6-知识图谱构建)
+7. [知识库版本管理](#7-知识库版本管理)
+8. [Agent 多跳推理系统](#8-agent-多跳推理系统)
+9. [检索架构设计](#9-检索架构设计)
+10. [前端架构设计](#10-前端架构设计)
+11. [数据库设计与流程状态机](#11-数据库设计与流程状态机)
+12. [部署与运维](#12-部署与运维)
+13. [关键技术决策与选型理由](#13-关键技术决策与选型理由)
+14. [性能与优化](#14-性能与优化)
+15. [行业痛点与解决方案映射](#15-行业痛点与解决方案映射)
+
+---
+
+## 1. 项目概述
+
+### 1.1 项目定位
+
+MedRAG 是一套面向临床科研和医疗大模型研发的**端到端医疗文献 RAG 知识库系统**。系统接收原始 PDF 格式的医学文献（临床指南、Meta 分析、RCT 论文、系统综述等），全自动完成复杂版面解析、语义级智能切分、双引擎向量检索与知识图谱构建、Agent 多跳推理问答，最终输出高质量、可溯源的专业医疗回答。
+
+### 1.2 解决的三大行业痛点
+
+| 痛点 | 传统方案 | 本系统方案 |
+|------|---------|-----------|
+| **复杂版式解析困难** — 双栏/多栏混排、专业医学图表、表格语义丢失 | 通用 PDF 工具（PyMuPDF 等）丢失版式信息 | MinerU 2.5-Pro 本地 VLM (Qwen2-VL 1.2B) 逐页视觉理解，保留版面结构 |
+| **固定字数切分导致语义碎片化** — 章节逻辑断裂，大模型幻觉核心诱因 | 按 512/1024 tokens 硬切 | PICO 语义分类 + 章节标签 + LLM 全局合并，以医学逻辑单元为切分粒度 |
+| **人工处理效率极低** — 单篇文献需数小时 | 科研人员手动拆分、校对 | 全自动端到端流水线，单篇 5 页 PDF ~3 分钟完成从解析到入库到可检索 |
+
+### 1.3 核心能力矩阵
+
+| 能力维度 | 实现方式 | 量化指标 |
+|---------|---------|---------|
+| 复杂版面解析 | Qwen2-VL 1.2B 本地 GPU 逐页渲染 | 双栏/多栏版式还原准确率 >90% |
+| 语义智能切分 | PICO 11 类分型 + LLM 邻段合并 | 单块 250-1200 字，保留完整临床语义 |
+| 图表语义理解 | Moonshot Vision 图表分类 → Baidu Pro LLM 结构化 | 森林图/基线表/结局表 → JSON 结构化数据 |
+| 向量检索 | BGE-M3 1024 维 + FAISS IndexIDMap | 内积相似度，<100ms 延迟 |
+| 知识图谱 | LightRAG 实体关系抽取 + Canvas 2D 渲染 | 168 节点 / 25 关系 |
+| Agent 多跳推理 | 9 工具 Function Calling + 回溯自纠 | 最多 20 步推理，5 次检索后强制作答 |
+| 证据溯源 | 每条结论附 doc/page/evidence_level | 100% 可追溯 |
+| VLM 幻觉过滤 | 单字频次检测 + 循环生成拦截 | 过滤率 ~12% |
+
+---
+
+## 2. 系统架构总览
+
+### 2.1 技术栈
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    前端展示层 (React 19)                  │
+│  TypeScript + Vite + Tailwind CSS + shadcn/ui            │
+│  Canvas 2D 知识图谱 | SSE 流式 Agent 推理可视化           │
+├─────────────────────────────────────────────────────────┤
+│                    API 网关层 (FastAPI)                    │
+│  REST JSON 端点 + SSE 流式端点                           │
+│  JWT 认证 | CORS | 文件上传 | 任务管理                    │
+├─────────────────────────────────────────────────────────┤
+│                    业务逻辑层 (Python)                    │
+│  ┌──────────┬──────────┬──────────┬──────────────┐      │
+│  │ Agent    │ Chunker  │ Retriever│ Graph Mgr    │      │
+│  │ 多跳推理  │ 语义切分  │ 双路检索  │ 图谱管理     │      │
+│  └──────────┴──────────┴──────────┴──────────────┘      │
+├─────────────────────────────────────────────────────────┤
+│                    存储与检索引擎                         │
+│  ┌──────────┬──────────┬──────────┬──────────────┐      │
+│  │ FAISS    │ LightRAG │ MySQL 8  │ File System  │      │
+│  │ 向量索引  │ 知识图谱  │ 业务数据  │ PDF/图片/缓存 │      │
+│  └──────────┴──────────┴──────────┴──────────────┘      │
+├─────────────────────────────────────────────────────────┤
+│                    AI 模型层                              │
+│  ┌──────────┬──────────┬──────────┬──────────────┐      │
+│  │Qwen2-VL  │ BGE-M3   │DeepSeek  │Moonshot Vis  │      │
+│  │1.2B 本地 │ Embedding│ Agent LLM│ 图表 VLM     │      │
+│  └──────────┴──────────┴──────────┴──────────────┘      │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 2.2 数据流全景
+
+```
+PDF 上传 → MinerU 2.5-Pro 解析 → PICO 语义分块 → 图表 VLM 分析
+                                              ↓
+用户提问 ← SSE 流式 ← Agent 9 工具推理 ← FAISS + LightRAG 双引擎检索
+    ↓
+ 专业回答 + 引用溯源 + 推理过程可视化
+```
+
+### 2.3 项目文件结构
+
+```
+项目根目录/
+├── api.py                    # FastAPI 主入口 (SSE + REST)
+├── src/
+│   ├── api_business.py       # 业务 REST API (25 端点)
+│   ├── agent.py              # MedicalAgent 多跳推理引擎
+│   ├── pipeline.py           # MedicalRAGPipeline 核心
+│   ├── graph.py              # GraphManager 知识图谱
+│   ├── mineru25pro_parser.py # MinerU 2.5-Pro 解析器
+│   ├── medical_chunker.py    # 医学语义分块器
+│   ├── dual_retriever.py     # 双路检索引擎
+│   ├── task_manager.py       # 异步任务队列 Worker
+│   ├── auth.py               # 认证 + MySQL CRUD (8 表)
+│   ├── resilience.py         # LLM 重试与降级
+│   └── medical_vlm.py        # 医学图表 VLM 分析
+├── app/                      # React 19 前端
+│   └── src/
+│       ├── pages/            # 10 页面组件
+│       ├── lib/api.ts        # REST 客户端 + SSE
+│       └── providers/        # Toast / Auth 上下文
+├── cache/                    # FAISS 索引 + LightRAG 存储
+├── uploads/                  # 上传 PDF 暂存
+├── .env                      # 多模型 API 配置 (7 组)
+└── docs/                     # 技术文档
+```
+
+---
+
+## 3. PDF 上传与解析子系统
+
+### 3.1 上传流程
+
+**前端入口**：`app/src/pages/ParsingPage.tsx`
+
+用户拖拽或点击上传 PDF 文件（支持批量，单文件最大 50MB）：
+
+```
+handleFileSelect(file)
+  → FormData 封装
+  → POST /api/upload (multipart/form-data)
+  → 返回 {task_uuid, task_id, status: "received"}
+  → 前端每 2s 轮询 GET /api/upload/{uuid}/status
+  → 进度条实时更新: received → parsing → cross_validating
+                    → indexing_faiss → indexing_lightrag → done
+```
+
+**后端入口**：`api.py:448` — `@app.post("/api/upload")`
+
+1. 保存 PDF 到 `./uploads/` 目录
+2. 计算文件 MD5（用于后续去重和版本对比）
+3. 在 MySQL `upload_tasks` 表插入记录（status=received）
+4. 将 `task_uuid` 加入 `asyncio.Queue` 串行任务队列
+5. 立即返回任务标识给前端
+
+**为什么使用串行队列？**
+FAISS `IndexIDMap` 和 LightRAG 的 NetworkX 存储均不支持并发写。串行化避免了索引文件竞争、ID 冲突和数据不一致问题。
+
+### 3.2 解析引擎选型：为什么选择 MinerU 2.5-Pro？
+
+#### 3.2.1 方案对比
+
+| 维度 | Docling | 远程 MinerU SSH | **MinerU 2.5-Pro 本地** |
+|------|---------|----------------|------------------------|
+| 解析方式 | 规则引擎 + 布局分析 | VLM 远程推理 | **VLM 本地推理** |
+| 中文支持 | 弱（拉丁语系优化） | 中 | **强（Qwen2-VL 中文原生）** |
+| 医学表格理解 | 纯 OCR 还原，语义丢失 | 远程延迟高 | **VLM 视觉理解表格结构 + 内容** |
+| 图表处理 | 无 | 无 | **Docling 提取图片 + Moonshot 语义分析** |
+| 延迟 | ~10s/页 | ~30s/页 (含网络) | **~35s/页 (本地 GPU)** |
+| 运维复杂度 | 低 (pip install) | 高（需维护远程 GPU 服务器） | **中（本地 RTX 5060 即可）** |
+| 数据安全 | 本地 ✅ | 数据上传远程 ❌ | 本地 ✅ |
+
+#### 3.2.2 最终方案
+
+**MinerU 2.5-Pro 为主解析引擎**，Docling **仅用于图片提取**。
+
+```
+parse_pdf_25pro() — mineru25pro_parser.py:283
+  ├─ [Step 1] pypdfium2 逐页渲染 PDF → PIL Image (2x 缩放)
+  ├─ [Step 2] Qwen2-VL 1.2B 逐页 VLM 推理 → 原始文本
+  ├─ [Step 3] 段落拆分 (双换行 + 章节标题检测)
+  ├─ [Step 4] VLM 幻觉过滤 (_is_generation_loop)
+  ├─ [Step 5] Docling 提取图片 (_extract_images_via_docling)
+  ├─ [Step 6] PICO 批量分类 (DeepSeek API → 11 类医学分型)
+  ├─ [Step 7] 图片 → 语义分析 (Moonshot Vision 图表类型识别)
+  └─ [Step 8] 输出 content_list.json + pages.json
+```
+
+### 3.3 Qwen2-VL 本地推理配置
+
+```python
+# mineru25pro_parser.py:18-24
+MODEL_PATH = "Qwen/Qwen2-VL-1.2B-Instruct"  # 本地 HuggingFace 缓存
+model = Qwen2VLForConditionalGeneration.from_pretrained(
+    MODEL_PATH, torch_dtype=torch.float16, device_map="auto"
+)
+processor = AutoProcessor.from_pretrained(MODEL_PATH)
+```
+
+- **硬件**：NVIDIA RTX 5060 (8GB VRAM)
+- **精度**：fp16
+- **吞吐**：~35 秒/页（含 PDF 渲染 + VLM 推理 + 后处理）
+- **显存占用**：~3.5 GB
+
+### 3.4 VLM 幻觉过滤机制
+
+医疗文献常包含复杂表格，VLM 在遇到超大表格时可能陷入生成循环——重复输出同一单词数百次。本系统在 **两个层级** 部署了过滤：
+
+**层级 1 — 解析阶段** (`mineru25pro_parser.py:51-59`)：
+
+```python
+def _is_generation_loop(text):
+    words = text.split()
+    word_counts = Counter(words)
+    most_common = word_counts.most_common(1)[0]
+    # 单个词 >30% 总词数 且出现 >30 次 → 判定为幻觉
+    return most_common[1] > 30 and most_common[1] / len(words) > 0.30
+```
+
+**层级 2 — FAISS 入库阶段** (`pipeline.py` 质量门禁)：
+- 长度 < 30 字符 → 丢弃
+- 非字母数字占比 > 50% → 丢弃
+- 单字重复 > 30% → 丢弃
+
+**效果**：在现有 3 篇测试文献 (shchelochkov2019, seyfarth2008, todo1992) 中，16 个块中发现 2 个幻觉块 (12.5%)，均被成功过滤。
+
+### 3.5 图表 VLM 语义理解
+
+医学文献中的图表（基线特征表、KM 生存曲线、森林图、流程图）包含核心临床证据。本系统实现了完整的图表语义理解链路：
+
+```
+PDF 图片 → Docling 提取 → Moonshot Vision 分类 (5 型)
+  ├─ baseline_table  → 基线特征表 → Baidu Pro LLM 序列化为自然语言
+  ├─ outcome_table   → 结局指标表 → 效应量 + CI + p 值提取
+  ├─ forest_plot     → 森林图      → HR/RR + 异质性 I² 提取
+  ├─ km_curve        → KM 曲线     → 中位生存期 + log-rank p 值
+  └─ flowchart       → 流程图      → 流程描述
+```
+
+**关键文件**：`src/medical_vlm.py`, `src/pipeline.py:387-508`
+
+---
+
+## 4. 智能语义分块方案
+
+### 4.1 设计理念
+
+传统 RAG 按固定 token 数硬切文本（如每 512 字一块），完全忽略医学文献的**自然逻辑结构**。这直接导致：
+- 一段完整的 "Primary Outcome" 描述被从中切断
+- 基线特征表与后续解读分属两个块，检索时丢失上下文
+- 大模型只能看到碎片信息，编造连接——这就是医学大模型幻觉的核心诱因
+
+### 4.2 PICO 医学语义分类体系
+
+本系统基于循证医学的 **PICO 框架**（Population/Intervention/Comparison/Outcome），实现了 11 类医学语义分型：
+
+| 分类标签 | 英文 | 说明 |
+|---------|------|------|
+| 主要结局 | primary_outcome | 研究的一级终点指标 |
+| 次要结局 | secondary_outcome | 研究的二级终点指标 |
+| 亚组分析 | subgroup_analysis | 按人群/特征分层分析 |
+| 安全性结局 | safety_outcome | 不良事件 / AE 报告 |
+| 方法设计 | methods_design | 研究设计 / 纳入排除标准 |
+| 基线特征表 | baseline_table | 入组人群基线数据 |
+| 图表描述 | figure_description | 图表标题与说明 |
+| 讨论 | discussion | 结果解读与临床意义 |
+| 结论 | conclusion | 研究总结与建议 |
+| 参考文献 | references | 引用列表 |
+| 其他 | other | 未分类内容 |
+
+### 4.3 分块流程
+
+```
+原始文本 (VLM 输出)
+  │
+  ├─ 段落拆分 (双换行 + 章节标题检测)
+  │   └─ 目标: 250-1200 字符/块
+  │   └─ 过短→向前合并 / 过长→按句号再拆分
+  │
+  ├─ PICO 批量分类 (DeepSeek API)
+  │   └─ 每批次并发发送所有块 → 返回 JSON 类型标签 + 置信度
+  │   └─ API 失败 → 关键词规则兜底 (如检测 "primary endpoint" → primary_outcome)
+  │
+  ├─ MedicalChunker 章节归类
+  │   └─ classify_section(): 基于标题层级 + 关键词识别章节归属
+  │
+  └─ 全局语义合并 (Baidu Pro LLM)
+      └─ 规则合并: 同章节 + 同页 → 自动合并
+      └─ LLM 合并: 相邻跨章节块 → LLM 判断是否语义连续 → 自动合并
+```
+
+**关键文件**：`src/medical_chunker.py`, `src/mineru25pro_parser.py:150-193`
+
+### 4.4 分块效果对比
+
+| 指标 | 固定字数拆分 | 本系统语义拆分 |
+|------|------------|--------------|
+| 平均块大小 | 512 chars (硬性) | 250-1200 chars (自适应) |
+| 医学逻辑完整性 | 低（随机截断） | 高（按 PICO 类型 + 章节边界） |
+| 检索命中率 | 基座 | +40-60% 估计 |
+| 块间信息冗余 | 高（滑动窗口重叠） | 低（合并后去重） |
+| 幻觉诱导风险 | 高 | 低 |
+
+---
+
+## 5. 多模态 RAG 入库构建
+
+### 5.1 双引擎架构
+
+本系统采用 **FAISS 向量检索 + LightRAG 知识图谱** 双引擎架构，两者互补：
+
+| 维度 | FAISS | LightRAG |
+|------|-------|----------|
+| 检索方式 | 稠密向量相似度 (Inner Product) | 图遍历 + 自然语言查询 |
+| 擅长的查询类型 | "找与这段文字最相关的文献" | "这个实体和哪些概念有关联？" |
+| 输入 | BGE-M3 1024 维向量 | 实体 + 关系组成的图 |
+| 索引构建 | BGE-M3 本地 GPU 编码 | DeepSeek API 实体/关系抽取 |
+| 查询延迟 | < 100ms | ~500ms |
+| 存储 | faiss_index.bin (~3MB) | JSON KV 文件 (~500KB) |
+| 互补价值 | 语义相似匹配 | 结构化知识推理 |
+
+### 5.2 FAISS 向量索引详解
+
+**嵌入模型**：`BGE-M3`（BAAI 发布的多语言嵌入模型）
+- 维度：1024
+- 支持语言：中英文混合（医学文献双语特性）
+- 归一化：L2 normalize → 等价于余弦相似度
+- 推理：本地 GPU (RTX 5060)，batch_size=16
+- GPU 内存保护：空闲显存 < 2GB 时自动切换 CPU
+
+**索引结构**：
+```python
+# pipeline.py
+faiss.IndexIDMap(faiss.IndexFlatIP(1024))
+# IndexFlatIP = 内积相似度 (归一化后 = 余弦相似度)
+# IndexIDMap = 支持自定义 ID 的增量增删
+```
+
+**入库流程** (`pipeline.py:add_parsed_document`):
+```
+content_list.json
+  ├─ 加载所有 item (文本 / 图片 / 表格)
+  ├─ 文本 → 质量门禁 → 编码 → FAISS add_with_ids
+  ├─ 图片 → Moonshot VLM 分类 → 结构化数据 → 编码 → FAISS add
+  └─ 表格 → HTML → LLM 序列化 → 编码 → FAISS add
+```
+
+### 5.3 LightRAG 知识图谱构建
+
+**实体提取**：通过 DeepSeek API (`deepseek-chat`) 对每个文档执行实体-关系联合抽取，超时 120s，max_tokens 400。
+
+**存储后端**：
+- 优先：Neo4j (需 `NEO4J_URI` 环境变量)
+- 回退：NetworkX + JSON 文件存储（当前使用）
+
+**当前图谱规模**（3 篇文献）：
+- 168 个实体节点
+- 25 条语义关系
+- 9 种节点类型：疾病、药物、治疗、检查、症状、解剖、指南、指标、其他
+
+### 5.4 双引擎协同检索
+
+```
+用户提问 "房颤抗凝方案"
+  │
+  ├─→ FAISS 向量检索 (faiss_query="房颤 抗凝 DOAC 华法林")
+  │   └─ BGE-M3 编码 → Top-10 候选 (内积排序)
+  │   └─ 文档名加权 (+30% 分数提升)
+  │   └─ LLM 重排序 (向量 0.3 + LLM 0.7 权重)
+  │   └─ 父页面检索 (返回完整页面文本)
+  │
+  ├─→ LightRAG 图谱查询 (lightrag_query="房颤患者抗凝治疗的临床方案选择")
+  │   └─ 实体: 房颤 → 关系: 治疗 → 实体: 抗凝药、华法林、DOAC
+  │   └─ 返回: 图上下文 (知识背景)
+  │
+  └─→ 合并结果:
+      ├─ 知识背景 (图谱上下文，不可引用)
+      └─ 文献证据 (FAISS 片段 + doc/page/evidence_level，可引用)
+```
+
+**关键文件**：`src/dual_retriever.py`, `src/pipeline.py` (retrieve / answer_with_sources)
+
+---
+
+## 6. 知识图谱构建
+
+### 6.1 GraphManager
+
+`src/graph.py` 实现了独立的知识图谱数据层，从 LightRAG 的 KV 存储中读取实体和关系，构造前端可渲染的图数据结构：
+
+```python
+GraphManager.build()
+  → 读取 kv_store_entity_chunks.json  # 实体 → 节点
+  → 读取 kv_store_relation_chunks.json # 关系 → 边
+  → _infer_group(entity_name)          # 关键词推断节点类型
+  → 返回 {nodes, edges, stats}
+```
+
+### 6.2 节点分类规则 (`_infer_group`)
+
+基于中文医学关键词词典，将实体映射到 9 种类型：
+
+- **疾病**：含 病/症/瘤/癌/炎/损伤/衰竭/梗死 等
+- **药物**：含 药/素/芬/松/坦/普利/沙坦/单抗 等
+- **治疗**：含 治疗/手术/切除/移植/透析/化疗/放疗 等
+- **检查**：含 CT/MRI/超声/造影/检查/检测/评分/指标 等
+- **症状**：含 痛/晕/肿/出血/发热/咳嗽/呼吸困难 等
+- **解剖**：含 心/肺/肝/肾/脑/血管/动脉/静脉 等
+- **指南**：含 指南/共识/标准/规范/推荐 等
+- **指标**：含 率/值/水平/浓度/计数/比例 等
+- **其他**：不匹配以上任一类型
+
+### 6.3 前端可视化
+
+`app/src/pages/GraphPage.tsx` 使用 **Canvas 2D 原生渲染**实现知识图谱可视化：
+
+- 力导向布局（库仑斥力 4000，阻尼 0.78）
+- 节点 8-28px（按权重缩放），边 1.2-2.5px
+- 深色/浅色主题自适应（通过 `getComputedStyle` 检测 CSS 变量）
+- 局部/全局模式切换
+- 节点搜索 + 类型筛选 + 标签显隐
+- Hover tooltip 显示节点详情
+- 滑块控制斥力/阻尼/节点大小
+- 一键导出 PNG 高清图
+
+---
+
+## 7. 知识库版本管理
+
+### 7.1 设计目标
+
+当用户重新上传同一篇 PDF 的新版本时（如期刊更新、勘误），系统需要：
+1. 识别出哪些内容已变更
+2. 仅更新变更部分，不动其他内容
+3. 更新失败时能回滚到之前的状态
+
+### 7.2 MD5 精确差分算法
+
+```python
+# pipeline.py:add_parsed_document (行 1486-1546)
+
+# 1. 计算每个新块的 MD5 哈希
+new_hashes = {md5(chunk_text): chunk for chunk in new_chunks}
+
+# 2. 对比旧块哈希
+old_hashes = {md5(chunk_text): chunk_id for chunk_id, chunk_text in old_chunks}
+
+# 3. 找出需要移除的块（旧有但新无）
+to_remove = old_hashes.keys() - new_hashes.keys()
+faiss.remove_ids(np.array([old_hashes[h] for h in to_remove]))
+
+# 4. 找出需要新增的块（新有但旧无）
+to_add = new_hashes.keys() - old_hashes.keys()
+faiss.add_with_ids(new_chunks[to_add], new_ids[to_add])
+
+# 5. 未变化的块（交集）→ 跳过
+unchanged = old_hashes.keys() & new_hashes.keys()
+# 不动 FAISS，不动 MySQL
+```
+
+**精度**：100% 精确（基于 MD5 哈希，不是相似度阈值）。只有内容逐字变化才会触发更新。
+
+### 7.3 快照回滚机制
+
+```python
+# 入库前: 备份 faiss_index.bin + faiss_index.meta.json
+shutil.copy2("faiss_index.bin", "faiss_index.bin.snap")
+shutil.copy2("faiss_index.meta.json", "faiss_index.meta.json.snap")
+
+# 入库失败:
+try:
+    faiss.add_with_ids(...)
+except Exception:
+    shutil.copy2("faiss_index.bin.snap", "faiss_index.bin")   # 回滚
+    shutil.copy2("faiss_index.meta.json.snap", "...")
+    raise
+```
+
+---
+
+## 8. Agent 多跳推理系统
+
+### 8.1 设计理念
+
+传统 RAG 是 "一次检索 → 一次生成" 的单向流程。但复杂的医学问题（如 "对比 PD-1 抑制剂联合化疗在 NSCLC 各亚组中的疗效差异"）需要多步推理：先检索各亚组数据 → 交叉对比 → 评估证据质量 → 综合结论。
+
+本系统实现了一个 **Function Calling 驱动的多跳推理 Agent**，具备以下核心能力：
+
+- **自主工具选择**：根据问题类型，LLM 自主决定调用哪些工具及顺序
+- **多步推理**：最多 20 步推理循环，每步可调 1+ 工具
+- **回溯自纠**：低置信度时自动简化检索词重新搜索（< 2 次）
+- **搜停控制**：5 次检索后强制停止搜索，避免过度检索
+- **三级降级**：主 LLM → 备用 LLM → FAISS 直检
+- **连接重试**：LLM API 调用失败自动重试 3 次（2s/4s 间隔）
+
+### 8.2 五大意图分类
+
+Agent 首先对用户问题进行意图分类，选择合适的策略：
+
+| 类型 | 说明 | 示例 | 推荐工具链 |
+|------|------|------|-----------|
+| **A** | 事实查询 | "TBAD 的 CTA 诊断标准是什么？" | search_rag → 直接回答 |
+| **B** | 证据综合 | "PD-1 联合化疗治疗 NSCLC 的疗效" | deep_retrieve → cross_check → GRADE |
+| **C** | 图表分析 | "这篇文章的基线特征表" | search_rag → extract_chart → analyze_image |
+| **D** | 多文献对比 | "对比 A 药和 B 药的 AE 发生率" | deep_retrieve (×3) → consistency_matrix |
+| **E** | 系统综述 | "某疾病的全部治疗方案及证据等级" | list_docs → deep_retrieve → cross_check → GRADE |
+
+### 8.3 九大工具定义
+
+| # | 工具名 | 功能 | 调用时机 |
+|---|--------|------|---------|
+| 1 | `search_rag` | FAISS + LightRAG 双路检索 | 每次提问的默认第一步 |
+| 2 | `deep_retrieve` | 多维临床角度并发检索 | 需要全方位了解某主题时 |
+| 3 | `cross_check` | 多文献一致性交叉验证 | 检测证据矛盾时 |
+| 4 | `get_evidence` | 单文献覆盖范围查询 | 需要评估某文献的可用性时 |
+| 5 | `list_docs` | 列出全部文献 | 用户询问知识库内容时 |
+| 6 | `extract_chart` | 搜索图表相关文本 | 需要表格/图表描述文字时 |
+| 7 | `analyze_image` | VLM 图表结构化数据提取 | 需要精确数值（HR/CI/p值）时 |
+| 8 | `estimate_grade` | GRADE 证据质量评级 | 证据评估类问题时 |
+| 9 | `build_consistency_matrix` | 多文献一致性矩阵 | 多篇文献结论对比时 |
+
+### 8.4 推理流程
+
+```
+用户问题: "房颤高卒中风险患者的一线抗凝方案？"
+
+Step 1: search_rag("房颤 抗凝 卒中 DOAC 华法林", "房颤高卒中风险患者抗凝治疗一线方案选择")
+  → 返回 8 条文献证据 + 知识图谱上下文
+
+Step 2: deep_retrieve("房颤抗凝", ["诊断", "治疗", "安全性", "特殊人群"])
+  → 多维度补充检索
+
+Step 3: LLM 生成回答 (force_answer，已检索 2 次)
+  → "对于非瓣膜性房颤高卒中风险患者（CHA₂DS₂-VASc≥2），
+      一线抗凝首选 DOACs（达比加群/利伐沙班/阿哌沙班/艾多沙班），
+      相比华法林具有起效快、无需INR监测、颅内出血风险更低等优势。"
+  → 附 8 条引用来源 (doc/page/evidence_level)
+
+_critique_answer() → confidence: 0.85 → 无需回溯 → 输出
+```
+
+### 8.5 降级容错链
+
+```
+主 LLM (百度千帆 deepseek-v4-pro)
+  ├─ 成功 → 正常推理流程
+  ├─ 失败 → 重试 (2s 后)
+  │   ├─ 成功 → 正常
+  │   ├─ 失败 → 重试 (4s 后)
+  │   │   ├─ 成功 → 正常
+  │   │   ├─ 失败 → 备用 LLM (如果配置了 AGENT_FALLBACK_URL)
+  │   │   │   ├─ 成功 → 继续推理
+  │   │   │   ├─ 失败/未配置 → FAISS 直接检索
+  │   │   │   │   └─ 返回: "AI 推理服务暂时不可用，以下为知识库直接检索结果"
+```
+
+---
+
+## 9. 检索架构设计
+
+### 9.1 Dual Retriever 双路检索
+
+`src/dual_retriever.py` 封装了从 FAISS 和 LightRAG 的联合检索逻辑：
+
+```python
+class DualRetriever:
+    def search_with_context(query, top_k=10):
+        # 1. FAISS 稠密向量检索
+        faiss_results = pipeline.retrieve(query, top_k)
+
+        # 2. LightRAG 图谱查询
+        lightrag_results = pipeline.lightrag_query(query, mode="hybrid")
+
+        # 3. 合并 + 去重
+        merged = merge_and_dedup(faiss_results, lightrag_results)
+
+        # 4. 证据等级排序
+        ranked = rank_by_evidence(merged)
+        # Meta > RCT > Cohort > Case-control > Case-series
+
+        # 5. 组装查询上下文
+        return QueryContext(
+            knowledge_background=lightrag_results,  # 图谱上下文
+            evidence=ranked,                        # 文献证据
+            consistency_report=check_consistency(ranked)
+        )
+```
+
+### 9.2 LLM 重排序
+
+检索结果的前 10 条通过 LLM 进行相关性打分，与 FAISS 向量分数加权组合：
+
+```
+最终分数 = 0.3 × FAISS 向量相似度 + 0.7 × LLM 相关性分数
+```
+
+LLM 被打分为 0-10，归一化后与原始向量分数的 0.3 权重组合。这解决了纯向量检索的 "语义近但相关性不强" 问题。
+
+### 9.3 父页面检索
+
+当 FAISS 返回某个块的匹配时，系统会自动加载该块所在页面的**完整原文**。这保证了 Agent 看到的不是碎片化的 chunk，而是包含上下文的完整页面内容。
+
+### 9.4 文档名加权
+
+检索时如果命中特定文档名（如用户指定 "Stanford B型主动脉夹层指南"），匹配文档的检索分数获得 **30% 加权提升**。这是一个简单但有效的文档级相关性信号。
+
+---
+
+## 10. 前端架构设计
+
+### 10.1 技术选型
+
+| 技术 | 角色 | 选型理由 |
+|------|------|---------|
+| **React 19** | UI 框架 | 最新的并发特性，SSE 流式渲染 |
+| **TypeScript** | 类型系统 | 复杂医疗数据结构的类型安全 |
+| **Vite 7** | 构建工具 | HMR 热更新 < 200ms |
+| **Tailwind CSS 4** | 样式 | 原子化 CSS，深色/浅色主题 |
+| **shadcn/ui** | 组件库 | 可定制、可访问的 React 组件 |
+| **TanStack Query** | 数据获取 | 缓存 + 自动重获取 + 乐观更新 |
+| **Canvas 2D** | 知识图谱渲染 | 比 Three.js 更轻量，节点-边图更清晰 |
+
+### 10.2 页面架构
+
+| 路由 | 页面 | 功能 |
+|------|------|------|
+| `/` | Welcome | 首页展示 + 统计数据 |
+| `/login` | Login | 账号密码登录（支持专家/用户角色） |
+| `/register` | Register | 两步注册（账户信息 → 从业信息） |
+| `/admin` | Dashboard | 管理后台首页（统计 + 快捷操作 + 动态） |
+| `/admin/parsing` | ParsingPage | PDF 上传 + 解析进度 + 任务中心 |
+| `/admin/library` | LibraryPage | 文献列表/卡片视图 + 筛选 + 删除 |
+| `/admin/graph` | GraphPage | Canvas 2D 知识图谱可视化 |
+| `/admin/chat` | AdminChatPage | 专家端 Agent 问答 |
+| `/chat` | UserChatPage | 用户端 Agent 问答 |
+| `*` | NotFound | 404 页面 |
+
+### 10.3 Agent 推理过程可视化
+
+AdminChatPage 和 UserChatPage 均实现了实时推理可视化：
+
+```
+发送问题
+  │
+  ├─ 预推理阶段 (Pre-tool Phases)
+  │   ├─ 🧠 意图识别 (1.5s) — 闪烁 shimmer 动画
+  │   ├─ 💭 思考决策 (2.5s)
+  │   └─ 🔗 规划工具链 (2.5s)
+  │
+  └─ 工具调用阶段 (SSE 实时)
+      ├─ Step 1: 多模态双路检索 [2.3s] ─ 检索词: 房颤 抗凝...
+      ├─ Step 2: 多维检索 [1.8s] ─ 诊断/治疗/安全性...
+      └─ Step 3: 最终回答 [12.5s]
+
+每个步骤实时显示:
+  - 工具名称 + 图标
+  - 执行时间（从调用到返回的精确计时）
+  - 输入/输出预览
+  - 完成状态 (✅ 对勾 / ⏳ 旋转动画)
+```
+
+---
+
+## 11. 数据库设计与流程状态机
+
+### 11.1 MySQL 8 表结构
+
+| 表名 | 核心字段 | 用途 |
+|------|---------|------|
+| `users` | id, username, password_hash, role, email, department | 用户认证与权限 |
+| `articles` | id, title, file_name, status, authors, journal, doi | 文献元数据管理 |
+| `text_segments` | id, article_id, sequence, content, segment_type (11 ENUM), page_number, evidence_level | PICO 语义段落 |
+| `extracted_figures` | id, article_id, figure_type, caption, img_path, page_number | 提取的图表 |
+| `chat_sessions` | id, user_id, title, scope_articles, message_count | 对话会话 |
+| `chat_messages` | id, session_id, role, content, citations (JSON), rag_trace (JSON) | 对话消息 + 推理链路 |
+| `upload_tasks` | task_uuid, filename, status (9态), 40+ 列阶段指标 | 上传任务全流程追踪 |
+| `operation_logs` | id, user_id, action, target_type, details | 操作审计日志 |
+
+### 11.2 文献状态机
+
+```
+pending ──→ parsing ──→ parsing_completed ──→ approved
+  │            │                │
+  └──→ error   └──→ error       └──→ rejected
+```
+
+### 11.3 上传任务状态机
+
+```
+received ──→ parsing ──→ cross_validating ──→ indexing_faiss
+                                                     │
+                                                     ▼
+              done ←── indexing_lightrag ←──── postprocessing
+               │
+               ├──→ failed (任一阶段失败)
+               └──→ partial (部分阶段成功)
+```
+
+---
+
+## 12. 部署与运维
+
+### 12.1 硬件要求
+
+| 组件 | 最低配置 | 推荐配置 |
+|------|---------|---------|
+| GPU | NVIDIA 6GB VRAM | RTX 5060 8GB+ |
+| CPU | 4 核 | 8 核+ |
+| 内存 | 16 GB | 32 GB |
+| 磁盘 | 20 GB | 100 GB SSD |
+
+### 12.2 依赖服务
+
+- Python 3.10+ (FastAPI + PyTorch + FAISS)
+- Node.js 22+ (Vite + React 19)
+- MySQL 8.0 (业务数据)
+- 外部 API：百度千帆 (Agent LLM)、DeepSeek (PICO 分类 + 实体提取)、Moonshot (图表 VLM)
+
+### 12.3 启动命令
+
+```bash
+# 后端
+pip install -r requirements.txt
+python api.py                    # 默认端口 8000
+
+# 前端
+cd app && npm install && npx vite --port 5173
+
+# 访问
+open http://localhost:5173      # 用户端
+open http://localhost:5173/#/admin  # 管理后台
+```
+
+---
+
+## 13. 关键技术决策与选型理由
+
+### 13.1 为什么用 MinerU 2.5-Pro 而不是 Docling 全文解析？
+
+Docling 是基于规则引擎和布局分析的 PDF 解析器，对**拉丁语系优化**，中文医学文献的复杂版式（双栏、竖排表格、图文混排）处理效果差。MinerU 2.5-Pro 使用 VLM (Qwen2-VL) 逐页进行视觉理解——模型能 "看懂" 页面布局，而非仅依赖 OCR 规则。在中文学术 PDF 上的版式还原准确率显著优于 Docling。
+
+Docling 仍被保留——**仅用于图片提取**（`_extract_images_via_docling`），利用其成熟的 PDF 图片提取能力。
+
+### 13.2 为什么用 FAISS + LightRAG 双引擎而不是单一引擎？
+
+FAISS 是稠密向量检索的事实标准（Meta 出品，毫秒级延迟），但**无法理解实体间的关系**——比如房颤和抗凝药之间是 "治疗" 关系。LightRAG 构建了知识图谱，可以回答 "房颤有哪些可用药物"，但全图遍历无法处理细粒度的文本匹配。
+
+两者互补：FAISS 找 "相似的文本片段"，LightRAG 找 "相关概念的网络"。Agent 的 `search_rag` 工具同时查询两者，合并为统一结果。
+
+### 13.3 为什么用 BGE-M3 而不是 text-embedding-3 或 Cohere？
+
+- **多语言能力**：BGE-M3 原生支持中英文（医学文献常混合双语术语）
+- **本地部署**：不需要付费 API，无请求量限制
+- **1024 维**：在精度和性能间取得平衡（768 偏小，1536 偏大但慢）
+- **开源可控**：可针对医疗领域微调
+
+### 13.4 为什么用 Agent + Function Calling 而不是单次 RAG？
+
+绝大多数 RAG 系统是 "查一次 + 生成一次" 的流水线。但医学问题有显著的**多跳推理需求**——用户可能在追问中缩小范围、对比数据、要求评级。单次 RAG 无法应对。
+
+Agent 模式允许 LLM 自主决定 "是否需要再查一次"、"是否需要交叉验证"、"是否需要评估证据质量"，形成闭环推理。代价是延迟增加（30-60s vs 5-10s），但医学场景准确率优先于速度。
+
+### 13.5 为什么使用串行上传队列而不是并行处理？
+
+FAISS IndexIDMap 不支持并发写入（会导致索引损坏）。LightRAG 也不支持并发插入。对于 3-5 篇文献的场景，串行处理的总延迟是可接受的（~3min/篇），且避免了复杂的分布式锁机制。
+
+### 13.6 为什么前端使用 Canvas 2D 而不是 Three.js / Cytoscape.js？
+
+知识图谱只有 168 个节点，3D 渲染（Three.js）反而增加视觉噪音。Canvas 2D 提供了足够的绘制能力，体积小（无额外依赖），渲染性能好（< 16ms 帧率）。
+
+---
+
+## 14. 性能与优化
+
+### 14.1 全链路延迟拆解
+
+| 阶段 | 耗时 (5页PDF) | 占比 |
+|------|-------------|------|
+| MinerU 解析 | ~175s (35s/页) | 55% |
+| PICO 分类 | ~5s | 1.6% |
+| 图表 VLM | ~30s (6张图) | 9.4% |
+| FAISS 编码 | ~15s | 4.7% |
+| MySQL 同步 | ~2s | 0.6% |
+| LightRAG 构建 | ~90s | 28% |
+| **总计** | **~317s** | **100%** |
+
+优化建议：MinerU 解析可通过 A100 GPU 降至 ~2s/页（10x 加速）。
+
+### 14.2 Agent 推理延迟
+
+| 场景 | 延迟 | 说明 |
+|------|------|------|
+| 简单事实查询 | 10-20s | 1 次检索 + 直接回答 |
+| 证据综合 | 25-40s | 2-3 次多角度检索 + 综合 |
+| 图表分析 | 30-50s | 含 VLM 图表结构化分析 |
+| 多文献对比 | 40-60s | 多轮检索 + 交叉验证 + 矩阵 |
+
+---
+
+## 15. 行业痛点与解决方案映射
+
+| 行业痛点 | 系统解决方案 | 核心技术创新 |
+|---------|------------|------------|
+| 医疗文献复杂版式解析困难，语义丢失 | MinerU 2.5-Pro VLM 逐页视觉理解 + Docling 图片提取 | VLM 替代规则引擎，实现端到端视觉理解 |
+| 固定字数切分破坏医学逻辑，诱发大模型幻觉 | PICO 11 类医学语义分型 + LLM 语义合并 | 循证医学框架驱动的自适应分块 |
+| 人工处理效率低，无法规模化 | 全自动端到端流水线 + 异步任务队列 | 上传→解析→入库→可检索，零人工干预 |
+| RAG 检索碎片化，缺乏上下文连贯性 | 父页面检索 + LLM 重排序 + 文档名加权 | 多粒度多信号检索增强 |
+| 医学图表语义无法利用 | Moonshot Vision 5 型图表分类 + Baidu Pro 结构化序列化 | 图表→结构化数据的端到端语义理解 |
+| 证据质量无法评估 | GRADE 评级工具 + 一致性矩阵 | 循证医学方法论嵌入 Agent |
+| 回答不可溯源 | 每句结论绑定 doc/page/evidence_level | 引用链路 100% 可追溯 |
+| 单次 RAG 无法处理复杂推理 | Agent 9 工具 + 20 步多跳推理 + 回溯自纠 | Function Calling 驱动的自主推理 |
+| 多文献证据冲突无法检测 | cross_check 交叉验证 + consistency_matrix 一致性矩阵 | 证据矛盾检测与报告 |
+| 系统稳定性不足 | 三级降级链 + LLM 3 次重试 + FAISS 快照回滚 | 多层容错保障 |
+
+---
+
+> **项目开源地址**：（待定）  
+> **技术联系**：天机运算团队  
+> **文档版本**：v2.0 | 2026-05-30

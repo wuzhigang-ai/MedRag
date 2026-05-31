@@ -942,8 +942,15 @@ class MedicalAgent:
                 src = r["source"]
                 text = r["text"][:400]
                 lines.append(f"**来源 {i+1}**: {src}\n> {text}\n")
-            lines.append(f"\n> ⚠️ Agent 推理引擎暂时不可用 ({error[:80]}...)")
-            lines.append("> 以上为知识库直接检索结果，仅供参考。")
+            if "Connection" in error or "ConnectError" in error or "timeout" in error.lower():
+                lines.append("\n> ⚠️ AI 推理服务暂时无法连接，以下为知识库直接检索结果。Agent 将在网络恢复后自动切换回推理模式。")
+            elif "auth" in error.lower() or "401" in error or "403" in error:
+                lines.append("\n> ⚠️ AI 推理服务认证失败，请联系管理员检查 API 密钥配置。以下为知识库直接检索结果。")
+            elif "rate" in error.lower() or "429" in error:
+                lines.append("\n> ⚠️ AI 推理服务请求过于频繁，请稍后重试。以下为知识库直接检索结果。")
+            else:
+                lines.append(f"\n> ⚠️ Agent 推理引擎暂时不可用，以下为知识库直接检索结果。详情: {error[:60]}")
+            lines.append("\n> 以上为知识库直接检索结果，仅供参考。")
             return {
                 "answer": "\n".join(lines),
                 "reasoning_trace": trace,
@@ -994,18 +1001,31 @@ class MedicalAgent:
         for step in range(max_steps):
             # After 5 searches: force final answer
             force_answer = search_count >= 5
-            try:
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    tools=[] if force_answer else TOOLS,
-                    tool_choice="none" if force_answer else "auto",
-                    temperature=0.3,
-                    max_tokens=1500,
-                    timeout=60.0,
-                )
-            except Exception as e:
-                logger.warning(f"Agent LLM failed at step {step+1}: {e}")
+            import time as _time
+            last_exc = None
+            response = None
+            for retry_i in range(3):
+                try:
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        tools=[] if force_answer else TOOLS,
+                        tool_choice="none" if force_answer else "auto",
+                        temperature=0.3,
+                        max_tokens=1500,
+                        timeout=60.0,
+                    )
+                    break
+                except Exception as e:
+                    last_exc = e
+                    if retry_i < 2:
+                        delay = (retry_i + 1) * 2.0
+                        logger.warning(f"Agent LLM failed at step {step+1} (retry {retry_i+1}/3, wait {delay}s): {e}")
+                        _time.sleep(delay)
+                    else:
+                        logger.warning(f"Agent LLM failed at step {step+1} (all retries exhausted): {e}")
+            if response is None:
+                e = last_exc
                 # Try fallback client first (if configured)
                 if self.fallback_client and step == 0:
                     logger.info("Primary LLM failed, trying AGENT_FALLBACK for this request...")
