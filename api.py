@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Optional, List
 from datetime import datetime
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -501,8 +501,12 @@ async def get_upload_task_status(task_uuid: str):
 
 
 @app.get("/api/upload/history")
-async def get_upload_history(limit: int = 50, status: str = None):
+async def get_upload_history(limit: int = 50, status: str = None, authorization: str = Header(None)):
     """上传任务历史列表"""
+    if authorization and authorization.startswith("Bearer "):
+        from src.auth import get_user_by_token
+        if not get_user_by_token(authorization[7:]):
+            raise HTTPException(401, "令牌无效或已过期")
     from src.auth import list_tasks
     tasks = list_tasks(limit=limit, status_filter=status)
     for task in tasks:

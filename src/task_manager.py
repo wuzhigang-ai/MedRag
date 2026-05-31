@@ -153,6 +153,8 @@ class UploadTaskManager:
 
                 # ── Step 1: Parse (with timeout) ──
                 update_task_status(task_uuid, "parsing")
+                from src.audit_logger import audit_parse_start
+                audit_parse_start(task_uuid, filename)
                 t0 = time.time()
                 try:
                     content_list_path = await asyncio.wait_for(

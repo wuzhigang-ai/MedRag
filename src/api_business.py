@@ -107,6 +107,16 @@ def _verify_token(authorization: str = Header(None)) -> dict:
         raise HTTPException(401, "令牌无效或已过期")
     return user
 
+def _verify_token_optional(authorization: str = Header(None)) -> dict | None:
+    """Optional auth: allows unauthenticated access, rejects bad tokens."""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    from src.auth import get_user_by_token
+    user = get_user_by_token(authorization[7:])
+    if not user:
+        raise HTTPException(401, "令牌无效或已过期")
+    return user
+
 def _require_admin(user: dict = Depends(_verify_token)) -> dict:
     if user.get("role") not in ("admin", "expert"):
         raise HTTPException(403, "需要管理员权限")
@@ -119,18 +129,19 @@ def _require_admin(user: dict = Depends(_verify_token)) -> dict:
 
 @router.get("/articles")
 def articles_list(status: str = None, search: str = None,
-                  articleType: str = None, department: str = None):
+                  articleType: str = None, department: str = None,
+                  user: dict | None = Depends(_verify_token_optional)):
     from src.auth import list_articles
     rows = list_articles(status=status, search=search, article_type=articleType, department=department)
     return rows
 
 @router.get("/articles/stats")
-def articles_stats():
+def articles_stats(user: dict | None = Depends(_verify_token_optional)):
     from src.auth import get_article_stats
     return get_article_stats()
 
 @router.get("/articles/{article_id}")
-def articles_get(article_id: int):
+def articles_get(article_id: int, user: dict | None = Depends(_verify_token_optional)):
     from src.auth import get_article
     a = get_article(article_id)
     if not a: raise HTTPException(404, "文献不存在")
@@ -297,7 +308,7 @@ def chat_rate_message(message_id: int, req: RateMessageReq, user: dict = Depends
 # ═══════════════════════════════════════════════════════
 
 @router.get("/stats/system")
-def stats_system():
+def stats_system(user: dict | None = Depends(_verify_token_optional)):
     from src.auth import get_system_stats
     from src.graph import GraphManager
     s = get_system_stats()
@@ -360,7 +371,7 @@ def stats_department():
 # ═══════════════════════════════════════════════════════
 
 @router.get("/graph")
-def graph_data():
+def graph_data(user: dict | None = Depends(_verify_token_optional)):
     """Reuse existing GraphManager."""
     p = _get_pipeline()
     from src.graph import GraphManager
@@ -368,8 +379,7 @@ def graph_data():
     return gm.build()
 
 @router.get("/graph/stats")
-def graph_stats():
-    """Real graph stats from LightRAG via GraphManager."""
+def graph_stats(user: dict | None = Depends(_verify_token_optional)):
     from src.graph import GraphManager
     from collections import Counter
     gm = GraphManager()
@@ -384,8 +394,7 @@ def graph_stats():
     }
 
 @router.get("/graph/nodes/search")
-def graph_search(query: str = ""):
-    """Search nodes by label."""
+def graph_search(query: str = "", user: dict | None = Depends(_verify_token_optional)):
     p = _get_pipeline()
     from src.graph import GraphManager
     gm = GraphManager()
