@@ -228,7 +228,13 @@
       "Bash(powershell -Command \"Compress-Archive -Path 'app/src','app/public','app/package.json','app/package-lock.json','app/tsconfig.json','app/tsconfig.app.json','app/tsconfig.node.json','app/vite.config.ts','app/tailwind.config.ts','app/index.html','app/components.json' -DestinationPath 'frontend.zip' -Force\")",
       "Bash(powershell -Command \"Compress-Archive -Path 'src','api.py','requirements.txt','.env.example' -DestinationPath 'backend.zip' -Force\")",
       "Bash(powershell -Command \"Compress-Archive -Path 'src','app','scripts','docs','README.md','api.py','requirements.txt','.env.example' -DestinationPath 'source.zip' -Force\")",
-      "Bash(powershell -Command \"Compress-Archive -Path 'app/src','app/public','app/package.json','app/tsconfig.json','app/tsconfig.app.json','app/vite.config.ts','app/index.html' -DestinationPath 'frontend.zip' -Force\")"
+      "Bash(powershell -Command \"Compress-Archive -Path 'app/src','app/public','app/package.json','app/tsconfig.json','app/tsconfig.app.json','app/vite.config.ts','app/index.html' -DestinationPath 'frontend.zip' -Force\")",
+      "Bash(git config *)",
+      "Bash(GIT_TRACE=1 git push -u origin master)",
+      "Bash(git credential-manager *)",
+      "Bash(ngrok version *)",
+      "Bash(npx localtunnel *)",
+      "Bash(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@82.156.142.212 \"echo SSH_OK\")"
     ]
   }
 }
