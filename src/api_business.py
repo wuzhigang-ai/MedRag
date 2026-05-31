@@ -56,7 +56,7 @@ def auth_login(req: LoginRequest, request: Request):
     if not user:
         raise HTTPException(401, "用户名或密码错误")
     token = hashlib.sha256(f"{user['id']}:{req.username}:{os.urandom(16).hex()}".encode()).hexdigest()
-    store_token(user['id'], user['username'], token)
+    store_token(user['id'], user['username'], token, user.get('role', 'user'))
     client_ip = request.client.host if request.client else "unknown"
     log_operation(user['id'], req.username, "login", ip_address=client_ip)
     return {"token": token, "user": {"id": user['id'], "username": user['username'], "role": user['role']}}

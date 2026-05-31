@@ -44,7 +44,7 @@ def with_conn(fn):
 
 _token_cache: dict[str, dict] = {}
 
-def store_token(user_id: int, username: str, token: str):
+def store_token(user_id: int, username: str, token: str, role: str = "user"):
     """Persist login token to DB + memory cache."""
     def _do(conn):
         cursor = conn.cursor()
@@ -55,7 +55,7 @@ def store_token(user_id: int, username: str, token: str):
         conn.commit()
         cursor.close()
     with_conn(_do)
-    _token_cache[token] = {"id": user_id, "username": username}
+    _token_cache[token] = {"id": user_id, "username": username, "role": role, "email": "", "department": ""}
 
 def get_user_by_token(token: str) -> dict | None:
     """Look up user by auth_token. Checks memory cache first, then DB."""
