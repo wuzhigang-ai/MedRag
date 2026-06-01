@@ -1,27 +1,26 @@
 /**
- * G6GraphView — 双主题自适应知识图谱
- * 深色/浅色两套完整配色方案，MutationObserver 监听切换
+ * G6GraphView — Nebula Data 视觉体系 v1.0
+ * Kimi 设计协作 · 深空星云(暗) / 白昼水晶(亮) 双主题
  */
 import { useEffect, useRef, useState } from "react";
 import { Graph } from "@antv/g6";
 
-// ── 节点配色：深色/浅色各一套独立色板 ──
-type Palette = {fill:string;glow:string;edge:string;label:string;minimapBg:string;minimapBorder:string;dotBg:string};
-const DARK:Palette={
-  fill:"",glow:"",edge:"rgba(148,163,184,0.22)",label:"#cbd5e1",
-  minimapBg:"#1e293b",minimapBorder:"#334155",dotBg:"#1e293b"
+// ── Nebula Data 色板 ──
+const DARK={
+  bg:"#0B0E17",bgCenter:"#0F1525",
+  L0:"#E8E4DD",L1:"#A8C4E0",L2:"#6B8FA8",L3:"#3D5266",L4:"#1E2A36",
+  edgeStrong:"rgba(168,196,224,0.5)",edgeMid:"rgba(107,143,168,0.3)",edgeWeak:"rgba(61,82,102,0.15)",
+  label:"rgba(232,228,221,0.88)",labelSub:"rgba(168,196,224,0.6)",
+  active:"#F0D78C",activeStroke:"rgba(240,215,140,0.7)",
+  minimapBg:"#1e293b",minimapBorder:"#334155",
 };
-const LIGHT:Palette={
-  fill:"",glow:"",edge:"rgba(51,65,85,0.30)",label:"#1e293b",
-  minimapBg:"#ffffff",minimapBorder:"#cbd5e1",dotBg:"#ffffff"
-};
-
-const NODE_COLORS:Record<string,[string,string]>={ // [dark_fill, light_fill]
-  disease:["#E84D4D","#DC2626"],drug:["#3B82F6","#2563EB"],symptom:["#F07850","#EA580C"],
-  treatment:["#10B981","#059669"],check:["#8B5CF6","#7C3AED"],exam:["#8B5CF6","#7C3AED"],
-  clinical_indicator:["#8B5CF6","#7C3AED"],anatomy:["#06B6D4","#0891B2"],
-  procedure:["#EC4899","#DB2777"],gene:["#7C3AED","#6D28D9"],pathogen:["#DC2626","#B91C1C"],
-  guideline:["#D4A853","#B8860B"],metric:["#3B82F6","#2563EB"],other:["#64748B","#475569"],
+const LIGHT={
+  bg:"#F7F5F0",bgCenter:"#FAF8F4",
+  L0:"rgba(44,62,80,0.85)",L1:"rgba(91,123,163,0.75)",L2:"rgba(138,163,193,0.65)",L3:"rgba(181,196,212,0.5)",L4:"rgba(213,221,229,0.35)",
+  edgeStrong:"rgba(91,123,163,0.38)",edgeMid:"rgba(138,163,193,0.24)",edgeWeak:"rgba(181,196,212,0.12)",
+  label:"rgba(44,62,80,0.9)",labelSub:"rgba(91,123,163,0.7)",
+  active:"rgba(212,168,67,0.9)",activeStroke:"rgba(212,168,67,0.6)",
+  minimapBg:"#ffffff",minimapBorder:"#cbd5e1",
 };
 
 interface GNode {id:number|string;label:string;group?:string;weight?:number;description?:string}
@@ -31,30 +30,42 @@ function isDark():boolean{
   try{const a=document.documentElement.getAttribute("data-theme");return a==="dark"||(!a&&window.matchMedia("(prefers-color-scheme:dark)").matches)}catch{return true}
 }
 
-function buildData(nodes:GNode[],edges:GEdge[],p:Palette){
+// L0-L4 层级判定：按节点关联数（weight）分档
+function nodeLevel(w:number):number{
+  if(w>=8)return 0;if(w>=5)return 1;if(w>=3)return 2;if(w>=1)return 3;return 4;
+}
+function levelColor(level:number,p:typeof DARK):string{
+  const map=[p.L0,p.L1,p.L2,p.L3,p.L4];return map[level]||p.L4;
+}
+function levelSize(level:number):number{
+  const map=[26,20,16,12,8];return map[level]||8;
+}
+
+function buildData(nodes:GNode[],edges:GEdge[],p:typeof DARK){
   return{
     nodes:nodes.map(n=>{
-      const c=NODE_COLORS[n.group||"other"]||NODE_COLORS.other;
-      const fill=isDark()?c[0]:c[1];
-      const r=Math.min(30,10+(n.weight||1)*2);
-      const lbl=(n.label||"").length>22?(n.label||"").slice(0,20)+"…":(n.label||"");
+      const lv=nodeLevel(n.weight||0);
+      const fill=levelColor(lv,p);const r=levelSize(lv);
+      const lbl=(n.label||"").length>18?(n.label||"").slice(0,16)+"…":(n.label||"");
       return{
         id:String(n.id),
-        data:{label:n.label,group:n.group||"other",weight:n.weight||1,description:n.description||""},
+        data:{label:n.label,group:n.group||"other",weight:n.weight||0,description:n.description||"",level:lv},
         style:{
-          size:r*2,fill,stroke:fill+"44",lineWidth:isDark()?1.5:2,
-          labelText:lbl,labelFill:p.label,labelFontSize:10,
-          labelPlacement:"bottom",labelOffsetY:r/2+8,
+          size:r*2,fill,stroke:p.L2+"44",lineWidth:lv<=2?1.5:1,
+          labelText:lv<=2?lbl:"",labelFill:p.label,labelFontSize:10,labelPlacement:"bottom",labelOffsetY:r/2+6,
           cursor:"pointer",
         },
         states:["active","inactive","selected"],
       };
     }),
-    edges:edges.map((e,i)=>({
-      id:String(e.id||`e${i}`),source:String(e.source),target:String(e.target),
-      style:{stroke:p.edge,lineWidth:0.6+(e.weight||1)*0.12,endArrow:false},
-      states:["active","inactive"],
-    })),
+    edges:edges.map((e,i)=>{
+      const ew=e.weight||1;const stroke=ew>=4?p.edgeStrong:ew>=2?p.edgeMid:p.edgeWeak;
+      return{
+        id:String(e.id||`e${i}`),source:String(e.source),target:String(e.target),
+        style:{stroke,lineWidth:0.6+ew*0.1,endArrow:false},
+        states:["active","inactive"],
+      };
+    }),
   };
 }
 
@@ -73,7 +84,6 @@ export default function G6GraphView({nodes,edges,search,filter,onNodeClick,onRea
   const graphRef=useRef<Graph|null>(null);
   const [theme,setTheme]=useState(isDark()?"dark":"light");
 
-  // Theme watcher
   useEffect(()=>{
     const check=()=>setTheme(isDark()?"dark":"light");
     const obs=new MutationObserver(check);
@@ -82,28 +92,33 @@ export default function G6GraphView({nodes,edges,search,filter,onNodeClick,onRea
     return()=>{obs.disconnect();window.matchMedia("(prefers-color-scheme:dark)").removeEventListener("change",check)};
   },[]);
 
-  // Build graph
   useEffect(()=>{
     const c=containerRef.current;if(!c||!nodes.length)return;
     const dark=theme==="dark",p=dark?DARK:LIGHT,W=c.clientWidth||800,H=c.clientHeight||500;
 
     if(graphRef.current){try{graphRef.current.destroy()}catch{};graphRef.current=null}
-    while(c.firstChild) c.removeChild(c.firstChild);
+    while(c.firstChild)c.removeChild(c.firstChild);
 
     try{
       const g=new Graph({
         container:c,width:W,height:H,autoFit:"view",padding:[80,80,80,80],
-        animation:true,background:"transparent",
+        animation:true,
+        background:dark
+          ?`radial-gradient(ellipse 70% 70% at 50% 45%,${p.bgCenter} 0%,${p.bg} 40%,#080A10 100%)`
+          :`radial-gradient(ellipse 70% 70% at 50% 45%,${p.bgCenter} 0%,${p.bg} 40%,#F0EDE6 100%)`,
         data:buildData(nodes,edges,p),
         layout:{type:"d3-force",preventOverlap:true,nodeSize:48,linkDistance:120,animate:true,alphaDecay:0.015,alphaMin:0.001,collideStrength:1.2,forceSimulationIterations:150},
         behaviors:["drag-canvas","zoom-canvas",{type:"drag-element",enableTransient:true}],
-        plugins:[{type:"minimap",size:[150,110],position:"right-bottom",
-          style:{background:p.minimapBg,border:`1px solid ${p.minimapBorder}`,borderRadius:6}}],
+        plugins:[{type:"minimap",size:[150,110],position:"right-bottom",style:{background:p.minimapBg,border:`1px solid ${p.minimapBorder}`,borderRadius:6}}],
         node:{type:"circle",
-          state:{active:{stroke:"#FFD700",lineWidth:3,labelFontSize:12},inactive:{opacity:dark?0.12:0.10},selected:{stroke:"#FFD700",lineWidth:4,labelFontSize:14,labelFill:"#FFD700"}},
+          state:{
+            active:{stroke:p.active,lineWidth:3,labelFontSize:12},
+            inactive:{opacity:dark?0.12:0.10},
+            selected:{stroke:p.active,lineWidth:4,labelFontSize:14,labelFill:p.active},
+          },
         },
         edge:{type:"line",
-          state:{active:{stroke:"#FFD700",lineWidth:2},inactive:{opacity:dark?0.04:0.06}},
+          state:{active:{stroke:p.active,lineWidth:2},inactive:{opacity:dark?0.04:0.06}},
         },
       });
       g.render().then(()=>{graphRef.current=g;if(onReady)onReady(g);applyHL(g,search,filter)});

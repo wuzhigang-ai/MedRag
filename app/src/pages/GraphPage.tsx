@@ -9,6 +9,10 @@ import G6GraphView from "@/components/G6GraphView";
 
 const ntColors: Record<string,string> = { disease:"#E84D4D",drug:"#3B82F6",symptom:"#F07850",treatment:"#10B981",clinical_indicator:"#8B5CF6",anatomy:"#06B6D4",procedure:"#EC4899",gene:"#7C3AED",pathogen:"#DC2626",other:"#64748B",check:"#8B5CF6",exam:"#8B5CF6",metric:"#3B82F6",guideline:"#D4A853" };
 const ntLabels: Record<string,string> = { disease:"疾病",drug:"药物",symptom:"症状",treatment:"治疗",clinical_indicator:"指标",anatomy:"解剖",procedure:"手术",gene:"基因",pathogen:"病原体",other:"其他",check:"检查",exam:"检查",metric:"指标",guideline:"指南" };
+// Nebula Data L0-L4 node hierarchy colors (dark theme)
+const levelColors=["#E8E4DD","#A8C4E0","#6B8FA8","#3D5266","#1E2A36"];
+const levelLabels=["核心节点","一级关联","二级关联","三级关联","休眠节点"];
+function levelSize(lv:number):number{const m=[16,13,10,8,6];return m[lv]||6;}
 const rtLabels: Record<string,string> = { treats:"治疗",causes:"导致",associated_with:"相关",contraindicated:"禁忌",diagnoses:"诊断",prevents:"预防",symptom_of:"症状",interacts_with:"相互作用",related_to:"关联" };
 
 export default function GraphPage() {
@@ -105,7 +109,19 @@ export default function GraphPage() {
 
       {/* ── Right Panel ── */}
       <div style={{width:220,flexShrink:0,display:"flex",flexDirection:"column",gap:10,overflow:"auto"}}>
-        {/* Legend */}
+        {/* Nebula Data L0-L4 Hierarchy Legend */}
+        <div className="m-card" style={{padding:10,borderRadius:12}}>
+          <div style={{fontSize:10,fontWeight:700,color:"var(--tx-500)",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>节点层级</div>
+          {levelColors.map((c,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"3px 6px",borderRadius:6,fontSize:10}}>
+              <div style={{width:levelSize(i),height:levelSize(i),borderRadius:"50%",background:c,flexShrink:0}}/>
+              <span style={{flex:1,color:"var(--tx-500)"}}>{levelLabels[i]}</span>
+              <span style={{color:"var(--tx-200)",fontSize:9,fontFamily:"monospace"}}>L{i}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Type Legend */}
         <div className="m-card" style={{padding:10,borderRadius:12}}>
           <div style={{fontSize:10,fontWeight:700,color:"var(--tx-500)",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>节点类型</div>
           {Object.entries(ntLabels).filter(([k])=>(nodeTypeStats[k]||0)>0).map(([k,v])=>(
