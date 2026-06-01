@@ -251,7 +251,8 @@
       "Bash(nohup npx vite --port 5173 --host)",
       "Bash(node -e ' *)",
       "Bash(rm -rf node_modules/.vite)",
-      "Bash(grep -E \"\\\\^$|\\\\.tsx\")"
+      "Bash(grep -E \"\\\\^$|\\\\.tsx\")",
+      "Bash(git revert *)"
     ]
   }
 }
