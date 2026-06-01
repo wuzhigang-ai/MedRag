@@ -239,7 +239,16 @@
       "Bash(pkill -f tunnel.py)",
       "Bash(where plink *)",
       "Bash(plink -V)",
-      "Bash(ssh *)"
+      "Bash(ssh *)",
+      "Bash(git branch *)",
+      "Bash(git pull *)",
+      "Bash(git checkout *)",
+      "Bash(git ls-remote *)",
+      "Bash(git fetch *)",
+      "Bash(powershell -Command 'Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }')",
+      "Bash(awk '{print \"Running: PID \"$2}')",
+      "Bash(powershell -Command 'Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }')",
+      "Bash(nohup npx vite --port 5173 --host)"
     ]
   }
 }

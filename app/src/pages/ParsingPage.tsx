@@ -90,6 +90,34 @@ export default function ParsingPage() {
   const selected = articles?.find((a: any) => a.id === selectedId);
   const phases = ["MinerU 2.5-Pro 识别中", "智能语义分块中", "FAISS 向量入库中", "LightRAG 图谱构建"];
 
+  // Map task status to phase index for progress display
+  const getTaskPhase = (status: string) => {
+    const map: Record<string,number> = { received:0, parsing:0, cross_validating:1, postprocessing:1, chunking:2, indexing_faiss:2, indexing_lightrag:3, indexing:3, done:4, partial:3, failed:-1 };
+    return map[status] ?? 0;
+  };
+  const getFaissLabel = (task: any) => {
+    const fs = task.faissStatus || task.faiss_status;
+    if (fs === "success" || (task.faissChunksAdded || task.faiss_chunks_added) > 0) return { icon: "✅", label: "已入库", cls: "m-tag-green" };
+    if (fs === "processing") return { icon: "⏳", label: "处理中", cls: "m-status-parsing" };
+    if (fs === "failed") return { icon: "❌", label: "失败", cls: "m-status-error" };
+    if (task.status === "done" || task.status === "partial") return { icon: "✅", label: "已完成", cls: "m-tag-green" };
+    return { icon: "⬜", label: "待处理", cls: "m-status-pending" };
+  };
+  const getLightragLabel = (task: any) => {
+    const ls = task.lightragStatus || task.lightrag_status;
+    const ent = task.lightragEntities || task.lightrag_entities;
+    if (ls === "success" || ent > 0) return { icon: "✅", label: `${ent || ""} 实体`, cls: "m-tag-green" };
+    if (ls === "processing") return { icon: "⏳", label: "构建中", cls: "m-status-parsing" };
+    if (ls === "failed" || task.status === "partial") return { icon: "⚠️", label: "未完成", cls: "m-status-pending" };
+    if (task.status === "done") return { icon: "✅", label: "已完成", cls: "m-tag-green" };
+    return { icon: "⬜", label: "待处理", cls: "m-status-pending" };
+  };
+  const formatTime = (t: string) => {
+    if (!t) return "—";
+    try { const d = new Date(t); return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`; }
+    catch { return t?.substring(0,16) || "—"; }
+  };
+
   // Fetch task history
   useEffect(() => {
     fetch("/api/upload/history").then(r => r.json()).then(d => setTaskList(d?.tasks || [])).catch(() => {});
@@ -471,7 +499,7 @@ export default function ParsingPage() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
               <thead>
                 <tr style={{ borderBottom: "1.5px solid var(--bd-200)" }}>
-                  {["任务ID", "文件名称", "解析状态", "向量库状态", "上传时间", "流程进度"].map(h => (
+                  {["任务ID","文件名称","用户","解析状态","FAISS入库","知识图谱","时间","流程进度"].map(h => (
                     <th key={h} style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "var(--tx-100)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -479,46 +507,52 @@ export default function ParsingPage() {
               <tbody>
                 {taskList.map((task, idx) => {
                   const st = statusConfig[task.status as ArticleStatus];
+                  const phase = getTaskPhase(task.status);
+                  const faiss = getFaissLabel(task);
+                  const lrag = getLightragLabel(task);
+                  const createdAt = task.createdAt || task.created_at || task.uploadTime;
+                  const userName = task.userName || task.user_name || task.uploadedBy || task.uploaded_by || "—";
                   return (
-                    <tr key={(task.task_uuid || "").substring(0,8)} style={{ borderBottom: idx < taskList.length - 1 ? "1px solid var(--bd-100)" : "none", transition: "background 0.15s" }}
+                    <tr key={(task.task_uuid || task.taskUuid || "").substring(0,8)} style={{ borderBottom: idx < taskList.length - 1 ? "1px solid var(--bd-100)" : "none", transition: "background 0.15s" }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-hover)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                     >
                       <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
-                        <span style={{ fontFamily: "monospace", fontSize: 10, fontWeight: 600, color: "var(--m-primary)" }}>{(task.task_uuid || "").substring(0,8)}</span>
+                        <span style={{ fontFamily: "monospace", fontSize: 10, fontWeight: 600, color: "var(--m-primary)" }}>{(task.task_uuid || task.taskUuid || "").substring(0,8)}</span>
                       </td>
                       <td style={{ padding: "7px 8px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                           <FiFileText size={11} style={{ color: "var(--tx-100)", flexShrink: 0 }} />
-                          <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{task.filename || "—"}</span>
+                          <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{task.filename || "—"}</span>
                         </div>
                       </td>
+                      <td style={{ padding: "7px 8px", color: "var(--tx-300)", fontSize: 10, whiteSpace: "nowrap" }}>{userName}</td>
                       <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
                         <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 7px", borderRadius: 100, background: st?.bg, color: st?.color, display: "inline-flex", alignItems: "center", gap: 3 }}>{st?.icon}{st?.label}</span>
                       </td>
                       <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
-                        <span className={`m-badge ${task.vectorStatus === "completed" ? "m-tag-green" : "m-status-pending"}`} style={{ fontSize: 9, padding: "2px 7px" }}>
-                          {task.vectorStatus === "completed" ? <FiCheckCircle size={9} style={{ display: "inline", marginRight: 3 }} /> : <FiClock size={9} style={{ display: "inline", marginRight: 3 }} />}
-                          {task.vectorStatus === "completed" ? "已入库" : "待处理"}
-                        </span>
+                        <span className={`m-badge ${faiss.cls}`} style={{ fontSize: 9, padding: "2px 6px" }}>{faiss.icon} {faiss.label}</span>
                       </td>
-                      <td style={{ padding: "7px 8px", color: "var(--tx-100)", whiteSpace: "nowrap", fontSize: 10 }}>{task.uploadTime}</td>
+                      <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
+                        <span className={`m-badge ${lrag.cls}`} style={{ fontSize: 9, padding: "2px 6px" }}>{lrag.icon} {lrag.label}</span>
+                      </td>
+                      <td style={{ padding: "7px 8px", color: "var(--tx-100)", whiteSpace: "nowrap", fontSize: 10 }}>{formatTime(createdAt)}</td>
                       <td style={{ padding: "7px 8px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
                           {flowPhases.map((ph, pi) => (
                             <div key={pi} style={{ display: "flex", alignItems: "center" }}>
                               <div style={{
                                 width: 20, height: 20, borderRadius: "50%",
-                                background: pi <= task.currentPhase ? `${ph.color}15` : "var(--bg-hover)",
-                                color: pi <= task.currentPhase ? ph.color : "var(--tx-100)",
+                                background: pi <= phase ? `${ph.color}15` : "var(--bg-hover)",
+                                color: pi <= phase ? ph.color : "var(--tx-100)",
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 fontSize: 9, transition: "all 0.3s",
-                                border: pi === task.currentPhase ? `1.5px solid ${ph.color}` : `1.5px solid ${pi <= task.currentPhase ? `${ph.color}30` : "var(--bd-200)"}`,
+                                border: pi === phase ? `1.5px solid ${ph.color}` : `1.5px solid ${pi <= phase ? `${ph.color}30` : "var(--bd-200)"}`,
                               }} title={ph.label}>
-                                {pi < task.currentPhase ? <FiCheck size={8} /> : ph.icon}
+                                {pi < phase ? <FiCheck size={8} /> : ph.icon}
                               </div>
                               {pi < flowPhases.length - 1 && (
-                                <div style={{ width: 12, height: 2, background: pi < task.currentPhase ? ph.color : "var(--bd-200)", opacity: pi < task.currentPhase ? 0.4 : 1 }} />
+                                <div style={{ width: 12, height: 2, background: pi < phase ? ph.color : "var(--bd-200)", opacity: pi < phase ? 0.4 : 1 }} />
                               )}
                             </div>
                           ))}
