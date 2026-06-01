@@ -33,9 +33,9 @@ function buildData(nodes:GNode[],edges:GEdge[],dark:boolean){
         style:{
           size:r*2,fill,
           stroke:dark?glow+"66":fill+"33",lineWidth:dark?1.5:2,
-          labelText:lbl,labelFill:dark?"#cbd5e1":"#334155",
+          labelText:lbl,labelFill:dark?"#cbd5e1":"#1e293b",
           labelFontSize:10,labelPlacement:"bottom",labelOffsetY:r/2+8,
-          shadowBlur:dark?8:4,shadowColor:dark?glow+"55":glow+"22",
+          shadowBlur:dark?8:3,shadowColor:dark?glow+"55":glow+"33",
           cursor:"pointer",opacity:0.92,
         },
         states:["active","inactive","selected"],
@@ -44,7 +44,7 @@ function buildData(nodes:GNode[],edges:GEdge[],dark:boolean){
     edges:edges.map((e,i)=>({
       id:String(e.id||`e${i}`),source:String(e.source),target:String(e.target),
       style:{
-        stroke:dark?"rgba(148,163,184,0.18)":"rgba(71,85,105,0.20)",
+        stroke:dark?"rgba(148,163,184,0.20)":"rgba(51,65,85,0.35)",
         lineWidth:0.6+(e.weight||1)*0.12,endArrow:false,
       },
       states:["active","inactive"],
@@ -81,7 +81,9 @@ export default function G6GraphView({nodes,edges,search,filter,onNodeClick,onRea
     const c=containerRef.current;if(!c||!nodes.length)return;
     const dark=theme==="dark",W=c.clientWidth||800,H=c.clientHeight||500;
 
-    if(graphRef.current){try{graphRef.current.destroy()}catch{}}
+    // Clean up old graph + DOM children completely
+    if(graphRef.current){try{graphRef.current.destroy()}catch{};graphRef.current=null}
+    while(c.firstChild){c.removeChild(c.firstChild)}
 
     try{
       const g=new Graph({
@@ -90,7 +92,7 @@ export default function G6GraphView({nodes,edges,search,filter,onNodeClick,onRea
         data:buildData(nodes,edges,dark),
         layout:{type:"d3-force",preventOverlap:true,nodeSize:48,linkDistance:120,animate:true,alphaDecay:0.015,alphaMin:0.001,collideStrength:1.2,forceSimulationIterations:150},
         behaviors:["drag-canvas","zoom-canvas",{type:"drag-element",enableTransient:true},{type:"hover-activate",degree:1,direction:"both"}],
-        plugins:[{type:"minimap",size:[150,110],position:"right-bottom",style:{background:dark?"#1e293b":"#f8fafc",border:`1px solid ${dark?"#334155":"#e2e8f0"}`,borderRadius:6}}],
+        plugins:[{type:"minimap",size:[150,110],position:"right-bottom",style:{background:dark?"#1e293b":"#ffffff",border:`1px solid ${dark?"#334155":"#cbd5e1"}`,borderRadius:6,boxShadow:dark?"0 2px 8px rgba(0,0,0,0.3)":"0 2px 8px rgba(0,0,0,0.08)"}}],
         node:{type:"circle",
           state:{active:{opacity:1,stroke:"#FFD700",lineWidth:3,shadowBlur:20,shadowColor:"#FFD700",labelFontSize:12},inactive:{opacity:0.10,shadowBlur:0},selected:{stroke:"#FFD700",lineWidth:4,shadowBlur:24,shadowColor:"#FFD700",labelFontSize:14,labelFill:"#FFD700"}},
         },
