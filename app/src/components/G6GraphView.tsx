@@ -328,12 +328,22 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
               let nx = p.x + p.vx, ny = p.y + p.vy;
               const dist = Math.sqrt((nx - cx) ** 2 + (ny - cy) ** 2);
               if (dist > R) {
-                // Reflect velocity and clamp position to boundary
                 const ndx = (nx - cx) / dist, ndy = (ny - cy) / dist;
-                nx = cx + ndx * R;
-                ny = cy + ndy * R;
-                // Bounce: reverse velocity component away from center
+                nx = cx + ndx * R; ny = cy + ndy * R;
                 p.vx *= -0.5; p.vy *= -0.5;
+              }
+              // Collision avoidance: push away from nearby nodes
+              for (const oid of allIds) {
+                if (oid === id) continue;
+                const o = posMap.get(oid); if (!o) continue;
+                const dx = nx - o.x, dy = ny - o.y;
+                const d = Math.sqrt(dx * dx + dy * dy);
+                const MIN_GAP = 35;
+                if (d < MIN_GAP && d > 0.1) {
+                  const push = (MIN_GAP - d) * 0.5;
+                  nx += (dx / d) * push;
+                  ny += (dy / d) * push;
+                }
               }
               p.x = nx; p.y = ny;
               updates.push({ id, style: { x: p.x, y: p.y } });
@@ -449,6 +459,18 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
               const ndx = (nx - cx) / dist, ndy = (ny - cy) / dist;
               nx = cx + ndx * R; ny = cy + ndy * R;
               p.vx *= -0.5; p.vy *= -0.5;
+            }
+            // Collision avoidance
+            for (const oid of allIds) {
+              if (oid === id) continue;
+              const o = posMap.get(oid); if (!o) continue;
+              const dx = nx - o.x, dy = ny - o.y;
+              const d = Math.sqrt(dx * dx + dy * dy);
+              if (d < 35 && d > 0.1) {
+                const push = (35 - d) * 0.5;
+                nx += (dx / d) * push;
+                ny += (dy / d) * push;
+              }
             }
             p.x = nx; p.y = ny;
             updates.push({ id, style: { x: p.x, y: p.y } });
