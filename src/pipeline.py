@@ -570,6 +570,9 @@ class MedicalRAGPipeline:
             "内异": "子宫内膜异位症超声评估中国专家共识",
             "子宫内膜异位": "子宫内膜异位症超声评估中国专家共识",
             "endometriosis": "子宫内膜异位症超声评估中国专家共识",
+            "印第安": "子宫内膜异位症超声评估中国专家共识",
+            "头饰": "子宫内膜异位症超声评估中国专家共识",
+            "肠道": "子宫内膜异位症超声评估中国专家共识",
         }
 
         boosted_doc = None
@@ -584,7 +587,7 @@ class MedicalRAGPipeline:
                 if boosted_doc in r["source"]:
                     r["score"] = min(1.0, r["score"] * 1.3)  # 30% boost
                 else:
-                    r["score"] = r["score"] * 0.5  # 50% penalty for non-matching docs
+                    r["score"] = r["score"] * 0.2  # 80% penalty for non-matching docs
             results.sort(key=lambda x: x["score"], reverse=True)
 
         # Cross-document suppression: if top result dominates, filter out low-score docs
