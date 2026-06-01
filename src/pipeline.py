@@ -566,7 +566,9 @@ class MedicalRAGPipeline:
             "肝移植": "todo1992",
             "urea": "todo1992",
             "子宫内膜": "子宫内膜异位症超声评估中国专家共识",
-            "超声": "子宫内膜异位症超声评估中国专家共识",
+            "内异症": "子宫内膜异位症超声评估中国专家共识",
+            "内异": "子宫内膜异位症超声评估中国专家共识",
+            "子宫内膜异位": "子宫内膜异位症超声评估中国专家共识",
             "endometriosis": "子宫内膜异位症超声评估中国专家共识",
         }
 
@@ -576,12 +578,28 @@ class MedicalRAGPipeline:
                 boosted_doc = doc_name
                 break
 
-        # Boost results matching the target document
+        # Boost results matching the target document, penalize others
         if boosted_doc:
             for r in results:
                 if boosted_doc in r["source"]:
                     r["score"] = min(1.0, r["score"] * 1.3)  # 30% boost
+                else:
+                    r["score"] = r["score"] * 0.5  # 50% penalty for non-matching docs
             results.sort(key=lambda x: x["score"], reverse=True)
+
+        # Cross-document suppression: if top result dominates, filter out low-score docs
+        if len(results) >= 2 and results[0]["score"] > 0.5:
+            top_doc = results[0]["source"].split(" [")[0]
+            filtered = []
+            for r in results:
+                r_doc = r["source"].split(" [")[0]
+                if r_doc == top_doc or r["score"] > results[0]["score"] * 0.85:
+                    filtered.append(r)
+                elif r["score"] < 0.35:
+                    continue  # drop very low scoring
+                else:
+                    filtered.append(r)
+            results = filtered
 
         return [r for r in results if r["score"] > min_score][:top_k]
 
