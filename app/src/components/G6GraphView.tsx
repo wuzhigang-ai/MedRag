@@ -146,7 +146,6 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const animTimerRef = useRef<number>(0);
   const animTimeoutRef = useRef<number>(0);
-  const destroyedRef = useRef(false);
   const nodePositionsRef = useRef<Map<string, { x: number; y: number; vx: number; vy: number }>>(new Map());
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
 
@@ -195,14 +194,13 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     if (el) el.style.display = "none";
   }, []);
 
-  // ── Floating animation — with proper destroy guards ──
-  const startFloatAnimation = useCallback((g: Graph) => {
+  // ── Floating animation ──
+  const startFloatAnimation = useCallback((g: Graph, abortRef: { current: boolean }) => {
     const posMap = nodePositionsRef.current;
     posMap.clear();
-    destroyedRef.current = false;
 
     const doTick = () => {
-      if (destroyedRef.current || graphRef.current !== g) return;
+      if (abortRef.current || graphRef.current !== g) return;
       try {
         const allIds = Array.from(posMap.keys());
         if (allIds.length === 0) return;
@@ -224,7 +222,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
           p.x += p.vx; p.y += p.vy;
           updates.push({ id, style: { x: p.x, y: p.y } });
         }
-        if (updates.length > 0 && !destroyedRef.current && graphRef.current === g) {
+        if (updates.length > 0 && !abortRef.current && graphRef.current === g) {
           g.updateNodeData(updates);
         }
       } catch { /* ignore */ }
@@ -232,15 +230,16 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
 
     // Delay capture to let d3-force layout settle
     animTimeoutRef.current = window.setTimeout(() => {
-      if (destroyedRef.current || graphRef.current !== g) return;
+      if (abortRef.current || graphRef.current !== g) return;
       try {
         g.getNodeData().forEach((n: any) => {
           const pos = g.getElementPosition(n.id);
           if (pos) posMap.set(n.id, { x: pos[0], y: pos[1], vx: 0, vy: 0 });
         });
       } catch { /* ok */ }
-      // Start tick loop
-      animTimerRef.current = window.setInterval(doTick, 120);
+      if (!abortRef.current && graphRef.current === g) {
+        animTimerRef.current = window.setInterval(doTick, 120);
+      }
     }, 800);
   }, []);
 
@@ -249,13 +248,12 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     const c = containerRef.current;
     if (!c || !nodes.length) return;
     const dark = theme === "dark", W = c.clientWidth || 800, H = c.clientHeight || 500;
-    let aborted = false;
+    const abortRef = { current: false };
 
-    // Kill animation timers + mark destroyed
-    destroyedRef.current = true;
+    // Kill animation timers
     if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = 0; }
     if (animTimeoutRef.current) { clearTimeout(animTimeoutRef.current); animTimeoutRef.current = 0; }
-    // Destroy previous
+    // Destroy previous graph
     if (graphRef.current) { try { graphRef.current.destroy(); } catch { /* ok */ } graphRef.current = null; }
     while (c.firstChild) c.removeChild(c.firstChild);
 
@@ -338,13 +336,12 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
       });
 
       g.render().then(() => {
-        if (aborted) { try { g.destroy(); } catch { /* ok */ } return; }
+        if (abortRef.current) return;
         graphRef.current = g;
         if (onReady) onReady(g);
         applyHL(g, search, filter);
-        // Start floating animation
-        startFloatAnimation(g);
-      });
+        startFloatAnimation(g, abortRef);
+      }).catch(() => { /* render rejected — graph destroyed */ });
 
       // ── Events ──
       g.on("node:click", (evt: any) => {
@@ -383,8 +380,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
       window.addEventListener("keydown", onKey);
 
       return () => {
-        aborted = true;
-        destroyedRef.current = true;
+        abortRef.current = true;
         if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = 0; }
         if (animTimeoutRef.current) { clearTimeout(animTimeoutRef.current); animTimeoutRef.current = 0; }
         window.removeEventListener("keydown", onKey);
@@ -398,12 +394,12 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
   // ── Search/filter ──
   useEffect(() => {
     const g = graphRef.current;
-    if (g) applyHL(g, search, filter);
+    if (g) { try { applyHL(g, search, filter); } catch { /* graph may be mid-destroy */ } }
   }, [search, filter]);
 
   // ── Resize ──
   useEffect(() => {
-    const r = () => { const g = graphRef.current, c = containerRef.current; if (g && c) g.setSize(c.clientWidth, c.clientHeight); };
+    const r = () => { try { const g = graphRef.current, c = containerRef.current; if (g && c) g.setSize(c.clientWidth, c.clientHeight); } catch { /* ok */ } };
     window.addEventListener("resize", r);
     return () => window.removeEventListener("resize", r);
   }, []);
