@@ -28,13 +28,13 @@ function buildData(nodes:GNode[],edges:GEdge[]){
       const lbl=(n.label||"").length>20?(n.label||"").slice(0,18)+"…":(n.label||"");
       return{
         id:String(n.id),data:{label:n.label,group:n.group||"other",weight:n.weight||1,description:n.description||""},
-        style:{size:r*2,fill,stroke:dark?glow+"88":fill+"44",lineWidth:1.5,labelText:lbl,labelFill:dark?"#cbd5e1":"#334155",labelFontSize:10,labelPlacement:"bottom",labelOffsetY:r/2+6,cursor:"pointer"},
+        style:{size:r*2,fill,stroke:dark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.25)",lineWidth:dark?2:2.5,labelText:lbl,labelFill:dark?"#e2e8f0":"#1e293b",labelFontSize:10,labelPlacement:"bottom",labelOffsetY:r/2+6,cursor:"pointer"},
         states:["active","inactive","selected"],
       };
     }),
     edges:edges.map((e,i)=>({
       id:String(e.id||`e${i}`),source:String(e.source),target:String(e.target),
-      style:{stroke:dark?"rgba(148,163,184,0.20)":"rgba(71,85,105,0.25)",lineWidth:0.6+(e.weight||1)*0.12,endArrow:false},
+      style:{stroke:dark?"rgba(148,163,184,0.55)":"rgba(51,65,85,0.50)",lineWidth:0.8+(e.weight||1)*0.15,endArrow:false},
       states:["active","inactive"],
     })),
   };

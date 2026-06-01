@@ -252,7 +252,9 @@
       "Bash(node -e ' *)",
       "Bash(rm -rf node_modules/.vite)",
       "Bash(grep -E \"\\\\^$|\\\\.tsx\")",
-      "Bash(git revert *)"
+      "Bash(git revert *)",
+      "Bash(rm -rf node_modules/.vite dist)",
+      "Bash(nohup python3 tunnel.py)"
     ]
   }
 }
