@@ -45,8 +45,7 @@ function buildData(nodes:GNode[],edges:GEdge[],p:Palette){
           size:r*2,fill,stroke:fill+"44",lineWidth:isDark()?1.5:2,
           labelText:lbl,labelFill:p.label,labelFontSize:10,
           labelPlacement:"bottom",labelOffsetY:r/2+8,
-          shadowBlur:isDark()?8:4,shadowColor:isDark()?fill+"55":fill+"33",
-          cursor:"pointer",opacity:0.92,
+          cursor:"pointer",
         },
         states:["active","inactive","selected"],
       };
@@ -97,14 +96,14 @@ export default function G6GraphView({nodes,edges,search,filter,onNodeClick,onRea
         animation:true,background:"transparent",
         data:buildData(nodes,edges,p),
         layout:{type:"d3-force",preventOverlap:true,nodeSize:48,linkDistance:120,animate:true,alphaDecay:0.015,alphaMin:0.001,collideStrength:1.2,forceSimulationIterations:150},
-        behaviors:["drag-canvas","zoom-canvas",{type:"drag-element",enableTransient:true},{type:"hover-activate",degree:1,direction:"both"}],
+        behaviors:["drag-canvas","zoom-canvas",{type:"drag-element",enableTransient:true}],
         plugins:[{type:"minimap",size:[150,110],position:"right-bottom",
           style:{background:p.minimapBg,border:`1px solid ${p.minimapBorder}`,borderRadius:6}}],
         node:{type:"circle",
-          state:{active:{opacity:1,stroke:"#FFD700",lineWidth:3,shadowBlur:20,shadowColor:"#FFD700",labelFontSize:12},inactive:{opacity:dark?0.10:0.08,shadowBlur:0},selected:{stroke:"#FFD700",lineWidth:4,shadowBlur:24,shadowColor:"#FFD700",labelFontSize:14,labelFill:"#FFD700"}},
+          state:{active:{stroke:"#FFD700",lineWidth:3,labelFontSize:12},inactive:{opacity:dark?0.12:0.10},selected:{stroke:"#FFD700",lineWidth:4,labelFontSize:14,labelFill:"#FFD700"}},
         },
         edge:{type:"line",
-          state:{active:{stroke:"#FFD700",opacity:0.55,lineWidth:2},inactive:{opacity:dark?0.02:0.04}},
+          state:{active:{stroke:"#FFD700",lineWidth:2},inactive:{opacity:dark?0.04:0.06}},
         },
       });
       g.render().then(()=>{graphRef.current=g;if(onReady)onReady(g);applyHL(g,search,filter)});
