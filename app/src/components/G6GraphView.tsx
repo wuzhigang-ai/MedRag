@@ -193,54 +193,47 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     if (el) el.style.display = "none";
   }, []);
 
-  // ── Floating animation loop ──
+  // ── Floating animation — batch updateNodeData at ~15fps, 30 random nodes/tick ──
   const startFloatAnimation = useCallback((g: Graph) => {
-    // Initialize position tracking
     const posMap = nodePositionsRef.current;
     posMap.clear();
     try {
-      const nd = g.getNodeData();
-      nd.forEach((n: any) => {
+      g.getNodeData().forEach((n: any) => {
         const pos = g.getElementPosition(n.id);
-        if (pos) {
-          posMap.set(n.id, {
-            x: pos[0], y: pos[1],
-            vx: (Math.random() - 0.5) * 0.3,
-            vy: (Math.random() - 0.5) * 0.3,
-          });
-        }
+        if (pos) posMap.set(n.id, { x: pos[0], y: pos[1], vx: 0, vy: 0 });
       });
     } catch { /* ok */ }
 
-    let lastTime = performance.now();
-    const tick = (now: number) => {
-      const dt = Math.min(now - lastTime, 50); // cap at 50ms
-      lastTime = now;
+    const tick = () => {
+      if (!graphRef.current || graphRef.current !== g) return; // stop if graph changed
       try {
-        const nd = g.getNodeData();
-        const updates: Record<string, [number, number]> = {};
-        nd.forEach((n: any) => {
-          const p = posMap.get(n.id);
-          if (!p) return;
-          // Brownian-like gentle drift
-          p.vx += (Math.random() - 0.5) * 0.04;
-          p.vy += (Math.random() - 0.5) * 0.04;
-          // Dampen velocity
-          p.vx *= 0.95;
-          p.vy *= 0.95;
-          // Clamp velocity
-          const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-          if (speed > 0.8) { p.vx *= 0.8 / speed; p.vy *= 0.8 / speed; }
-          // Apply displacement
-          p.x += p.vx * (dt / 16);
-          p.y += p.vy * (dt / 16);
-          updates[n.id] = [p.x, p.y];
-        });
-        // Batch position updates
-        if (Object.keys(updates).length > 0) {
-          g.setElementPosition(updates);
+        const allIds = Array.from(posMap.keys());
+        if (allIds.length === 0) { animFrameRef.current = requestAnimationFrame(tick); return; }
+        // Shuffle and pick ~30 random nodes per tick
+        const batch: string[] = [];
+        const pool = [...allIds];
+        for (let i = 0; i < 30 && pool.length > 0; i++) {
+          const idx = Math.floor(Math.random() * pool.length);
+          batch.push(pool[idx]);
+          pool.splice(idx, 1);
         }
-      } catch { /* graph may be destroyed */ }
+        const updates: { id: string; style: { x: number; y: number } }[] = [];
+        for (const id of batch) {
+          const p = posMap.get(id);
+          if (!p) continue;
+          p.vx += (Math.random() - 0.5) * 0.06;
+          p.vy += (Math.random() - 0.5) * 0.06;
+          p.vx *= 0.92; p.vy *= 0.92;
+          const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+          if (speed > 1.2) { p.vx *= 1.2 / speed; p.vy *= 1.2 / speed; }
+          p.x += p.vx;
+          p.y += p.vy;
+          updates.push({ id, style: { x: p.x, y: p.y } });
+        }
+        if (updates.length > 0) {
+          try { g.updateNodeData(updates); } catch { /* ignore per-frame errors */ }
+        }
+      } catch { /* ignore per-frame errors */ }
       animFrameRef.current = requestAnimationFrame(tick);
     };
     animFrameRef.current = requestAnimationFrame(tick);
