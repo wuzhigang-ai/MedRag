@@ -24,8 +24,9 @@ function buildData(nodes:GNode[],edges:GEdge[]){
   const dark=isDark();
   return{
     nodes:nodes.map(n=>{
-      const[fill,glow]=nc(n.group||"other");const r=Math.min(30,10+(n.weight||1)*2);
+      const r=Math.min(30,10+(n.weight||1)*2);
       const lbl=(n.label||"").length>20?(n.label||"").slice(0,18)+"…":(n.label||"");
+      const fill=dark?"#5C4033":"#3E2723";
       return{
         id:String(n.id),data:{label:n.label,group:n.group||"other",weight:n.weight||1,description:n.description||""},
         style:{size:r*2,fill,stroke:dark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.25)",lineWidth:dark?2:2.5,labelText:lbl,labelFill:dark?"#e2e8f0":"#1e293b",labelFontSize:10,labelPlacement:"bottom",labelOffsetY:r/2+6,cursor:"pointer"},

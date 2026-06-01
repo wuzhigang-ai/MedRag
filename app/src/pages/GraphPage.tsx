@@ -7,7 +7,7 @@ import { trpc } from "@/providers/trpc";
 import { FiSearch, FiZoomIn, FiZoomOut, FiMaximize, FiDownload, FiFilter, FiSliders, FiInfo, FiX, FiRefreshCw } from "react-icons/fi";
 import G6GraphView from "@/components/G6GraphView";
 
-const ntColors: Record<string,string> = { disease:"#E84D4D",drug:"#3B82F6",symptom:"#F07850",treatment:"#10B981",clinical_indicator:"#8B5CF6",anatomy:"#06B6D4",procedure:"#EC4899",gene:"#7C3AED",pathogen:"#DC2626",other:"#64748B",check:"#8B5CF6",exam:"#8B5CF6",metric:"#3B82F6",guideline:"#D4A853" };
+const ntColors: Record<string,string> = { disease:"#5C4033",drug:"#5C4033",symptom:"#5C4033",treatment:"#5C4033",clinical_indicator:"#5C4033",anatomy:"#5C4033",procedure:"#5C4033",gene:"#5C4033",pathogen:"#5C4033",other:"#5C4033",check:"#5C4033",exam:"#5C4033",metric:"#5C4033",guideline:"#5C4033" };
 const ntLabels: Record<string,string> = { disease:"疾病",drug:"药物",symptom:"症状",treatment:"治疗",clinical_indicator:"指标",anatomy:"解剖",procedure:"手术",gene:"基因",pathogen:"病原体",other:"其他",check:"检查",exam:"检查",metric:"指标",guideline:"指南" };
 const rtLabels: Record<string,string> = { treats:"治疗",causes:"导致",associated_with:"相关",contraindicated:"禁忌",diagnoses:"诊断",prevents:"预防",symptom_of:"症状",interacts_with:"相互作用",related_to:"关联" };
 
