@@ -7,7 +7,6 @@ import { useState, useCallback, useRef } from "react";
 import { trpc } from "@/providers/trpc";
 import { FiSearch, FiZoomIn, FiZoomOut, FiMaximize, FiDownload, FiFilter, FiSliders, FiInfo } from "react-icons/fi";
 import G6GraphView from "@/components/G6GraphView";
-import { Graph } from "@antv/g6";
 
 const ntColors: Record<string,string> = { disease:"#E84D4D",drug:"#3B82F6",symptom:"#F07850",treatment:"#10B981",clinical_indicator:"#8B5CF6",anatomy:"#06B6D4",procedure:"#EC4899",gene:"#7C3AED",pathogen:"#DC2626",other:"#64748B",check:"#8B5CF6",exam:"#8B5CF6",metric:"#3B82F6",guideline:"#D4A853" };
 const ntLabels: Record<string,string> = { disease:"疾病",drug:"药物",symptom:"症状",treatment:"治疗",clinical_indicator:"指标",anatomy:"解剖",procedure:"手术",gene:"基因",pathogen:"病原体",other:"其他",check:"检查",exam:"检查",metric:"指标",guideline:"指南" };
@@ -16,7 +15,7 @@ const rtLabels: Record<string,string> = { treats:"治疗",causes:"导致",associ
 export default function GraphPage() {
   const { data: gd } = trpc.knowledge.getGraph.useQuery();
   const { data: stats } = trpc.knowledge.stats.useQuery();
-  const graphRef = useRef<Graph | null>(null);
+  const graphRef = useRef<any>(null);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
@@ -29,7 +28,7 @@ export default function GraphPage() {
   const nodeTypeStats: Record<string,number> = {};
   nodes.forEach((n:any) => { nodeTypeStats[n.group||n.nodeType] = (nodeTypeStats[n.group||n.nodeType]||0)+1; });
 
-  const handleGraphReady = useCallback((g: Graph) => { graphRef.current = g; }, []);
+  const handleGraphReady = useCallback((g: any) => { graphRef.current = g; }, []);
 
   const zoomIn = () => { try { const g = graphRef.current; if (g) { const z = g.getZoom(); g.zoomTo(z * 1.3); } } catch {} };
   const zoomOut = () => { try { const g = graphRef.current; if (g) { const z = g.getZoom(); g.zoomTo(z / 1.3); } } catch {} };
