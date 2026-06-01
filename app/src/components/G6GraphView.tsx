@@ -64,32 +64,35 @@ export default function G6GraphView({nodes,edges,search,filter,onNodeClick,onRea
     return()=>{obs.disconnect();window.matchMedia("(prefers-color-scheme:dark)").removeEventListener("change",check)};
   },[]);
 
-  // Single useEffect — init + data — no race condition
+  // Single useEffect — init + data with abort guard
   useEffect(()=>{
     const c=containerRef.current;if(!c||!nodes.length)return;
     const dark=theme==="dark",W=c.clientWidth||800,H=c.clientHeight||500;
+    let aborted=false;
 
+    // Destroy previous
     if(graphRef.current){try{graphRef.current.destroy()}catch{};graphRef.current=null}
     while(c.firstChild)c.removeChild(c.firstChild);
 
     try{
       const g=new Graph({
-        container:c,width:W,height:H,autoFit:"view",padding:[80,80,80,80],animation:true,background:"transparent",
+        container:c,width:W,height:H,autoFit:"view",padding:[80,80,80,80],animation:false,background:"transparent",
         data:buildData(nodes,edges),
         layout:{type:"d3-force",preventOverlap:true,nodeSize:48,linkDistance:120,animate:true,alphaDecay:0.015,alphaMin:0.001,collideStrength:1.2,forceSimulationIterations:150},
         behaviors:["drag-canvas","zoom-canvas",{type:"drag-element",enableTransient:true},{type:"hover-activate",degree:1,direction:"both"}],
         plugins:[{type:"minimap",size:[150,110],position:"right-bottom",style:{background:dark?"#1e293b":"#f8fafc",border:`1px solid ${dark?"#334155":"#e2e8f0"}`,borderRadius:6}}],
         node:{type:"circle",
+          style:{fill:dark?"#5C4033":"#3E2723",stroke:dark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.25)",lineWidth:dark?2:2.5,cursor:"pointer"},
           state:{active:{stroke:"#FFD700",lineWidth:3,labelFontSize:12},inactive:{opacity:dark?0.10:0.08},selected:{stroke:"#FFD700",lineWidth:4,labelFontSize:14,labelFill:"#FFD700"}},
         },
         edge:{type:"line",style:{stroke:dark?"rgba(239,68,68,0.65)":"rgba(220,38,38,0.55)",lineWidth:0.8,endArrow:false},state:{active:{stroke:"#FFD700",lineWidth:2},inactive:{opacity:dark?0.04:0.06}}},
       });
-      g.render().then(()=>{graphRef.current=g;if(onReady)onReady(g);applyHL(g,search,filter)});
+      g.render().then(()=>{if(!aborted){graphRef.current=g;if(onReady)onReady(g);applyHL(g,search,filter)}});
       g.on("node:click",(evt:any)=>{const nid=evt?.target?.id;if(nid&&onNodeClick){const f=nodes.find(n=>String(n.id)===nid);if(f){g.getNodeData().forEach(nd=>g.setElementState({[nd.id]:nd.id===nid?"selected":{}}));onNodeClick(f)}}});
       g.on("canvas:click",()=>g.getNodeData().forEach(nd=>g.setElementState({[nd.id]:{}})));
       const onKey=(e:KeyboardEvent)=>{if(e.key==="f"&&!e.ctrlKey&&!e.metaKey){e.preventDefault();try{g.fitView({padding:80})}catch{}}};
       window.addEventListener("keydown",onKey);
-      return()=>{window.removeEventListener("keydown",onKey);try{g.destroy()}catch{};graphRef.current=null};
+      return()=>{aborted=true;window.removeEventListener("keydown",onKey);try{g.destroy()}catch{};graphRef.current=null};
     }catch(e){console.error("G6:",e)}
   },[nodes.length,edges.length,theme]);
 
