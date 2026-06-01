@@ -297,15 +297,19 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
           try {
             const allIds = Array.from(posMap.keys());
             if (allIds.length === 0) return;
-            // Update ALL nodes every tick
+            const batchSize = Math.min(60, allIds.length);
+            const pool = [...allIds]; const batch: string[] = [];
+            for (let i = 0; i < batchSize && pool.length > 0; i++) {
+              batch.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+            }
             const updates: { id: string; style: { x: number; y: number } }[] = [];
-            for (const id of allIds) {
+            for (const id of batch) {
               const p = posMap.get(id); if (!p) continue;
-              p.vx += (Math.random() - 0.5) * 6;
-              p.vy += (Math.random() - 0.5) * 6;
-              p.vx *= 0.82; p.vy *= 0.82;
+              p.vx += (Math.random() - 0.5) * 1.5;
+              p.vy += (Math.random() - 0.5) * 1.5;
+              p.vx *= 0.90; p.vy *= 0.90;
               const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-              if (spd > 15) { p.vx *= 15 / spd; p.vy *= 15 / spd; }
+              if (spd > 3) { p.vx *= 3 / spd; p.vy *= 3 / spd; }
               p.x += p.vx; p.y += p.vy;
               updates.push({ id, style: { x: p.x, y: p.y } });
             }
@@ -314,7 +318,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
               try { graph.draw(); } catch { /* ok */ }
             }
           } catch { /* ok */ }
-        }, 50);
+        }, 80);
       }, 1500);
     }
 
