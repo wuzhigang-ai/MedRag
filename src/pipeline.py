@@ -546,63 +546,91 @@ class MedicalRAGPipeline:
                 })
         return results
 
+    def _get_doc_list(self) -> List[str]:
+        """Extract unique document names from sources."""
+        return sorted(set(s.split(" [p.")[0] for s in self.sources if " [p." in s))
+
+    def _classify_query_to_docs(self, query: str) -> List[str]:
+        """Use LLM with few-shot examples to classify which documents are relevant."""
+        doc_list = self._get_doc_list()
+        if len(doc_list) <= 1:
+            return doc_list
+
+        doc_names = "\n".join(f"- {d}" for d in doc_list)
+
+        prompt = f"""你是一个医学文献检索分类器。根据用户查询，判断应从哪些文档中检索。
+只输出匹配的文档名称（可多个，用分号分隔），不确定则输出 "ALL"。
+
+可用文档：
+{doc_names}
+
+Few-shot 示例：
+查询：Stanford B型主动脉夹层的治疗
+输出：Stanford+B+型主动脉夹层诊断和治疗中国专家共识（2022版）(1)
+
+查询：肠道DIE的印第安头饰征在超声上呈什么形态？为什么DIE很少累及肠黏膜层？
+输出：子宫内膜异位症超声评估中国专家共识
+
+查询：子宫内膜异位症的超声评估方法
+输出：子宫内膜异位症超声评估中国专家共识
+
+查询：丙酸血症的肝移植治疗
+输出：shchelochkov2019;todo1992
+
+查询：尿素循环酶缺陷与肝移植
+输出：todo1992
+
+查询：主动脉夹层腔内修复术的适应证
+输出：Stanford+B+型主动脉夹层诊断和治疗中国专家共识（2022版）(1)
+
+查询：COVID-19疫苗的免疫原性
+输出：covid_vaccine_rct_2023
+
+现在判断以下查询应检索哪些文档：{query}"""
+
+        try:
+            result = self.resilience_deepseek.call_text_sync(
+                prompt, "你是医学文献检索分类器。只输出文档名称，用分号分隔。",
+                model=PROVIDERS["deepseek_official"]["model"],
+                timeout=10.0, max_tokens=200,
+            )
+            if result.success and result.data:
+                classified = [d.strip() for d in result.data.strip().split(";")]
+                matched = [d for d in classified if d in doc_list]
+                if matched:
+                    logger.info(f"Query classified to docs: {matched}")
+                    return matched
+        except Exception as e:
+            logger.warning(f"Doc classification failed, falling back to ALL: {e}")
+
+        return []  # empty = use ALL docs, no filtering
+
     def _doc_aware_retrieve(self, query: str, top_k: int = 10, min_score: float = 0.3) -> List[Dict]:
-        """Document-aware retrieval: boost results matching query document names."""
+        """LLM-classified document-aware retrieval with few-shot examples."""
         results = self._faiss_retrieve(query, top_k=max(top_k * 2, 20), min_score=0.2)
         if not results:
             return []
 
-        # Extract potential doc names from query
-        query_lower = query.lower()
-        doc_boost_keywords = {
-            "stanford": "Stanford+B+型主动脉夹层",
-            "tbadtbad": "Stanford+B+型主动脉夹层",
-            "主动脉": "Stanford+B+型主动脉夹层",
-            "seyfarth": "seyfarth2008",
-            "shchelochkov": "shchelochkov2019",
-            "propionic": "shchelochkov2019",
-            "丙酸": "shchelochkov2019",
-            "todo": "todo1992",
-            "肝移植": "todo1992",
-            "urea": "todo1992",
-            "子宫内膜": "子宫内膜异位症超声评估中国专家共识",
-            "内异症": "子宫内膜异位症超声评估中国专家共识",
-            "内异": "子宫内膜异位症超声评估中国专家共识",
-            "子宫内膜异位": "子宫内膜异位症超声评估中国专家共识",
-            "endometriosis": "子宫内膜异位症超声评估中国专家共识",
-            "印第安": "子宫内膜异位症超声评估中国专家共识",
-            "头饰": "子宫内膜异位症超声评估中国专家共识",
-            "肠道": "子宫内膜异位症超声评估中国专家共识",
-        }
+        target_docs = self._classify_query_to_docs(query)
 
-        boosted_doc = None
-        for kw, doc_name in doc_boost_keywords.items():
-            if kw in query_lower:
-                boosted_doc = doc_name
-                break
-
-        # Boost results matching the target document, penalize others
-        if boosted_doc:
+        if target_docs and len(target_docs) > 0:
             for r in results:
-                if boosted_doc in r["source"]:
-                    r["score"] = min(1.0, r["score"] * 1.3)  # 30% boost
+                r_doc = r["source"].split(" [p.")[0]
+                if any(td in r_doc or r_doc in td for td in target_docs):
+                    r["score"] = min(1.0, r["score"] * 1.3)
                 else:
-                    r["score"] = r["score"] * 0.2  # 80% penalty for non-matching docs
+                    r["score"] = r["score"] * 0.05
             results.sort(key=lambda x: x["score"], reverse=True)
 
-        # Cross-document suppression: if top result dominates, filter out low-score docs
-        if len(results) >= 2 and results[0]["score"] > 0.5:
-            top_doc = results[0]["source"].split(" [")[0]
-            filtered = []
-            for r in results:
-                r_doc = r["source"].split(" [")[0]
-                if r_doc == top_doc or r["score"] > results[0]["score"] * 0.85:
-                    filtered.append(r)
-                elif r["score"] < 0.35:
-                    continue  # drop very low scoring
-                else:
-                    filtered.append(r)
-            results = filtered
+            # Filter: keep top doc's results + any high-score stragglers
+            if len(results) >= 2 and results[0]["score"] > 0.5:
+                top_doc = results[0]["source"].split(" [p.")[0]
+                filtered = []
+                for r in results:
+                    r_doc = r["source"].split(" [p.")[0]
+                    if r_doc == top_doc or r["score"] > results[0]["score"] * 0.85:
+                        filtered.append(r)
+                results = filtered
 
         return [r for r in results if r["score"] > min_score][:top_k]
 
