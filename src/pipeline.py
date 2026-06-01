@@ -619,18 +619,12 @@ Few-shot 示例：
                 if any(td in r_doc or r_doc in td for td in target_docs):
                     r["score"] = min(1.0, r["score"] * 1.3)
                 else:
-                    r["score"] = r["score"] * 0.05
+                    r["score"] = r["score"] * 0.01  # 99% penalty for non-matching docs
             results.sort(key=lambda x: x["score"], reverse=True)
 
-            # Filter: keep top doc's results + any high-score stragglers
-            if len(results) >= 2 and results[0]["score"] > 0.5:
-                top_doc = results[0]["source"].split(" [p.")[0]
-                filtered = []
-                for r in results:
-                    r_doc = r["source"].split(" [p.")[0]
-                    if r_doc == top_doc or r["score"] > results[0]["score"] * 0.85:
-                        filtered.append(r)
-                results = filtered
+            # Strict filter: when classification is clear, only keep target docs
+            top_doc = results[0]["source"].split(" [p.")[0]
+            results = [r for r in results if r["source"].split(" [p.")[0] == top_doc]
 
         return [r for r in results if r["score"] > min_score][:top_k]
 
