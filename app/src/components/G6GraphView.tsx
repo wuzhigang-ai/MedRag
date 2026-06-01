@@ -34,7 +34,7 @@ function buildData(nodes:GNode[],edges:GEdge[]){
     }),
     edges:edges.map((e,i)=>({
       id:String(e.id||`e${i}`),source:String(e.source),target:String(e.target),
-      style:{stroke:dark?"rgba(148,163,184,0.55)":"rgba(51,65,85,0.50)",lineWidth:0.8+(e.weight||1)*0.15,endArrow:false},
+      style:{stroke:dark?"rgba(239,68,68,0.65)":"rgba(220,38,38,0.55)",lineWidth:0.8+(e.weight||1)*0.15,endArrow:false},
       states:["active","inactive"],
     })),
   };
