@@ -193,50 +193,55 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     if (el) el.style.display = "none";
   }, []);
 
-  // ── Floating animation — batch updateNodeData at ~15fps, 30 random nodes/tick ──
+  // ── Floating animation — setInterval at 200ms (5fps), 15 random nodes/tick ──
   const startFloatAnimation = useCallback((g: Graph) => {
     const posMap = nodePositionsRef.current;
     posMap.clear();
-    try {
-      g.getNodeData().forEach((n: any) => {
-        const pos = g.getElementPosition(n.id);
-        if (pos) posMap.set(n.id, { x: pos[0], y: pos[1], vx: 0, vy: 0 });
-      });
-    } catch { /* ok */ }
-
-    const tick = () => {
-      if (!graphRef.current || graphRef.current !== g) return; // stop if graph changed
+    // Short delay to let layout settle before capturing positions
+    setTimeout(() => {
+      if (!graphRef.current || graphRef.current !== g) return;
       try {
-        const allIds = Array.from(posMap.keys());
-        if (allIds.length === 0) { animFrameRef.current = requestAnimationFrame(tick); return; }
-        // Shuffle and pick ~30 random nodes per tick
-        const batch: string[] = [];
-        const pool = [...allIds];
-        for (let i = 0; i < 30 && pool.length > 0; i++) {
-          const idx = Math.floor(Math.random() * pool.length);
-          batch.push(pool[idx]);
-          pool.splice(idx, 1);
-        }
-        const updates: { id: string; style: { x: number; y: number } }[] = [];
-        for (const id of batch) {
-          const p = posMap.get(id);
-          if (!p) continue;
-          p.vx += (Math.random() - 0.5) * 0.06;
-          p.vy += (Math.random() - 0.5) * 0.06;
-          p.vx *= 0.92; p.vy *= 0.92;
-          const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-          if (speed > 1.2) { p.vx *= 1.2 / speed; p.vy *= 1.2 / speed; }
-          p.x += p.vx;
-          p.y += p.vy;
-          updates.push({ id, style: { x: p.x, y: p.y } });
-        }
-        if (updates.length > 0) {
-          try { g.updateNodeData(updates); } catch { /* ignore per-frame errors */ }
-        }
-      } catch { /* ignore per-frame errors */ }
-      animFrameRef.current = requestAnimationFrame(tick);
-    };
-    animFrameRef.current = requestAnimationFrame(tick);
+        g.getNodeData().forEach((n: any) => {
+          const pos = g.getElementPosition(n.id);
+          if (pos) posMap.set(n.id, { x: pos[0], y: pos[1], vx: 0, vy: 0 });
+        });
+      } catch { /* ok */ }
+
+      const interval = setInterval(() => {
+        if (!graphRef.current || graphRef.current !== g) { clearInterval(interval); return; }
+        try {
+          const allIds = Array.from(posMap.keys());
+          if (allIds.length === 0) return;
+          // Pick 15 random nodes
+          const batch: string[] = [];
+          const pool = [...allIds];
+          for (let i = 0; i < 15 && pool.length > 0; i++) {
+            const idx = Math.floor(Math.random() * pool.length);
+            batch.push(pool[idx]);
+            pool.splice(idx, 1);
+          }
+          const updates: { id: string; style: { x: number; y: number } }[] = [];
+          for (const id of batch) {
+            const p = posMap.get(id);
+            if (!p) continue;
+            p.vx += (Math.random() - 0.5) * 0.08;
+            p.vy += (Math.random() - 0.5) * 0.08;
+            p.vx *= 0.88; p.vy *= 0.88;
+            const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+            if (speed > 1.5) { p.vx *= 1.5 / speed; p.vy *= 1.5 / speed; }
+            p.x += p.vx;
+            p.y += p.vy;
+            updates.push({ id, style: { x: p.x, y: p.y } });
+          }
+          if (updates.length > 0) {
+            try { g.updateNodeData(updates); } catch { /* ok */ }
+          }
+        } catch { /* ok */ }
+      }, 200);
+
+      // Store interval ID in animFrameRef for cleanup
+      animFrameRef.current = interval as unknown as number;
+    }, 500);
   }, []);
 
   // ── Main graph effect ──
@@ -247,7 +252,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     let aborted = false;
 
     // Kill animation loop
-    if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = 0; }
+    if (animFrameRef.current) { clearInterval(animFrameRef.current); animFrameRef.current = 0; }
     // Destroy previous
     if (graphRef.current) { try { graphRef.current.destroy(); } catch { /* ok */ } graphRef.current = null; }
     while (c.firstChild) c.removeChild(c.firstChild);
@@ -377,7 +382,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
 
       return () => {
         aborted = true;
-        if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = 0; }
+        if (animFrameRef.current) { clearInterval(animFrameRef.current); animFrameRef.current = 0; }
         window.removeEventListener("keydown", onKey);
         try { g.destroy(); } catch { /* ok */ }
         graphRef.current = null;
