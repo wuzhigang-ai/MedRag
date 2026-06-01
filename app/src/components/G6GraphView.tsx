@@ -144,7 +144,9 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Graph | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
-  const animFrameRef = useRef<number>(0);
+  const animTimerRef = useRef<number>(0);
+  const animTimeoutRef = useRef<number>(0);
+  const destroyedRef = useRef(false);
   const nodePositionsRef = useRef<Map<string, { x: number; y: number; vx: number; vy: number }>>(new Map());
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
 
@@ -193,53 +195,52 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     if (el) el.style.display = "none";
   }, []);
 
-  // ── Floating animation — setInterval at 120ms (~8fps), 25 random nodes/tick ──
+  // ── Floating animation — with proper destroy guards ──
   const startFloatAnimation = useCallback((g: Graph) => {
     const posMap = nodePositionsRef.current;
     posMap.clear();
-    // Delay to let d3-force layout settle before capturing positions
-    setTimeout(() => {
-      if (!graphRef.current || graphRef.current !== g) return;
+    destroyedRef.current = false;
+
+    const doTick = () => {
+      if (destroyedRef.current || graphRef.current !== g) return;
+      try {
+        const allIds = Array.from(posMap.keys());
+        if (allIds.length === 0) return;
+        const batchSize = Math.min(25, allIds.length);
+        const pool = [...allIds];
+        const batch: string[] = [];
+        for (let i = 0; i < batchSize && pool.length > 0; i++) {
+          batch.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+        }
+        const updates: { id: string; style: { x: number; y: number } }[] = [];
+        for (const id of batch) {
+          const p = posMap.get(id);
+          if (!p) continue;
+          p.vx += (Math.random() - 0.5) * 0.15;
+          p.vy += (Math.random() - 0.5) * 0.15;
+          p.vx *= 0.85; p.vy *= 0.85;
+          const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+          if (spd > 2.0) { p.vx *= 2.0 / spd; p.vy *= 2.0 / spd; }
+          p.x += p.vx; p.y += p.vy;
+          updates.push({ id, style: { x: p.x, y: p.y } });
+        }
+        if (updates.length > 0 && !destroyedRef.current && graphRef.current === g) {
+          g.updateNodeData(updates);
+        }
+      } catch { /* ignore */ }
+    };
+
+    // Delay capture to let d3-force layout settle
+    animTimeoutRef.current = window.setTimeout(() => {
+      if (destroyedRef.current || graphRef.current !== g) return;
       try {
         g.getNodeData().forEach((n: any) => {
           const pos = g.getElementPosition(n.id);
           if (pos) posMap.set(n.id, { x: pos[0], y: pos[1], vx: 0, vy: 0 });
         });
       } catch { /* ok */ }
-
-      const interval = setInterval(() => {
-        if (!graphRef.current || graphRef.current !== g) { clearInterval(interval); return; }
-        try {
-          const allIds = Array.from(posMap.keys());
-          if (allIds.length === 0) return;
-          const batchSize = Math.min(25, allIds.length);
-          const batch: string[] = [];
-          const pool = [...allIds];
-          for (let i = 0; i < batchSize && pool.length > 0; i++) {
-            const idx = Math.floor(Math.random() * pool.length);
-            batch.push(pool[idx]);
-            pool.splice(idx, 1);
-          }
-          const updates: { id: string; style: { x: number; y: number } }[] = [];
-          for (const id of batch) {
-            const p = posMap.get(id);
-            if (!p) continue;
-            p.vx += (Math.random() - 0.5) * 0.15;
-            p.vy += (Math.random() - 0.5) * 0.15;
-            p.vx *= 0.85; p.vy *= 0.85;
-            const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-            if (speed > 2.0) { p.vx *= 2.0 / speed; p.vy *= 2.0 / speed; }
-            p.x += p.vx;
-            p.y += p.vy;
-            updates.push({ id, style: { x: p.x, y: p.y } });
-          }
-          if (updates.length > 0) {
-            try { g.updateNodeData(updates); } catch { /* ok */ }
-          }
-        } catch { /* ok */ }
-      }, 120);
-
-      animFrameRef.current = interval as unknown as number;
+      // Start tick loop
+      animTimerRef.current = window.setInterval(doTick, 120);
     }, 800);
   }, []);
 
@@ -250,8 +251,10 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     const dark = theme === "dark", W = c.clientWidth || 800, H = c.clientHeight || 500;
     let aborted = false;
 
-    // Kill animation loop
-    if (animFrameRef.current) { clearInterval(animFrameRef.current); animFrameRef.current = 0; }
+    // Kill animation timers + mark destroyed
+    destroyedRef.current = true;
+    if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = 0; }
+    if (animTimeoutRef.current) { clearTimeout(animTimeoutRef.current); animTimeoutRef.current = 0; }
     // Destroy previous
     if (graphRef.current) { try { graphRef.current.destroy(); } catch { /* ok */ } graphRef.current = null; }
     while (c.firstChild) c.removeChild(c.firstChild);
@@ -381,7 +384,9 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
 
       return () => {
         aborted = true;
-        if (animFrameRef.current) { clearInterval(animFrameRef.current); animFrameRef.current = 0; }
+        destroyedRef.current = true;
+        if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = 0; }
+        if (animTimeoutRef.current) { clearTimeout(animTimeoutRef.current); animTimeoutRef.current = 0; }
         window.removeEventListener("keydown", onKey);
         try { g.destroy(); } catch { /* ok */ }
         graphRef.current = null;
