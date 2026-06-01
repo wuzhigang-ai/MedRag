@@ -563,6 +563,7 @@ export default function ParsingPage() {
                       <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
                         <span title={destiny.desc} style={{ fontSize: 10, fontWeight: 500, color: destiny.color, display: "inline-flex", alignItems: "center", gap: 3, cursor: "default" }}>{destiny.icon}{destiny.label}</span>
                       </td>
+                      <td style={{ padding: "7px 8px", color: "var(--tx-500)", fontSize: 10, whiteSpace: "nowrap", fontWeight: 500 }}>{userName}</td>
                       <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
                         <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 7px", borderRadius: 100, background: st?.bg, color: st?.color, display: "inline-flex", alignItems: "center", gap: 3 }}>{st?.icon}{st?.label}</span>
                       </td>
