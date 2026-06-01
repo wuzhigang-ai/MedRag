@@ -13,37 +13,40 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Graph } from "@antv/g6";
 
-// ═══ Medical Entity Color Palette — High Brightness ═══
+// ═══ Medical Entity Color Palette — Extreme Fluorescent Brightness ═══
+// Dark fills (df): near-neon against #080E1A background
+// Light fills (f): saturated against #F0F4F8 background
+// All strokes: white for maximum visibility
 const NC: Record<string, { f: string; s: string; df: string; ds: string }> = {
-  disease:    { f: "#FF5252", s: "#FF1744", df: "#FF8A80", ds: "#FF5252" },
-  drug:       { f: "#448AFF", s: "#2979FF", df: "#82B1FF", ds: "#448AFF" },
-  symptom:    { f: "#FF6E40", s: "#FF3D00", df: "#FF9E80", ds: "#FF6E40" },
-  treatment:  { f: "#00E676", s: "#00C853", df: "#69F0AE", ds: "#00E676" },
-  check:      { f: "#B388FF", s: "#7C4DFF", df: "#B388FF", ds: "#7C4DFF" },
-  exam:       { f: "#B388FF", s: "#7C4DFF", df: "#B388FF", ds: "#7C4DFF" },
-  clinical_indicator: { f: "#7C4DFF", s: "#651FFF", df: "#B388FF", ds: "#7C4DFF" },
-  anatomy:    { f: "#00E5FF", s: "#00B8D4", df: "#18FFFF", ds: "#00E5FF" },
-  procedure:  { f: "#FF4081", s: "#F50057", df: "#FF80AB", ds: "#FF4081" },
-  gene:       { f: "#651FFF", s: "#651FFF", df: "#B388FF", ds: "#7C4DFF" },
-  pathogen:   { f: "#FF1744", s: "#D50000", df: "#FF5252", ds: "#FF1744" },
-  guideline:  { f: "#FFD740", s: "#FFC400", df: "#FFE57F", ds: "#FFD740" },
-  metric:     { f: "#448AFF", s: "#2979FF", df: "#82B1FF", ds: "#448AFF" },
-  other:      { f: "#90A4AE", s: "#78909C", df: "#B0BEC5", ds: "#90A4AE" },
+  disease:    { f: "#FF2222", s: "#FFFFFF", df: "#FF4444", ds: "#FFFFFF" },
+  drug:       { f: "#2277FF", s: "#FFFFFF", df: "#4499FF", ds: "#FFFFFF" },
+  symptom:    { f: "#FF5500", s: "#FFFFFF", df: "#FF7722", ds: "#FFFFFF" },
+  treatment:  { f: "#00DD44", s: "#FFFFFF", df: "#22FF66", ds: "#FFFFFF" },
+  check:      { f: "#9944FF", s: "#FFFFFF", df: "#BB66FF", ds: "#FFFFFF" },
+  exam:       { f: "#9944FF", s: "#FFFFFF", df: "#BB66FF", ds: "#FFFFFF" },
+  clinical_indicator: { f: "#8833FF", s: "#FFFFFF", df: "#AA55FF", ds: "#FFFFFF" },
+  anatomy:    { f: "#00CCDD", s: "#FFFFFF", df: "#22EEFF", ds: "#FFFFFF" },
+  procedure:  { f: "#FF2288", s: "#FFFFFF", df: "#FF44AA", ds: "#FFFFFF" },
+  gene:       { f: "#7722FF", s: "#FFFFFF", df: "#9944FF", ds: "#FFFFFF" },
+  pathogen:   { f: "#FF0000", s: "#FFFFFF", df: "#FF2222", ds: "#FFFFFF" },
+  guideline:  { f: "#FFCC00", s: "#FFFFFF", df: "#FFEE33", ds: "#FFFFFF" },
+  metric:     { f: "#2277FF", s: "#FFFFFF", df: "#4499FF", ds: "#FFFFFF" },
+  other:      { f: "#8899AA", s: "#FFFFFF", df: "#AABBCC", ds: "#FFFFFF" },
 };
 
-// ═══ Edge Relation Color Palette — High Visibility ═══
+// ═══ Edge Colors — Fully Opaque, Maximum Brightness ═══
 const EC: Record<string, { l: string; d: string }> = {
-  treats:          { l: "rgba(0,230,118,0.85)",   d: "rgba(105,240,174,0.90)" },
-  causes:          { l: "rgba(255,23,68,0.80)",    d: "rgba(255,82,82,0.85)" },
-  associated_with: { l: "rgba(68,138,255,0.75)",   d: "rgba(130,177,255,0.80)" },
-  contraindicated: { l: "rgba(255,61,0,0.80)",     d: "rgba(255,110,64,0.85)" },
-  diagnoses:       { l: "rgba(124,77,255,0.80)",   d: "rgba(179,136,255,0.85)" },
-  prevents:        { l: "rgba(0,229,255,0.80)",    d: "rgba(24,255,255,0.85)" },
-  symptom_of:      { l: "rgba(255,110,64,0.80)",   d: "rgba(255,158,128,0.85)" },
-  interacts_with:  { l: "rgba(255,64,129,0.80)",   d: "rgba(255,128,171,0.85)" },
-  related_to:      { l: "rgba(144,164,174,0.70)",  d: "rgba(176,190,197,0.75)" },
+  treats:          { l: "#00CC44", d: "#44FF88" },
+  causes:          { l: "#FF2222", d: "#FF5555" },
+  associated_with: { l: "#3388FF", d: "#66AAFF" },
+  contraindicated: { l: "#FF4400", d: "#FF7733" },
+  diagnoses:       { l: "#8833FF", d: "#AA66FF" },
+  prevents:        { l: "#00CCDD", d: "#44EEFF" },
+  symptom_of:      { l: "#FF6622", d: "#FF8855" },
+  interacts_with:  { l: "#FF1177", d: "#FF4499" },
+  related_to:      { l: "#8899AA", d: "#AABBCC" },
 };
-const EDGE_DEFAULT = { l: "rgba(144,164,174,0.65)", d: "rgba(176,190,197,0.70)" };
+const EDGE_DEFAULT = { l: "#8899AA", d: "#AABBCC" };
 
 function nc(g: string) { return NC[g] || NC.other; }
 function ec(r: string, dark: boolean) { const c = EC[r] || EDGE_DEFAULT; return dark ? c.d : c.l; }
@@ -67,7 +70,7 @@ function buildData(nodes: GNode[], edges: GEdge[], dark: boolean) {
       const c = nc(n.group || "other");
       const w = n.weight || 1;
       // Size: 14–48px radius, proportional to sqrt(weight / maxWeight)
-      const r = 14 + Math.sqrt(w / maxW) * 34;
+      const r = 16 + Math.sqrt(w / maxW) * 36;
       const lbl = (n.label || "").length > 22 ? (n.label || "").slice(0, 20) + "…" : (n.label || "");
       return {
         id: String(n.id),
@@ -75,17 +78,17 @@ function buildData(nodes: GNode[], edges: GEdge[], dark: boolean) {
         style: {
           size: r * 2,
           fill: dark ? c.df : c.f,
-          stroke: dark ? c.ds : c.s,
-          lineWidth: dark ? 3 : 3.5,
+          stroke: dark ? "#FFFFFF" : c.s,
+          lineWidth: dark ? 3.5 : 4,
           labelText: lbl,
-          labelFill: dark ? "#FFFFFF" : "#0B1628",
-          labelFontSize: 11,
-          labelFontWeight: 600,
+          labelFill: dark ? "#FFFFFF" : "#000000",
+          labelFontSize: 12,
+          labelFontWeight: 700,
           labelPlacement: "bottom",
           labelOffsetY: r / 2 + 6,
           cursor: "pointer",
           shadowColor: dark ? c.df : c.f,
-          shadowBlur: 12,
+          shadowBlur: dark ? 25 : 18,
           shadowOffsetX: 0,
           shadowOffsetY: 0,
         },
@@ -99,7 +102,7 @@ function buildData(nodes: GNode[], edges: GEdge[], dark: boolean) {
       data: { relationType: e.relationType || "related_to", weight: e.weight || 1 },
       style: {
         stroke: ec(e.relationType || "", dark),
-        lineWidth: 1.2 + (e.weight || 1) * 0.2,
+        lineWidth: 2.5 + (e.weight || 1) * 0.4,
         endArrow: false,
       },
       states: ["active", "inactive"],
@@ -227,7 +230,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
           type: "d3-force",
           preventOverlap: true,
           nodeSize: 48,
-          linkDistance: 140,
+          linkDistance: 160,
           animate: true,
           alphaDecay: 0.012,
           alphaMin: 0.001,
@@ -246,7 +249,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
           position: "right-bottom",
           style: {
             background: dark ? "#1e293b" : "#f8fafc",
-            border: `1px solid ${dark ? "#334155" : "#e2e8f0"}`,
+            border: `2px solid ${dark ? "#8899AA" : "#c5d2de"}`,
             borderRadius: 6,
           },
         }],
@@ -254,30 +257,31 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
           type: "circle",
           state: {
             active: {
-              stroke: "#FFD700",
-              lineWidth: 5,
-              labelFontSize: 13,
-              labelFontWeight: 700,
-              shadowColor: "rgba(255,215,0,0.8)",
-              shadowBlur: 20,
-            },
-            inactive: { opacity: dark ? 0.15 : 0.12 },
-            selected: {
-              stroke: "#FFD700",
+              stroke: "#FFFFFF",
               lineWidth: 6,
               labelFontSize: 14,
               labelFontWeight: 700,
+              labelFill: "#FFFFFF",
+              shadowColor: "rgba(255,255,255,0.9)",
+              shadowBlur: 35,
+            },
+            inactive: { opacity: dark ? 0.22 : 0.18 },
+            selected: {
+              stroke: "#FFFFFF",
+              lineWidth: 8,
+              labelFontSize: 16,
+              labelFontWeight: 700,
               labelFill: "#FFD700",
-              shadowColor: "rgba(255,215,0,0.9)",
-              shadowBlur: 28,
+              shadowColor: "rgba(255,215,0,0.95)",
+              shadowBlur: 45,
             },
           },
         },
         edge: {
           type: "line",
           state: {
-            active: { stroke: "#FFD700", lineWidth: 4, shadowColor: "rgba(255,215,0,0.6)", shadowBlur: 10 },
-            inactive: { opacity: dark ? 0.10 : 0.08 },
+            active: { stroke: "#FFFFFF", lineWidth: 5, shadowColor: "rgba(255,255,255,0.7)", shadowBlur: 15 },
+            inactive: { opacity: dark ? 0.15 : 0.12 },
           },
         },
       });
