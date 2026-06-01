@@ -118,6 +118,39 @@ export default function ParsingPage() {
     catch { return t?.substring(0,16) || "—"; }
   };
 
+  // ── 文献归宿：智能判定上传类型 ──
+  const getUploadDestiny = (task: any, allTasks: any[]) => {
+    const md5 = task.fileMd5 || task.file_md5;
+    const fn = task.filename || "";
+    const chunks = task.faissChunksAdded || task.faiss_chunks_added || 0;
+    const isUpdate = task.faissIsUpdate || task.faiss_is_update;
+    const st = task.status;
+    // Find same-MD5 tasks that are done (successfully ingested)
+    const sameMd5Done = allTasks.filter(t =>
+      (t.fileMd5 || t.file_md5) === md5 && md5 && t.status === "done" && t.task_uuid !== task.task_uuid
+    );
+    // Find same-filename tasks that are done
+    const sameNameDone = allTasks.filter(t =>
+      (t.filename || "") === fn && t.status === "done" && t.task_uuid !== task.task_uuid
+    );
+
+    if (isUpdate || (chunks > 0 && sameNameDone.length > 0 && (sameMd5Done.length === 0 || md5 !== sameNameDone[0]?.file_md5)))
+      return { icon: "🔄", label: "版本更新", desc: "文献内容已变更，重新入库", color: "var(--m-cyan)" };
+    if (st === "failed" && sameMd5Done.length > 0)
+      return { icon: "💤", label: "重复入梦", desc: "相同内容已在此前成功入库", color: "var(--tx-100)" };
+    if (st === "failed" && sameNameDone.length > 0 && md5 && sameNameDone[0] && (sameNameDone[0].file_md5 || sameNameDone[0].fileMd5) === md5)
+      return { icon: "💤", label: "重复入梦", desc: "相同内容已在此前成功入库", color: "var(--tx-100)" };
+    if (st === "failed" && chunks === 0)
+      return { icon: "🌫️", label: "未竟之章", desc: "处理中断，未能完成入库", color: "var(--tx-100)" };
+    if (sameMd5Done.length > 0)
+      return { icon: "🌊", label: "似曾相识", desc: "相同 MD5 的文献已存在于知识库", color: "var(--m-gold)" };
+    if (chunks > 0 && st === "done")
+      return { icon: "✨", label: "新篇入阁", desc: "首次纳入知识库，开辟新知", color: "var(--m-green)" };
+    if (chunks > 0)
+      return { icon: "📖", label: "部分收录", desc: "已部分入库，可被检索", color: "var(--m-gold)" };
+    return { icon: "⏳", label: "待定之章", desc: "尚未完成处理流程", color: "var(--tx-200)" };
+  };
+
   // Fetch task history
   useEffect(() => {
     fetch("/api/upload/history").then(r => r.json()).then(d => setTaskList(d?.tasks || [])).catch(() => {});
@@ -499,7 +532,7 @@ export default function ParsingPage() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
               <thead>
                 <tr style={{ borderBottom: "1.5px solid var(--bd-200)" }}>
-                  {["任务ID","文件名称","用户","解析状态","FAISS入库","知识图谱","时间","流程进度"].map(h => (
+                  {["任务ID","文件名称","文献归宿","用户","解析状态","FAISS入库","知识图谱","时间"].map(h => (
                     <th key={h} style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "var(--tx-100)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -507,9 +540,9 @@ export default function ParsingPage() {
               <tbody>
                 {taskList.map((task, idx) => {
                   const st = statusConfig[task.status as ArticleStatus];
-                  const phase = getTaskPhase(task.status);
                   const faiss = getFaissLabel(task);
                   const lrag = getLightragLabel(task);
+                  const destiny = getUploadDestiny(task, taskList);
                   const createdAt = task.createdAt || task.created_at || task.uploadTime;
                   const userName = task.userName || task.user_name || task.uploadedBy || task.uploaded_by || "—";
                   return (
@@ -523,8 +556,11 @@ export default function ParsingPage() {
                       <td style={{ padding: "7px 8px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                           <FiFileText size={11} style={{ color: "var(--tx-100)", flexShrink: 0 }} />
-                          <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{task.filename || "—"}</span>
+                          <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }} title={task.filename}>{task.filename || "—"}</span>
                         </div>
+                      </td>
+                      <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
+                        <span title={destiny.desc} style={{ fontSize: 10, fontWeight: 500, color: destiny.color, display: "inline-flex", alignItems: "center", gap: 3, cursor: "default" }}>{destiny.icon}{destiny.label}</span>
                       </td>
                       <td style={{ padding: "7px 8px", color: "var(--tx-300)", fontSize: 10, whiteSpace: "nowrap" }}>{userName}</td>
                       <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
@@ -537,27 +573,6 @@ export default function ParsingPage() {
                         <span className={`m-badge ${lrag.cls}`} style={{ fontSize: 9, padding: "2px 6px" }}>{lrag.icon} {lrag.label}</span>
                       </td>
                       <td style={{ padding: "7px 8px", color: "var(--tx-100)", whiteSpace: "nowrap", fontSize: 10 }}>{formatTime(createdAt)}</td>
-                      <td style={{ padding: "7px 8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-                          {flowPhases.map((ph, pi) => (
-                            <div key={pi} style={{ display: "flex", alignItems: "center" }}>
-                              <div style={{
-                                width: 20, height: 20, borderRadius: "50%",
-                                background: pi <= phase ? `${ph.color}15` : "var(--bg-hover)",
-                                color: pi <= phase ? ph.color : "var(--tx-100)",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: 9, transition: "all 0.3s",
-                                border: pi === phase ? `1.5px solid ${ph.color}` : `1.5px solid ${pi <= phase ? `${ph.color}30` : "var(--bd-200)"}`,
-                              }} title={ph.label}>
-                                {pi < phase ? <FiCheck size={8} /> : ph.icon}
-                              </div>
-                              {pi < flowPhases.length - 1 && (
-                                <div style={{ width: 12, height: 2, background: pi < phase ? ph.color : "var(--bd-200)", opacity: pi < phase ? 0.4 : 1 }} />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
                     </tr>
                   );
                 })}
