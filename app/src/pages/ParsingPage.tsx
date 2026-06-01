@@ -14,7 +14,7 @@ import {
 
 type ArticleStatus = "pending" | "parsing" | "parsed" | "reviewing" | "approved" | "rejected" | "error";
 
-const statusConfig: Record<ArticleStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
+const articleStatusConfig: Record<ArticleStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   pending:   { label: "待解析", color: "#D97706", bg: "rgba(217,119,6,0.08)", icon: <FiClock size={10} /> },
   parsing:   { label: "解析中", color: "#00C4B4", bg: "rgba(0,196,180,0.08)", icon: <FiActivity size={10} /> },
   parsed:    { label: "已解析", color: "#2563EB", bg: "rgba(37,99,235,0.08)", icon: <FiCheckCircle size={10} /> },
@@ -22,6 +22,21 @@ const statusConfig: Record<ArticleStatus, { label: string; color: string; bg: st
   approved:  { label: "已入库", color: "#10B981", bg: "rgba(16,185,129,0.08)", icon: <FiDatabase size={10} /> },
   rejected:  { label: "已驳回", color: "#E84D4D", bg: "rgba(232,77,77,0.08)", icon: <FiXCircle size={10} /> },
   error:     { label: "异常",   color: "#E84D4D", bg: "rgba(232,77,77,0.08)", icon: <FiAlertCircle size={10} /> },
+};
+
+// Upload task status — covers all 9 pipeline states with distinct visual identity
+const taskStatusConfig: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
+  received:           { label:"排队中",     color:"#9CA3AF", bg:"rgba(156,163,175,0.08)", icon:<FiClock size={10}/> },
+  parsing:            { label:"MinerU解析", color:"#00C4B4", bg:"rgba(0,196,180,0.08)",  icon:<FiCpu size={10}/> },
+  cross_validating:   { label:"语义分块",   color:"#D4A853", bg:"rgba(212,168,83,0.08)",  icon:<FiLayers size={10}/> },
+  postprocessing:     { label:"后处理",     color:"#D4A853", bg:"rgba(212,168,83,0.08)",  icon:<FiLayers size={10}/> },
+  chunking:           { label:"FAISS入库",  color:"#059669", bg:"rgba(5,150,105,0.08)",   icon:<FiDatabase size={10}/> },
+  indexing_faiss:     { label:"FAISS入库",  color:"#059669", bg:"rgba(5,150,105,0.08)",   icon:<FiDatabase size={10}/> },
+  indexing_lightrag:  { label:"图谱构建",   color:"#8B5CF6", bg:"rgba(139,92,246,0.08)",  icon:<FiTrendingUp size={10}/> },
+  indexing:           { label:"图谱构建",   color:"#8B5CF6", bg:"rgba(139,92,246,0.08)",  icon:<FiTrendingUp size={10}/> },
+  done:               { label:"已完成",     color:"#10B981", bg:"rgba(16,185,129,0.08)",  icon:<FiCheckCircle size={10}/> },
+  partial:            { label:"部分完成",   color:"#F59E0B", bg:"rgba(245,158,11,0.08)",  icon:<FiAlertCircle size={10}/> },
+  failed:             { label:"失败",       color:"#E84D4D", bg:"rgba(232,77,77,0.08)",   icon:<FiXCircle size={10}/> },
 };
 
 const segLabels: Record<string, string> = {
@@ -300,7 +315,7 @@ export default function ParsingPage() {
             {isLoading && <div style={{ textAlign: "center", padding: 16, color: "var(--tx-100)", fontSize: 11 }}>加载中...</div>}
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {articles?.map((article) => {
-                const st = statusConfig[article.status as ArticleStatus];
+                const st = articleStatusConfig[article.status as ArticleStatus];
                 const isSel = selectedId === article.id;
                 return (
                   <div key={article.id} onClick={() => setSelectedId(article.id)} style={{
@@ -342,7 +357,7 @@ export default function ParsingPage() {
             {showUploadHistory && (
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {(articles || []).map((h) => {
-                  const st = statusConfig[h.status as ArticleStatus];
+                  const st = articleStatusConfig[h.status as ArticleStatus];
                   return (
                     <div key={h.id} style={{ padding: "6px 8px", borderRadius: 6, background: "var(--bg-elevated)", transition: "all 0.15s", cursor: "pointer" }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-hover)"; }}
@@ -539,7 +554,7 @@ export default function ParsingPage() {
               </thead>
               <tbody>
                 {taskList.map((task, idx) => {
-                  const st = statusConfig[task.status as ArticleStatus];
+                  const st = taskStatusConfig[task.status] || articleStatusConfig[task.status as ArticleStatus] || taskStatusConfig.failed;
                   const faiss = getFaissLabel(task);
                   const lrag = getLightragLabel(task);
                   const destiny = getUploadDestiny(task, taskList);
