@@ -280,18 +280,32 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     };
     window.addEventListener("keydown", onKey);
 
-    // ── Floating animation — 1000x visible displacement ──
+    // ── Brownian drift + hard circular boundary ──
     function startFloatAnim(graph: Graph) {
       const posMap = posMapRef.current;
       posMap.clear();
       animTimeoutRef.current = window.setTimeout(() => {
         if (graphRef.current !== graph) return;
+        // Capture centroid + boundary radius
+        let cx = 0, cy = 0;
         try {
           graph.getNodeData().forEach((n: any) => {
             const pos = graph.getElementPosition(n.id);
-            if (pos) posMap.set(n.id, { x: pos[0], y: pos[1], vx: 0, vy: 0 });
+            if (pos) {
+              posMap.set(n.id, { x: pos[0], y: pos[1], vx: 0, vy: 0 });
+              cx += pos[0]; cy += pos[1];
+            }
           });
         } catch { /* ok */ }
+        const ids = Array.from(posMap.keys());
+        if (ids.length === 0) return;
+        cx /= ids.length; cy /= ids.length;
+        let R = 0;
+        ids.forEach(id => {
+          const p = posMap.get(id); if (!p) return;
+          R = Math.max(R, Math.sqrt((p.x - cx) ** 2 + (p.y - cy) ** 2));
+        });
+        R *= 1.05; // 5% margin
         animTimerRef.current = window.setInterval(() => {
           if (graphRef.current !== graph) return;
           try {
@@ -310,7 +324,18 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
               p.vx *= 0.88; p.vy *= 0.88;
               const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
               if (spd > 6) { p.vx *= 6 / spd; p.vy *= 6 / spd; }
-              p.x += p.vx; p.y += p.vy;
+              // Hard boundary: bounce back if outside circle
+              let nx = p.x + p.vx, ny = p.y + p.vy;
+              const dist = Math.sqrt((nx - cx) ** 2 + (ny - cy) ** 2);
+              if (dist > R) {
+                // Reflect velocity and clamp position to boundary
+                const ndx = (nx - cx) / dist, ndy = (ny - cy) / dist;
+                nx = cx + ndx * R;
+                ny = cy + ndy * R;
+                // Bounce: reverse velocity component away from center
+                p.vx *= -0.5; p.vy *= -0.5;
+              }
+              p.x = nx; p.y = ny;
               updates.push({ id, style: { x: p.x, y: p.y } });
             }
             if (updates.length > 0 && graphRef.current === graph) {
@@ -381,26 +406,51 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     posMap.clear();
     animTimeoutRef.current = window.setTimeout(() => {
       if (graphRef.current !== graph) return;
+      let cx = 0, cy = 0;
       try {
         graph.getNodeData().forEach((n: any) => {
           const pos = graph.getElementPosition(n.id);
-          if (pos) posMap.set(n.id, { x: pos[0], y: pos[1], vx: 0, vy: 0 });
+          if (pos) {
+            posMap.set(n.id, { x: pos[0], y: pos[1], vx: 0, vy: 0 });
+            cx += pos[0]; cy += pos[1];
+          }
         });
       } catch { /* ok */ }
+      const ids = Array.from(posMap.keys());
+      if (ids.length === 0) return;
+      cx /= ids.length; cy /= ids.length;
+      let R = 0;
+      ids.forEach(id => {
+        const p = posMap.get(id); if (!p) return;
+        R = Math.max(R, Math.sqrt((p.x - cx) ** 2 + (p.y - cy) ** 2));
+      });
+      R *= 1.05;
       animTimerRef.current = window.setInterval(() => {
         if (graphRef.current !== graph) return;
         try {
           const allIds = Array.from(posMap.keys());
           if (allIds.length === 0) return;
+          const batchSize = Math.min(80, allIds.length);
+          const pool = [...allIds]; const batch: string[] = [];
+          for (let i = 0; i < batchSize && pool.length > 0; i++) {
+            batch.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+          }
           const updates: { id: string; style: { x: number; y: number } }[] = [];
-          for (const id of allIds) {
+          for (const id of batch) {
             const p = posMap.get(id); if (!p) continue;
-            p.vx += (Math.random() - 0.5) * 6;
-            p.vy += (Math.random() - 0.5) * 6;
-            p.vx *= 0.82; p.vy *= 0.82;
+            p.vx += (Math.random() - 0.5) * 3;
+            p.vy += (Math.random() - 0.5) * 3;
+            p.vx *= 0.88; p.vy *= 0.88;
             const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-            if (spd > 15) { p.vx *= 15 / spd; p.vy *= 15 / spd; }
-            p.x += p.vx; p.y += p.vy;
+            if (spd > 6) { p.vx *= 6 / spd; p.vy *= 6 / spd; }
+            let nx = p.x + p.vx, ny = p.y + p.vy;
+            const dist = Math.sqrt((nx - cx) ** 2 + (ny - cy) ** 2);
+            if (dist > R) {
+              const ndx = (nx - cx) / dist, ndy = (ny - cy) / dist;
+              nx = cx + ndx * R; ny = cy + ndy * R;
+              p.vx *= -0.5; p.vy *= -0.5;
+            }
+            p.x = nx; p.y = ny;
             updates.push({ id, style: { x: p.x, y: p.y } });
           }
           if (updates.length > 0 && graphRef.current === graph) {
@@ -408,7 +458,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
             try { graph.draw(); } catch { /* ok */ }
           }
         } catch { /* ok */ }
-      }, 50);
+      }, 80);
     }, 1500);
   }
 
