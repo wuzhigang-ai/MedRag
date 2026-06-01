@@ -39,10 +39,10 @@ function toolToStep(toolName: string, idx: number): RagStep {
 }
 
 const quickQs = [
-  "房颤高卒中风险患者的一线抗凝方案？",
-  "PD-1抑制剂联合化疗治疗NSCLC的疗效数据？",
-  "COVID-19 mRNA疫苗与灭活疫苗的免疫原性对比？",
-  "阿尔茨海默病早期诊断的生物标志物？",
+  "What life-threatening metabolic abnormality is corrected by orthotopic liver transplantation in patients with urea cycle enzyme deficiencies?",
+  "Which two specific urea cycle enzyme deficiencies were treated with liver transplantation in the two main case reports?",
+  "高危型TBAD中\"不可缓解的疼痛\"和\"无法控制的高血压\"的具体操作化定义（持续时间与药物种类）是什么？",
+  "肠道DIE的\"印第安头饰\"征在超声上呈什么形态？为什么DIE很少累及肠黏膜层？",
 ];
 
 /* ── Markdown Renderer ── */
