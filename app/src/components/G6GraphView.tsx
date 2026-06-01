@@ -133,6 +133,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
   const graphRef = useRef<Graph | null>(null);
   const animTimerRef = useRef<number>(0);
   const animTimeoutRef = useRef<number>(0);
+  const destroyedRef = useRef(false);
   const posMapRef = useRef<Map<string, { x: number; y: number; vx: number; vy: number }>>(new Map());
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
 
@@ -282,10 +283,11 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
 
     // ── Brownian drift + hard circular boundary ──
     function startFloatAnim(graph: Graph) {
+      destroyedRef.current = false;
       const posMap = posMapRef.current;
       posMap.clear();
       animTimeoutRef.current = window.setTimeout(() => {
-        if (graphRef.current !== graph) return;
+        if (destroyedRef.current || graphRef.current !== graph) return;
         // Capture centroid + boundary radius
         let cx = 0, cy = 0;
         try {
@@ -307,7 +309,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
         });
         R *= 1.05; // 5% margin
         animTimerRef.current = window.setInterval(() => {
-          if (graphRef.current !== graph) return;
+          if (destroyedRef.current || graphRef.current !== graph) return;
           try {
             const allIds = Array.from(posMap.keys());
             if (allIds.length === 0) return;
@@ -359,6 +361,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
 
     // ── Cleanup — ONLY on unmount ──
     return () => {
+      destroyedRef.current = true;
       hasGraphRef.current = false;
       if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = 0; }
       if (animTimeoutRef.current) { clearTimeout(animTimeoutRef.current); animTimeoutRef.current = 0; }
@@ -410,6 +413,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
   }, [nodes.length, edges.length]);
 
   function startFloatAnimInternal(graph: Graph) {
+    destroyedRef.current = false;
     if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = 0; }
     if (animTimeoutRef.current) { clearTimeout(animTimeoutRef.current); animTimeoutRef.current = 0; }
     const posMap = posMapRef.current;
@@ -436,7 +440,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
       });
       R *= 1.05;
       animTimerRef.current = window.setInterval(() => {
-        if (graphRef.current !== graph) return;
+        if (destroyedRef.current || graphRef.current !== graph) return;
         try {
           const allIds = Array.from(posMap.keys());
           if (allIds.length === 0) return;
