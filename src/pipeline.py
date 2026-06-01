@@ -622,9 +622,10 @@ Few-shot 示例：
                     r["score"] = r["score"] * 0.01  # 99% penalty for non-matching docs
             results.sort(key=lambda x: x["score"], reverse=True)
 
-            # Strict filter: when classification is clear, only keep target docs
-            top_doc = results[0]["source"].split(" [p.")[0]
-            results = [r for r in results if r["source"].split(" [p.")[0] == top_doc]
+            # Multi-doc: keep ALL matching docs. Single-doc: strict filter only that doc.
+            if len(target_docs) == 1:
+                target = target_docs[0]
+                results = [r for r in results if target in r["source"]]
 
         return [r for r in results if r["score"] > min_score][:top_k]
 
