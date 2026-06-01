@@ -13,37 +13,37 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Graph } from "@antv/g6";
 
-// ═══ Medical Entity Color Palette ═══
+// ═══ Medical Entity Color Palette — High Brightness ═══
 const NC: Record<string, { f: string; s: string; df: string; ds: string }> = {
-  disease:    { f: "#E84D4D", s: "#C53030", df: "#FF6B6B", ds: "#E84D4D" },
-  drug:       { f: "#3B82F6", s: "#2563EB", df: "#60A5FA", ds: "#3B82F6" },
-  symptom:    { f: "#F07850", s: "#D9653A", df: "#FF9A76", ds: "#F07850" },
-  treatment:  { f: "#10B981", s: "#059669", df: "#34D399", ds: "#10B981" },
-  check:      { f: "#8B5CF6", s: "#7C3AED", df: "#A78BFA", ds: "#8B5CF6" },
-  exam:       { f: "#8B5CF6", s: "#7C3AED", df: "#A78BFA", ds: "#8B5CF6" },
-  clinical_indicator: { f: "#6366F1", s: "#4F46E5", df: "#818CF8", ds: "#6366F1" },
-  anatomy:    { f: "#06B6D4", s: "#0891B2", df: "#22D3EE", ds: "#06B6D4" },
-  procedure:  { f: "#EC4899", s: "#DB2777", df: "#F472B6", ds: "#EC4899" },
-  gene:       { f: "#7C3AED", s: "#6D28D9", df: "#9B6BFF", ds: "#7C3AED" },
-  pathogen:   { f: "#DC2626", s: "#B91C1C", df: "#FF4040", ds: "#DC2626" },
-  guideline:  { f: "#D4A853", s: "#B8963F", df: "#F0D080", ds: "#D4A853" },
-  metric:     { f: "#3B82F6", s: "#2563EB", df: "#60A5FA", ds: "#3B82F6" },
-  other:      { f: "#64748B", s: "#475569", df: "#94A3B8", ds: "#64748B" },
+  disease:    { f: "#FF5252", s: "#FF1744", df: "#FF8A80", ds: "#FF5252" },
+  drug:       { f: "#448AFF", s: "#2979FF", df: "#82B1FF", ds: "#448AFF" },
+  symptom:    { f: "#FF6E40", s: "#FF3D00", df: "#FF9E80", ds: "#FF6E40" },
+  treatment:  { f: "#00E676", s: "#00C853", df: "#69F0AE", ds: "#00E676" },
+  check:      { f: "#B388FF", s: "#7C4DFF", df: "#B388FF", ds: "#7C4DFF" },
+  exam:       { f: "#B388FF", s: "#7C4DFF", df: "#B388FF", ds: "#7C4DFF" },
+  clinical_indicator: { f: "#7C4DFF", s: "#651FFF", df: "#B388FF", ds: "#7C4DFF" },
+  anatomy:    { f: "#00E5FF", s: "#00B8D4", df: "#18FFFF", ds: "#00E5FF" },
+  procedure:  { f: "#FF4081", s: "#F50057", df: "#FF80AB", ds: "#FF4081" },
+  gene:       { f: "#651FFF", s: "#651FFF", df: "#B388FF", ds: "#7C4DFF" },
+  pathogen:   { f: "#FF1744", s: "#D50000", df: "#FF5252", ds: "#FF1744" },
+  guideline:  { f: "#FFD740", s: "#FFC400", df: "#FFE57F", ds: "#FFD740" },
+  metric:     { f: "#448AFF", s: "#2979FF", df: "#82B1FF", ds: "#448AFF" },
+  other:      { f: "#90A4AE", s: "#78909C", df: "#B0BEC5", ds: "#90A4AE" },
 };
 
-// ═══ Edge Relation Color Palette ═══
+// ═══ Edge Relation Color Palette — High Visibility ═══
 const EC: Record<string, { l: string; d: string }> = {
-  treats:          { l: "rgba(16,185,129,0.65)",  d: "rgba(52,211,153,0.65)" },
-  causes:          { l: "rgba(220,38,38,0.60)",    d: "rgba(255,64,64,0.60)" },
-  associated_with: { l: "rgba(59,130,246,0.50)",   d: "rgba(96,165,250,0.50)" },
-  contraindicated: { l: "rgba(240,120,80,0.60)",   d: "rgba(255,154,118,0.60)" },
-  diagnoses:       { l: "rgba(139,92,246,0.60)",   d: "rgba(167,139,250,0.60)" },
-  prevents:        { l: "rgba(6,182,212,0.60)",    d: "rgba(34,211,238,0.60)" },
-  symptom_of:      { l: "rgba(240,120,80,0.50)",   d: "rgba(255,154,118,0.50)" },
-  interacts_with:  { l: "rgba(236,72,153,0.60)",   d: "rgba(244,114,182,0.60)" },
-  related_to:      { l: "rgba(100,116,139,0.40)",  d: "rgba(148,163,184,0.40)" },
+  treats:          { l: "rgba(0,230,118,0.85)",   d: "rgba(105,240,174,0.90)" },
+  causes:          { l: "rgba(255,23,68,0.80)",    d: "rgba(255,82,82,0.85)" },
+  associated_with: { l: "rgba(68,138,255,0.75)",   d: "rgba(130,177,255,0.80)" },
+  contraindicated: { l: "rgba(255,61,0,0.80)",     d: "rgba(255,110,64,0.85)" },
+  diagnoses:       { l: "rgba(124,77,255,0.80)",   d: "rgba(179,136,255,0.85)" },
+  prevents:        { l: "rgba(0,229,255,0.80)",    d: "rgba(24,255,255,0.85)" },
+  symptom_of:      { l: "rgba(255,110,64,0.80)",   d: "rgba(255,158,128,0.85)" },
+  interacts_with:  { l: "rgba(255,64,129,0.80)",   d: "rgba(255,128,171,0.85)" },
+  related_to:      { l: "rgba(144,164,174,0.70)",  d: "rgba(176,190,197,0.75)" },
 };
-const EDGE_DEFAULT = { l: "rgba(100,116,139,0.35)", d: "rgba(148,163,184,0.35)" };
+const EDGE_DEFAULT = { l: "rgba(144,164,174,0.65)", d: "rgba(176,190,197,0.70)" };
 
 function nc(g: string) { return NC[g] || NC.other; }
 function ec(r: string, dark: boolean) { const c = EC[r] || EDGE_DEFAULT; return dark ? c.d : c.l; }
@@ -76,16 +76,18 @@ function buildData(nodes: GNode[], edges: GEdge[], dark: boolean) {
           size: r * 2,
           fill: dark ? c.df : c.f,
           stroke: dark ? c.ds : c.s,
-          lineWidth: dark ? 2 : 2.5,
+          lineWidth: dark ? 3 : 3.5,
           labelText: lbl,
-          labelFill: dark ? "#e2e8f0" : "#1e293b",
-          labelFontSize: 10,
-          labelFontWeight: 500,
+          labelFill: dark ? "#FFFFFF" : "#0B1628",
+          labelFontSize: 11,
+          labelFontWeight: 600,
           labelPlacement: "bottom",
           labelOffsetY: r / 2 + 6,
           cursor: "pointer",
-          shadowColor: dark ? "rgba(0,0,0,0.3)" : "rgba(15,43,91,0.08)",
-          shadowBlur: 6,
+          shadowColor: dark ? c.df : c.f,
+          shadowBlur: 12,
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
         },
         states: ["active", "inactive", "selected"],
       };
@@ -97,7 +99,7 @@ function buildData(nodes: GNode[], edges: GEdge[], dark: boolean) {
       data: { relationType: e.relationType || "related_to", weight: e.weight || 1 },
       style: {
         stroke: ec(e.relationType || "", dark),
-        lineWidth: 0.6 + (e.weight || 1) * 0.15,
+        lineWidth: 1.2 + (e.weight || 1) * 0.2,
         endArrow: false,
       },
       states: ["active", "inactive"],
@@ -251,16 +253,31 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
         node: {
           type: "circle",
           state: {
-            active: { stroke: "#FFD700", lineWidth: 3, labelFontSize: 12, labelFontWeight: 700 },
-            inactive: { opacity: dark ? 0.08 : 0.06 },
-            selected: { stroke: "#FFD700", lineWidth: 4, labelFontSize: 13, labelFontWeight: 700, labelFill: "#FFD700", shadowColor: "rgba(255,215,0,0.5)", shadowBlur: 16 },
+            active: {
+              stroke: "#FFD700",
+              lineWidth: 5,
+              labelFontSize: 13,
+              labelFontWeight: 700,
+              shadowColor: "rgba(255,215,0,0.8)",
+              shadowBlur: 20,
+            },
+            inactive: { opacity: dark ? 0.15 : 0.12 },
+            selected: {
+              stroke: "#FFD700",
+              lineWidth: 6,
+              labelFontSize: 14,
+              labelFontWeight: 700,
+              labelFill: "#FFD700",
+              shadowColor: "rgba(255,215,0,0.9)",
+              shadowBlur: 28,
+            },
           },
         },
         edge: {
           type: "line",
           state: {
-            active: { stroke: "#FFD700", lineWidth: 2.5 },
-            inactive: { opacity: dark ? 0.03 : 0.04 },
+            active: { stroke: "#FFD700", lineWidth: 4, shadowColor: "rgba(255,215,0,0.6)", shadowBlur: 10 },
+            inactive: { opacity: dark ? 0.10 : 0.08 },
           },
         },
       });

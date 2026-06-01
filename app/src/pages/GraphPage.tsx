@@ -22,11 +22,11 @@ import type { Graph } from "@antv/g6";
 
 // ═══ Node type → display color (matches G6GraphView NC palette) ═══
 const ntColors: Record<string, string> = {
-  disease: "#E84D4D", drug: "#3B82F6", symptom: "#F07850",
-  treatment: "#10B981", clinical_indicator: "#6366F1", anatomy: "#06B6D4",
-  procedure: "#EC4899", gene: "#7C3AED", pathogen: "#DC2626",
-  guideline: "#D4A853", other: "#64748B", check: "#8B5CF6",
-  exam: "#8B5CF6", metric: "#3B82F6",
+  disease: "#FF5252", drug: "#448AFF", symptom: "#FF6E40",
+  treatment: "#00E676", clinical_indicator: "#7C4DFF", anatomy: "#00E5FF",
+  procedure: "#FF4081", gene: "#651FFF", pathogen: "#FF1744",
+  guideline: "#FFD740", other: "#90A4AE", check: "#B388FF",
+  exam: "#B388FF", metric: "#448AFF",
 };
 
 const ntLabels: Record<string, string> = {
