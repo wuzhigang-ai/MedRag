@@ -44,9 +44,9 @@ const rtLabels: Record<string, string> = {
 
 // Edge type → display color for relation badges
 const rtColors: Record<string, string> = {
-  treats: "#DDFFEE", causes: "#FFDDDD", associated_with: "#DDEEFF",
-  contraindicated: "#FFEEDD", diagnoses: "#F5EEFF", prevents: "#DDFFFF",
-  symptom_of: "#FFEEDD", interacts_with: "#FFE5F0", related_to: "#F0F0FF",
+  treats: "#55DD88", causes: "#EE6666", associated_with: "#5599EE",
+  contraindicated: "#EE8844", diagnoses: "#9966EE", prevents: "#55CCDD",
+  symptom_of: "#EE8844", interacts_with: "#EE66AA", related_to: "#8899AA",
 };
 
 export default function GraphPage() {
