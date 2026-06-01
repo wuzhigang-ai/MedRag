@@ -14,30 +14,30 @@ import { Graph } from "@antv/g6";
 
 // ═══ 100x Brightness Color Palette ═══
 const NC: Record<string, { f: string; s: string; df: string; ds: string }> = {
-  disease:    { f: "#DD0000", s: "#880000", df: "#FFAAAA", ds: "#FFFFFF" },
-  drug:       { f: "#0055DD", s: "#002288", df: "#AADDFF", ds: "#FFFFFF" },
-  symptom:    { f: "#DD4400", s: "#882200", df: "#FFBB99", ds: "#FFFFFF" },
-  treatment:  { f: "#00AA44", s: "#005522", df: "#99FFCC", ds: "#FFFFFF" },
-  check:      { f: "#7722DD", s: "#441188", df: "#EECCFF", ds: "#FFFFFF" },
-  exam:       { f: "#7722DD", s: "#441188", df: "#EECCFF", ds: "#FFFFFF" },
-  clinical_indicator: { f: "#6600DD", s: "#330088", df: "#CCBBFF", ds: "#FFFFFF" },
-  anatomy:    { f: "#0099AA", s: "#004455", df: "#AAFFFF", ds: "#FFFFFF" },
-  procedure:  { f: "#DD0077", s: "#880044", df: "#FFBBDD", ds: "#FFFFFF" },
-  gene:       { f: "#5500DD", s: "#220088", df: "#CCAAFF", ds: "#FFFFFF" },
-  pathogen:   { f: "#CC0000", s: "#770000", df: "#FF9999", ds: "#FFFFFF" },
-  guideline:  { f: "#BB9900", s: "#664400", df: "#FFF0AA", ds: "#FFFFFF" },
-  metric:     { f: "#0055DD", s: "#002288", df: "#AADDFF", ds: "#FFFFFF" },
-  other:      { f: "#667788", s: "#445566", df: "#EEEEFF", ds: "#FFFFFF" },
+  disease:    { f: "#DD0000", s: "#880000", df: "#FFDDDD", ds: "#FFFFFF" },
+  drug:       { f: "#0055DD", s: "#002288", df: "#DDEEFF", ds: "#FFFFFF" },
+  symptom:    { f: "#DD4400", s: "#882200", df: "#FFEEDD", ds: "#FFFFFF" },
+  treatment:  { f: "#00AA44", s: "#005522", df: "#DDFFEE", ds: "#FFFFFF" },
+  check:      { f: "#7722DD", s: "#441188", df: "#F5EEFF", ds: "#FFFFFF" },
+  exam:       { f: "#7722DD", s: "#441188", df: "#F5EEFF", ds: "#FFFFFF" },
+  clinical_indicator: { f: "#6600DD", s: "#330088", df: "#EEE5FF", ds: "#FFFFFF" },
+  anatomy:    { f: "#0099AA", s: "#004455", df: "#DDFFFF", ds: "#FFFFFF" },
+  procedure:  { f: "#DD0077", s: "#880044", df: "#FFE5F0", ds: "#FFFFFF" },
+  gene:       { f: "#5500DD", s: "#220088", df: "#E8DDFF", ds: "#FFFFFF" },
+  pathogen:   { f: "#CC0000", s: "#770000", df: "#FFDDDD", ds: "#FFFFFF" },
+  guideline:  { f: "#BB9900", s: "#664400", df: "#FFF8DD", ds: "#FFFFFF" },
+  metric:     { f: "#0055DD", s: "#002288", df: "#DDEEFF", ds: "#FFFFFF" },
+  other:      { f: "#667788", s: "#445566", df: "#F0F0FF", ds: "#FFFFFF" },
 };
 
 const EC: Record<string, { l: string; d: string }> = {
-  treats: { l: "#00AA44", d: "#AAFFCC" }, causes: { l: "#DD0000", d: "#FFAAAA" },
-  associated_with: { l: "#0066CC", d: "#AADDFF" }, contraindicated: { l: "#DD4400", d: "#FFBB99" },
-  diagnoses: { l: "#7722DD", d: "#EECCFF" }, prevents: { l: "#0099AA", d: "#AAFFFF" },
-  symptom_of: { l: "#DD5500", d: "#FFBB99" }, interacts_with: { l: "#DD0077", d: "#FFBBEE" },
-  related_to: { l: "#8899AA", d: "#DDEEFF" },
+  treats: { l: "#00AA44", d: "#DDFFEE" }, causes: { l: "#DD0000", d: "#FFDDDD" },
+  associated_with: { l: "#0066CC", d: "#DDEEFF" }, contraindicated: { l: "#DD4400", d: "#FFEEDD" },
+  diagnoses: { l: "#7722DD", d: "#F5EEFF" }, prevents: { l: "#0099AA", d: "#DDFFFF" },
+  symptom_of: { l: "#DD5500", d: "#FFEEDD" }, interacts_with: { l: "#DD0077", d: "#FFE5F0" },
+  related_to: { l: "#8899AA", d: "#F0F0FF" },
 };
-const EDGE_DEFAULT = { l: "#8899AA", d: "#DDEEFF" };
+const EDGE_DEFAULT = { l: "#8899AA", d: "#F0F0FF" };
 
 function nc(g: string) { return NC[g] || NC.other; }
 function ec(r: string, dark: boolean) { const c = EC[r] || EDGE_DEFAULT; return dark ? c.d : c.l; }
