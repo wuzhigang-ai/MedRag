@@ -234,7 +234,12 @@
       "Bash(git credential-manager *)",
       "Bash(ngrok version *)",
       "Bash(npx localtunnel *)",
-      "Bash(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@82.156.142.212 \"echo SSH_OK\")"
+      "Bash(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@82.156.142.212 \"echo SSH_OK\")",
+      "Bash(ssh -o ConnectTimeout=5 -T git@github.com)",
+      "Bash(pkill -f tunnel.py)",
+      "Bash(where plink *)",
+      "Bash(plink -V)",
+      "Bash(ssh *)"
     ]
   }
 }
