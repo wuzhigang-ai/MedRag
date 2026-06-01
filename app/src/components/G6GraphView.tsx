@@ -81,7 +81,7 @@ export default function G6GraphView({nodes,edges,search,filter,onNodeClick,onRea
         node:{type:"circle",
           state:{active:{stroke:"#FFD700",lineWidth:3,labelFontSize:12},inactive:{opacity:dark?0.10:0.08},selected:{stroke:"#FFD700",lineWidth:4,labelFontSize:14,labelFill:"#FFD700"}},
         },
-        edge:{type:"line",state:{active:{stroke:"#FFD700",lineWidth:2},inactive:{opacity:dark?0.04:0.06}}},
+        edge:{type:"line",style:{stroke:dark?"rgba(239,68,68,0.65)":"rgba(220,38,38,0.55)",lineWidth:0.8,endArrow:false},state:{active:{stroke:"#FFD700",lineWidth:2},inactive:{opacity:dark?0.04:0.06}}},
       });
       g.render().then(()=>{graphRef.current=g;if(onReady)onReady(g);applyHL(g,search,filter)});
       g.on("node:click",(evt:any)=>{const nid=evt?.target?.id;if(nid&&onNodeClick){const f=nodes.find(n=>String(n.id)===nid);if(f){g.getNodeData().forEach(nd=>g.setElementState({[nd.id]:nd.id===nid?"selected":{}}));onNodeClick(f)}}});

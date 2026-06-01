@@ -254,7 +254,8 @@
       "Bash(grep -E \"\\\\^$|\\\\.tsx\")",
       "Bash(git revert *)",
       "Bash(rm -rf node_modules/.vite dist)",
-      "Bash(nohup python3 tunnel.py)"
+      "Bash(nohup python3 tunnel.py)",
+      "Bash(powershell -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force\")"
     ]
   }
 }
