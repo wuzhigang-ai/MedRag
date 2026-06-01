@@ -1,52 +1,48 @@
 /**
- * G6GraphView — Medical Knowledge Graph · Type-Based Coloring · Dual-Theme · Cinema Grade
+ * G6GraphView — Medical Knowledge Graph · 3D Sphere Nodes · Floating Animation · Extreme Contrast
  *
- * Features:
- * - 13 medical entity type colors with distinct dark/light variants
- * - Edge relation type coloring + labels on active edges
- * - HTML tooltip overlay with rich entity preview
- * - Neighbor highlight on hover (degree-1 bidirectional)
- * - Minimap, zoom, drag behaviors
- * - Keyboard: F = fit view, Escape = deselect
- * - Robust abort-guard + theme-adaptive architecture
+ * - 3D node illusion via gradient-like dual-layer shadow + offset
+ * - Subtle random floating animation (breathing effect) on all nodes
+ * - Extreme contrast dual-theme: dark saturated fills (light bg) / bright neon fills (dark bg)
+ * - White strokes on dark, black strokes on light — maximum visibility
+ * - Golden-white glow on hover/select
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Graph } from "@antv/g6";
 
-// ═══ Medical Entity Color Palette — Extreme Fluorescent Brightness ═══
-// Dark fills (df): near-neon against #080E1A background
-// Light fills (f): saturated against #F0F4F8 background
-// All strokes: white for maximum visibility
+// ═══ Extreme Contrast Color Palette ═══
+// Light theme (f/s): very dark saturated fills on white bg → maximum visibility
+// Dark theme (df/ds): bright neon fills + white stroke on near-black bg → maximum pop
 const NC: Record<string, { f: string; s: string; df: string; ds: string }> = {
-  disease:    { f: "#FF2222", s: "#FFFFFF", df: "#FF4444", ds: "#FFFFFF" },
-  drug:       { f: "#2277FF", s: "#FFFFFF", df: "#4499FF", ds: "#FFFFFF" },
-  symptom:    { f: "#FF5500", s: "#FFFFFF", df: "#FF7722", ds: "#FFFFFF" },
-  treatment:  { f: "#00DD44", s: "#FFFFFF", df: "#22FF66", ds: "#FFFFFF" },
-  check:      { f: "#9944FF", s: "#FFFFFF", df: "#BB66FF", ds: "#FFFFFF" },
-  exam:       { f: "#9944FF", s: "#FFFFFF", df: "#BB66FF", ds: "#FFFFFF" },
-  clinical_indicator: { f: "#8833FF", s: "#FFFFFF", df: "#AA55FF", ds: "#FFFFFF" },
-  anatomy:    { f: "#00CCDD", s: "#FFFFFF", df: "#22EEFF", ds: "#FFFFFF" },
-  procedure:  { f: "#FF2288", s: "#FFFFFF", df: "#FF44AA", ds: "#FFFFFF" },
-  gene:       { f: "#7722FF", s: "#FFFFFF", df: "#9944FF", ds: "#FFFFFF" },
-  pathogen:   { f: "#FF0000", s: "#FFFFFF", df: "#FF2222", ds: "#FFFFFF" },
-  guideline:  { f: "#FFCC00", s: "#FFFFFF", df: "#FFEE33", ds: "#FFFFFF" },
-  metric:     { f: "#2277FF", s: "#FFFFFF", df: "#4499FF", ds: "#FFFFFF" },
-  other:      { f: "#8899AA", s: "#FFFFFF", df: "#AABBCC", ds: "#FFFFFF" },
+  disease:    { f: "#CC0000", s: "#660000", df: "#FF5555", ds: "#FFFFFF" },
+  drug:       { f: "#0055CC", s: "#002266", df: "#5599FF", ds: "#FFFFFF" },
+  symptom:    { f: "#CC4400", s: "#662200", df: "#FF7733", ds: "#FFFFFF" },
+  treatment:  { f: "#008833", s: "#004411", df: "#33FF66", ds: "#FFFFFF" },
+  check:      { f: "#6622CC", s: "#331166", df: "#BB66FF", ds: "#FFFFFF" },
+  exam:       { f: "#6622CC", s: "#331166", df: "#BB66FF", ds: "#FFFFFF" },
+  clinical_indicator: { f: "#5500CC", s: "#220066", df: "#AA55FF", ds: "#FFFFFF" },
+  anatomy:    { f: "#007788", s: "#003344", df: "#22EEFF", ds: "#FFFFFF" },
+  procedure:  { f: "#CC0066", s: "#660033", df: "#FF4499", ds: "#FFFFFF" },
+  gene:       { f: "#4400CC", s: "#220066", df: "#9944FF", ds: "#FFFFFF" },
+  pathogen:   { f: "#BB0000", s: "#550000", df: "#FF3333", ds: "#FFFFFF" },
+  guideline:  { f: "#AA8800", s: "#554400", df: "#FFDD33", ds: "#FFFFFF" },
+  metric:     { f: "#0055CC", s: "#002266", df: "#5599FF", ds: "#FFFFFF" },
+  other:      { f: "#556677", s: "#334455", df: "#AABBCC", ds: "#FFFFFF" },
 };
 
-// ═══ Edge Colors — Fully Opaque, Maximum Brightness ═══
+// ═══ Edge colors — fully opaque ═══
 const EC: Record<string, { l: string; d: string }> = {
-  treats:          { l: "#00CC44", d: "#44FF88" },
-  causes:          { l: "#FF2222", d: "#FF5555" },
-  associated_with: { l: "#3388FF", d: "#66AAFF" },
-  contraindicated: { l: "#FF4400", d: "#FF7733" },
-  diagnoses:       { l: "#8833FF", d: "#AA66FF" },
-  prevents:        { l: "#00CCDD", d: "#44EEFF" },
-  symptom_of:      { l: "#FF6622", d: "#FF8855" },
-  interacts_with:  { l: "#FF1177", d: "#FF4499" },
-  related_to:      { l: "#8899AA", d: "#AABBCC" },
+  treats:          { l: "#008833", d: "#55FF88" },
+  causes:          { l: "#CC0000", d: "#FF5555" },
+  associated_with: { l: "#0055AA", d: "#5599FF" },
+  contraindicated: { l: "#CC3300", d: "#FF7733" },
+  diagnoses:       { l: "#6622BB", d: "#AA55FF" },
+  prevents:        { l: "#007788", d: "#44EEFF" },
+  symptom_of:      { l: "#CC4400", d: "#FF8855" },
+  interacts_with:  { l: "#BB0055", d: "#FF4499" },
+  related_to:      { l: "#667788", d: "#AABBCC" },
 };
-const EDGE_DEFAULT = { l: "#8899AA", d: "#AABBCC" };
+const EDGE_DEFAULT = { l: "#667788", d: "#AABBCC" };
 
 function nc(g: string) { return NC[g] || NC.other; }
 function ec(r: string, dark: boolean) { const c = EC[r] || EDGE_DEFAULT; return dark ? c.d : c.l; }
@@ -62,14 +58,11 @@ function isDark(): boolean {
 }
 
 function buildData(nodes: GNode[], edges: GEdge[], dark: boolean) {
-  const nodeMap = new Map(nodes.map(n => [String(n.id), n]));
   const maxW = Math.max(1, ...nodes.map(n => n.weight || 1));
-
   return {
     nodes: nodes.map(n => {
       const c = nc(n.group || "other");
       const w = n.weight || 1;
-      // Size: 14–48px radius, proportional to sqrt(weight / maxWeight)
       const r = 16 + Math.sqrt(w / maxW) * 36;
       const lbl = (n.label || "").length > 22 ? (n.label || "").slice(0, 20) + "…" : (n.label || "");
       return {
@@ -78,19 +71,20 @@ function buildData(nodes: GNode[], edges: GEdge[], dark: boolean) {
         style: {
           size: r * 2,
           fill: dark ? c.df : c.f,
-          stroke: dark ? "#FFFFFF" : c.s,
-          lineWidth: dark ? 3.5 : 4,
+          stroke: dark ? c.ds : c.s,
+          lineWidth: dark ? 4 : 4.5,
           labelText: lbl,
           labelFill: dark ? "#FFFFFF" : "#000000",
           labelFontSize: 12,
-          labelFontWeight: 700,
+          labelFontWeight: dark ? 700 : 700,
           labelPlacement: "bottom",
           labelOffsetY: r / 2 + 6,
           cursor: "pointer",
-          shadowColor: dark ? c.df : c.f,
-          shadowBlur: dark ? 25 : 18,
-          shadowOffsetX: 0,
-          shadowOffsetY: 0,
+          // 3D depth illusion via offset shadow
+          shadowColor: dark ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.45)",
+          shadowBlur: dark ? 18 : 12,
+          shadowOffsetX: 3,
+          shadowOffsetY: 4,
         },
         states: ["active", "inactive", "selected"],
       };
@@ -102,8 +96,10 @@ function buildData(nodes: GNode[], edges: GEdge[], dark: boolean) {
       data: { relationType: e.relationType || "related_to", weight: e.weight || 1 },
       style: {
         stroke: ec(e.relationType || "", dark),
-        lineWidth: 2.5 + (e.weight || 1) * 0.4,
+        lineWidth: 3 + (e.weight || 1) * 0.5,
         endArrow: false,
+        shadowColor: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.10)",
+        shadowBlur: 6,
       },
       states: ["active", "inactive"],
     })),
@@ -115,17 +111,14 @@ function applyHL(g: Graph, search: string, filter: string) {
     const s = search.trim().toLowerCase(), f = filter;
     const nd = g.getNodeData();
     if (!s && !f) {
-      // Reset all states — use [] not {} for G6 v5 compatibility
       const reset: Record<string, string[]> = {};
       nd.forEach(n => { reset[n.id] = []; });
       g.setElementState(reset);
-      // Also reset edges
       const ereset: Record<string, string[]> = {};
       g.getEdgeData().forEach(e => { ereset[e.id!] = []; });
       g.setElementState(ereset);
       return;
     }
-    // Batch node states
     const nstates: Record<string, string | string[]> = {};
     nd.forEach(n => {
       const l = ((n.data?.label as string) || "").toLowerCase();
@@ -133,7 +126,6 @@ function applyHL(g: Graph, search: string, filter: string) {
       nstates[n.id] = (!s || l.includes(s)) && (!f || gr === f) ? "active" : "inactive";
     });
     g.setElementState(nstates);
-    // Batch edge states based on connected node states
     const estates: Record<string, string | string[]> = {};
     g.getEdgeData().forEach(e => {
       const sa = g.getElementState(String(e.source));
@@ -152,6 +144,8 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Graph | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const animFrameRef = useRef<number>(0);
+  const nodePositionsRef = useRef<Map<string, { x: number; y: number; vx: number; vy: number }>>(new Map());
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
 
   // ── Theme observer ──
@@ -166,7 +160,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     };
   }, []);
 
-  // ── Tooltip manager ──
+  // ── Tooltip ──
   const showTooltip = useCallback((clientX: number, clientY: number, nodeData: any) => {
     const el = tooltipRef.current;
     if (!el) return;
@@ -199,6 +193,59 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     if (el) el.style.display = "none";
   }, []);
 
+  // ── Floating animation loop ──
+  const startFloatAnimation = useCallback((g: Graph) => {
+    // Initialize position tracking
+    const posMap = nodePositionsRef.current;
+    posMap.clear();
+    try {
+      const nd = g.getNodeData();
+      nd.forEach((n: any) => {
+        const pos = g.getElementPosition(n.id);
+        if (pos) {
+          posMap.set(n.id, {
+            x: pos[0], y: pos[1],
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: (Math.random() - 0.5) * 0.3,
+          });
+        }
+      });
+    } catch { /* ok */ }
+
+    let lastTime = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(now - lastTime, 50); // cap at 50ms
+      lastTime = now;
+      try {
+        const nd = g.getNodeData();
+        const updates: Record<string, [number, number]> = {};
+        nd.forEach((n: any) => {
+          const p = posMap.get(n.id);
+          if (!p) return;
+          // Brownian-like gentle drift
+          p.vx += (Math.random() - 0.5) * 0.04;
+          p.vy += (Math.random() - 0.5) * 0.04;
+          // Dampen velocity
+          p.vx *= 0.95;
+          p.vy *= 0.95;
+          // Clamp velocity
+          const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+          if (speed > 0.8) { p.vx *= 0.8 / speed; p.vy *= 0.8 / speed; }
+          // Apply displacement
+          p.x += p.vx * (dt / 16);
+          p.y += p.vy * (dt / 16);
+          updates[n.id] = [p.x, p.y];
+        });
+        // Batch position updates
+        if (Object.keys(updates).length > 0) {
+          g.setElementPosition(updates);
+        }
+      } catch { /* graph may be destroyed */ }
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+    animFrameRef.current = requestAnimationFrame(tick);
+  }, []);
+
   // ── Main graph effect ──
   useEffect(() => {
     const c = containerRef.current;
@@ -206,21 +253,21 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     const dark = theme === "dark", W = c.clientWidth || 800, H = c.clientHeight || 500;
     let aborted = false;
 
-    // Destroy previous graph
+    // Kill animation loop
+    if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = 0; }
+    // Destroy previous
     if (graphRef.current) { try { graphRef.current.destroy(); } catch { /* ok */ } graphRef.current = null; }
     while (c.firstChild) c.removeChild(c.firstChild);
 
-    // Recreate tooltip element
+    // Tooltip element
     const tip = document.createElement("div");
-    tip.style.cssText = "display:none;position:fixed;z-index:9999;pointer-events:none;padding:8px 10px;border-radius:var(--r-sm,8px);background:var(--bg-surface,#fff);border:1px solid var(--bd-100,#e2e8f0);box-shadow:var(--sh-lg,0 8px 30px rgba(15,43,91,0.08));font-size:11px;max-width:240px;";
+    tip.style.cssText = "display:none;position:fixed;z-index:9999;pointer-events:none;padding:8px 10px;border-radius:8px;background:var(--bg-surface,#fff);border:1px solid var(--bd-100);box-shadow:var(--sh-lg);font-size:11px;max-width:240px;";
     c.appendChild(tip);
     tooltipRef.current = tip;
 
     try {
       const g = new Graph({
-        container: c,
-        width: W,
-        height: H,
+        container: c, width: W, height: H,
         autoFit: "view",
         padding: [80, 80, 80, 80],
         animation: false,
@@ -229,12 +276,12 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
         layout: {
           type: "d3-force",
           preventOverlap: true,
-          nodeSize: 48,
-          linkDistance: 160,
+          nodeSize: 52,
+          linkDistance: 170,
           animate: true,
           alphaDecay: 0.012,
           alphaMin: 0.001,
-          collideStrength: 1.5,
+          collideStrength: 1.8,
           forceSimulationIterations: 200,
         },
         behaviors: [
@@ -248,8 +295,8 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
           size: [150, 110],
           position: "right-bottom",
           style: {
-            background: dark ? "#1e293b" : "#f8fafc",
-            border: `2px solid ${dark ? "#8899AA" : "#c5d2de"}`,
+            background: dark ? "#1e293b" : "#ffffff",
+            border: `2px solid ${dark ? "#AABBCC" : "#667788"}`,
             borderRadius: 6,
           },
         }],
@@ -258,30 +305,34 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
           state: {
             active: {
               stroke: "#FFFFFF",
-              lineWidth: 6,
+              lineWidth: 7,
               labelFontSize: 14,
               labelFontWeight: 700,
               labelFill: "#FFFFFF",
-              shadowColor: "rgba(255,255,255,0.9)",
-              shadowBlur: 35,
+              shadowColor: "rgba(255,255,255,0.95)",
+              shadowBlur: 40,
+              shadowOffsetX: 0,
+              shadowOffsetY: 0,
             },
-            inactive: { opacity: dark ? 0.22 : 0.18 },
+            inactive: { opacity: dark ? 0.20 : 0.15 },
             selected: {
               stroke: "#FFFFFF",
-              lineWidth: 8,
+              lineWidth: 9,
               labelFontSize: 16,
               labelFontWeight: 700,
               labelFill: "#FFD700",
               shadowColor: "rgba(255,215,0,0.95)",
-              shadowBlur: 45,
+              shadowBlur: 50,
+              shadowOffsetX: 0,
+              shadowOffsetY: 0,
             },
           },
         },
         edge: {
           type: "line",
           state: {
-            active: { stroke: "#FFFFFF", lineWidth: 5, shadowColor: "rgba(255,255,255,0.7)", shadowBlur: 15 },
-            inactive: { opacity: dark ? 0.15 : 0.12 },
+            active: { stroke: "#FFFFFF", lineWidth: 6, shadowColor: "rgba(255,255,255,0.8)", shadowBlur: 18 },
+            inactive: { opacity: dark ? 0.12 : 0.10 },
           },
         },
       });
@@ -291,34 +342,31 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
         graphRef.current = g;
         if (onReady) onReady(g);
         applyHL(g, search, filter);
+        // Start floating animation
+        startFloatAnimation(g);
       });
 
-      // ── Node click → select + callback ──
+      // ── Events ──
       g.on("node:click", (evt: any) => {
         const nid = evt?.target?.id;
         if (!nid || !onNodeClick) return;
         const found = nodes.find(n => String(n.id) === nid);
         if (!found) return;
-        // Deselect all others, select this one
         const nstates: Record<string, string[]> = {};
         g.getNodeData().forEach(nd => { nstates[nd.id] = nd.id === nid ? ["selected"] : []; });
         g.setElementState(nstates);
         onNodeClick(found);
       });
 
-      // ── Canvas click → deselect ──
       g.on("canvas:click", () => {
         const reset: Record<string, string[]> = {};
         g.getNodeData().forEach(nd => { reset[nd.id] = []; });
         g.setElementState(reset);
       });
 
-      // ── Node hover → tooltip ──
       g.on("node:pointerenter", (evt: any) => {
         const nd = evt?.target?.id ? g.getNodeData().find((n: any) => n.id === evt.target.id) : null;
-        if (nd?.data && evt.clientX) {
-          showTooltip(evt.clientX, evt.clientY, nd.data);
-        }
+        if (nd?.data && evt.clientX) showTooltip(evt.clientX, evt.clientY, nd.data);
       });
       g.on("node:pointermove", (evt: any) => {
         if (tooltipRef.current?.style.display === "block" && evt.clientX) {
@@ -328,15 +376,15 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
       });
       g.on("node:pointerleave", () => hideTooltip());
 
-      // ── Keyboard shortcuts ──
       const onKey = (e: KeyboardEvent) => {
         if (e.key === "f" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); try { g.fitView({ padding: 80 }); } catch { /* ok */ } }
-        if (e.key === "Escape") { g.getNodeData().forEach(nd => g.setElementState({ [nd.id]: {} })); }
+        if (e.key === "Escape") { const r: Record<string, string[]> = {}; g.getNodeData().forEach(nd => { r[nd.id] = []; }); g.setElementState(r); }
       };
       window.addEventListener("keydown", onKey);
 
       return () => {
         aborted = true;
+        if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = 0; }
         window.removeEventListener("keydown", onKey);
         try { g.destroy(); } catch { /* ok */ }
         graphRef.current = null;
@@ -345,18 +393,15 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     } catch (e) { console.error("G6:", e); }
   }, [nodes.length, edges.length, theme]);
 
-  // ── Search/filter reapply ──
+  // ── Search/filter ──
   useEffect(() => {
     const g = graphRef.current;
     if (g) applyHL(g, search, filter);
   }, [search, filter]);
 
-  // ── Resize handler ──
+  // ── Resize ──
   useEffect(() => {
-    const r = () => {
-      const g = graphRef.current, c = containerRef.current;
-      if (g && c) g.setSize(c.clientWidth, c.clientHeight);
-    };
+    const r = () => { const g = graphRef.current, c = containerRef.current; if (g && c) g.setSize(c.clientWidth, c.clientHeight); };
     window.addEventListener("resize", r);
     return () => window.removeEventListener("resize", r);
   }, []);
