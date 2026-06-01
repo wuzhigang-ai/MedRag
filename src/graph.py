@@ -97,18 +97,18 @@ class GraphManager:
             return 'drug'
         if any(k in nl for k in ['surgery','repair','replacement','graft',
             'stent','angioplasty','catheter','ablation','resection','transplant',
-            'TEVAR','EVAR','CPB','CABG','PCI','ECMO','CRRT','balloon pump',
+            'tevar','evar','cpb','cabg','pci','ecmo','crrt','balloon pump',
             'impella','ventricular assist','pacemaker','defibrillator','bypass',
             'embolization','anastomosis','thoracotomy',' laparotomy','endoscopy',
             '手术','治疗','修复','移植','支架','导管','消融','切除','置换','搭桥',
             '介入','管理']):
             return 'treatment'
-        if any(k in nl for k in ['CT','MRI','ultrasound','echocardiograph',
-            'angiograph','X-ray','PET','SPECT','ECG','EEG','EMG','lab','assay',
-            'biomarker','troponin','creatinine','GFR','eGFR','BUN','ALT','AST',
-            'HbA1c','glucose','cholesterol','LDL','HDL','biopsy','endoscopy',
+        if any(k in nl for k in ['ct','mri','ultrasound','echocardiograph',
+            'angiograph','x-ray','pet','spect','ecg','eeg','emg','lab','assay',
+            'biomarker','troponin','creatinine','gfr','egfr','bun','alt','ast',
+            'hba1c','glucose','cholesterol','ldl','hdl','biopsy','endoscopy',
             'colonoscopy','bronchoscopy','cystoscopy','检查','检测','超声',
-            '造影','图','试验','评分','量表','Cystatin','Equation']):
+            '造影','图','试验','评分','量表','cystatin','equation']):
             return 'check'
         if any(k in nl for k in ['pain','fever','edema','dyspnea','fatigue',
             'nausea','vomiting','bleeding','hemorrhage','hypertension','hypotension',
@@ -124,9 +124,9 @@ class GraphManager:
             'Cohort']):
             return 'anatomy'
         if any(k in nl for k in ['guideline','consensus','recommendation',
-            'trial','RCT','meta-analysis','systematic review','cohort','registry',
-            '指南','共识','推荐','试验','研究','证据','ClinicalTrials','NIH','FDA',
-            'EMA']):
+            'trial','rct','meta-analysis','systematic review','cohort','registry',
+            '指南','共识','推荐','试验','研究','证据','clinicaltrials','nih','fda',
+            'ema']):
             return 'guideline'
         if any(k in nl for k in ['score','index','rate','ratio','level',
             'pressure','volume','output','fraction','clearance','survival',
