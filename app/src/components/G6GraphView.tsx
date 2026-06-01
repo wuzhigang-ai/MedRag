@@ -280,7 +280,7 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
     };
     window.addEventListener("keydown", onKey);
 
-    // ── Floating animation — more visible displacement + draw() to commit ──
+    // ── Floating animation — 1000x visible displacement ──
     function startFloatAnim(graph: Graph) {
       const posMap = posMapRef.current;
       posMap.clear();
@@ -297,18 +297,15 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
           try {
             const allIds = Array.from(posMap.keys());
             if (allIds.length === 0) return;
-            const batchSize = Math.min(50, allIds.length);
-            const pool = [...allIds]; const batch: string[] = [];
-            for (let i = 0; i < batchSize && pool.length > 0; i++) {
-              batch.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-            }
+            // Update ALL nodes every tick
             const updates: { id: string; style: { x: number; y: number } }[] = [];
-            for (const id of batch) {
+            for (const id of allIds) {
               const p = posMap.get(id); if (!p) continue;
-              p.vx += (Math.random() - 0.5) * 0.5; p.vy += (Math.random() - 0.5) * 0.5;
-              p.vx *= 0.92; p.vy *= 0.92;
+              p.vx += (Math.random() - 0.5) * 6;
+              p.vy += (Math.random() - 0.5) * 6;
+              p.vx *= 0.82; p.vy *= 0.82;
               const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-              if (spd > 4.0) { p.vx *= 4.0 / spd; p.vy *= 4.0 / spd; }
+              if (spd > 15) { p.vx *= 15 / spd; p.vy *= 15 / spd; }
               p.x += p.vx; p.y += p.vy;
               updates.push({ id, style: { x: p.x, y: p.y } });
             }
@@ -317,8 +314,8 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
               try { graph.draw(); } catch { /* ok */ }
             }
           } catch { /* ok */ }
-        }, 80);
-      }, 1200);
+        }, 50);
+      }, 1500);
     }
 
     // ── Cleanup — ONLY on unmount ──
@@ -391,18 +388,14 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
         try {
           const allIds = Array.from(posMap.keys());
           if (allIds.length === 0) return;
-          const batchSize = Math.min(50, allIds.length);
-          const pool = [...allIds]; const batch: string[] = [];
-          for (let i = 0; i < batchSize && pool.length > 0; i++) {
-            batch.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-          }
           const updates: { id: string; style: { x: number; y: number } }[] = [];
-          for (const id of batch) {
+          for (const id of allIds) {
             const p = posMap.get(id); if (!p) continue;
-            p.vx += (Math.random() - 0.5) * 0.5; p.vy += (Math.random() - 0.5) * 0.5;
-            p.vx *= 0.92; p.vy *= 0.92;
+            p.vx += (Math.random() - 0.5) * 6;
+            p.vy += (Math.random() - 0.5) * 6;
+            p.vx *= 0.82; p.vy *= 0.82;
             const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-            if (spd > 4.0) { p.vx *= 4.0 / spd; p.vy *= 4.0 / spd; }
+            if (spd > 15) { p.vx *= 15 / spd; p.vy *= 15 / spd; }
             p.x += p.vx; p.y += p.vy;
             updates.push({ id, style: { x: p.x, y: p.y } });
           }
@@ -411,8 +404,8 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
             try { graph.draw(); } catch { /* ok */ }
           }
         } catch { /* ok */ }
-      }, 80);
-    }, 1200);
+      }, 50);
+    }, 1500);
   }
 
   // ── Search/filter ──
