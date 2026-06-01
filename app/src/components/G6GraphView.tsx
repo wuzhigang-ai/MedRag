@@ -28,7 +28,7 @@ function buildData(nodes:GNode[],edges:GEdge[]){
       const lbl=(n.label||"").length>20?(n.label||"").slice(0,18)+"…":(n.label||"");
       return{
         id:String(n.id),data:{label:n.label,group:n.group||"other",weight:n.weight||1,description:n.description||""},
-        style:{size:r*2,fill,stroke:dark?glow+"88":fill+"44",lineWidth:1.5,labelText:lbl,labelFill:dark?"#cbd5e1":"#334155",labelFontSize:10,labelPlacement:"bottom",labelOffsetY:r/2+6,shadowBlur:dark?8:4,shadowColor:dark?glow+"55":glow+"22",cursor:"pointer",opacity:0.92},
+        style:{size:r*2,fill,stroke:dark?glow+"88":fill+"44",lineWidth:1.5,labelText:lbl,labelFill:dark?"#cbd5e1":"#334155",labelFontSize:10,labelPlacement:"bottom",labelOffsetY:r/2+6,cursor:"pointer"},
         states:["active","inactive","selected"],
       };
     }),
@@ -79,9 +79,9 @@ export default function G6GraphView({nodes,edges,search,filter,onNodeClick,onRea
         behaviors:["drag-canvas","zoom-canvas",{type:"drag-element",enableTransient:true},{type:"hover-activate",degree:1,direction:"both"}],
         plugins:[{type:"minimap",size:[150,110],position:"right-bottom",style:{background:dark?"#1e293b":"#f8fafc",border:`1px solid ${dark?"#334155":"#e2e8f0"}`,borderRadius:6}}],
         node:{type:"circle",
-          state:{active:{opacity:1,stroke:"#FFD700",lineWidth:3,shadowBlur:20,shadowColor:"#FFD700",labelFontSize:12},inactive:{opacity:dark?0.10:0.08,shadowBlur:0},selected:{stroke:"#FFD700",lineWidth:4,shadowBlur:24,shadowColor:"#FFD700",labelFontSize:14,labelFill:"#FFD700"}},
+          state:{active:{stroke:"#FFD700",lineWidth:3,labelFontSize:12},inactive:{opacity:dark?0.10:0.08},selected:{stroke:"#FFD700",lineWidth:4,labelFontSize:14,labelFill:"#FFD700"}},
         },
-        edge:{type:"line",state:{active:{stroke:"#FFD700",opacity:0.55,lineWidth:2},inactive:{opacity:dark?0.02:0.04}}},
+        edge:{type:"line",state:{active:{stroke:"#FFD700",lineWidth:2},inactive:{opacity:dark?0.04:0.06}}},
       });
       g.render().then(()=>{graphRef.current=g;if(onReady)onReady(g);applyHL(g,search,filter)});
       g.on("node:click",(evt:any)=>{const nid=evt?.target?.id;if(nid&&onNodeClick){const f=nodes.find(n=>String(n.id)===nid);if(f){g.getNodeData().forEach(nd=>g.setElementState({[nd.id]:nd.id===nid?"selected":{}}));onNodeClick(f)}}});
