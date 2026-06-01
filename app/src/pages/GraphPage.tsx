@@ -22,11 +22,11 @@ import type { Graph } from "@antv/g6";
 
 // ═══ Node type → display color (matches G6GraphView NC palette) ═══
 const ntColors: Record<string, string> = {
-  disease: "#CC0000", drug: "#0055CC", symptom: "#CC4400",
-  treatment: "#008833", clinical_indicator: "#5500CC", anatomy: "#007788",
-  procedure: "#CC0066", gene: "#4400CC", pathogen: "#BB0000",
-  guideline: "#AA8800", other: "#556677", check: "#6622CC",
-  exam: "#6622CC", metric: "#0055CC",
+  disease: "#DD0000", drug: "#0055DD", symptom: "#DD4400",
+  treatment: "#00AA44", clinical_indicator: "#6600DD", anatomy: "#0099AA",
+  procedure: "#DD0077", gene: "#5500DD", pathogen: "#CC0000",
+  guideline: "#BB9900", other: "#667788", check: "#7722DD",
+  exam: "#7722DD", metric: "#0055DD",
 };
 
 const ntLabels: Record<string, string> = {
@@ -44,9 +44,9 @@ const rtLabels: Record<string, string> = {
 
 // Edge type → display color for relation badges
 const rtColors: Record<string, string> = {
-  treats: "#44FF88", causes: "#FF5555", associated_with: "#66AAFF",
-  contraindicated: "#FF7733", diagnoses: "#AA66FF", prevents: "#44EEFF",
-  symptom_of: "#FF8855", interacts_with: "#FF4499", related_to: "#AABBCC",
+  treats: "#AAFFCC", causes: "#FFAAAA", associated_with: "#AADDFF",
+  contraindicated: "#FFBB99", diagnoses: "#EECCFF", prevents: "#AAFFFF",
+  symptom_of: "#FFBB99", interacts_with: "#FFBBEE", related_to: "#DDEEFF",
 };
 
 export default function GraphPage() {

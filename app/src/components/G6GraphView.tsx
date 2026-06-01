@@ -12,32 +12,32 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Graph } from "@antv/g6";
 
-// ═══ Extreme Contrast Color Palette ═══
+// ═══ 100x Brightness Color Palette ═══
 const NC: Record<string, { f: string; s: string; df: string; ds: string }> = {
-  disease:    { f: "#CC0000", s: "#660000", df: "#FF5555", ds: "#FFFFFF" },
-  drug:       { f: "#0055CC", s: "#002266", df: "#5599FF", ds: "#FFFFFF" },
-  symptom:    { f: "#CC4400", s: "#662200", df: "#FF7733", ds: "#FFFFFF" },
-  treatment:  { f: "#008833", s: "#004411", df: "#33FF66", ds: "#FFFFFF" },
-  check:      { f: "#6622CC", s: "#331166", df: "#BB66FF", ds: "#FFFFFF" },
-  exam:       { f: "#6622CC", s: "#331166", df: "#BB66FF", ds: "#FFFFFF" },
-  clinical_indicator: { f: "#5500CC", s: "#220066", df: "#AA55FF", ds: "#FFFFFF" },
-  anatomy:    { f: "#007788", s: "#003344", df: "#22EEFF", ds: "#FFFFFF" },
-  procedure:  { f: "#CC0066", s: "#660033", df: "#FF4499", ds: "#FFFFFF" },
-  gene:       { f: "#4400CC", s: "#220066", df: "#9944FF", ds: "#FFFFFF" },
-  pathogen:   { f: "#BB0000", s: "#550000", df: "#FF3333", ds: "#FFFFFF" },
-  guideline:  { f: "#AA8800", s: "#554400", df: "#FFDD33", ds: "#FFFFFF" },
-  metric:     { f: "#0055CC", s: "#002266", df: "#5599FF", ds: "#FFFFFF" },
-  other:      { f: "#556677", s: "#334455", df: "#AABBCC", ds: "#FFFFFF" },
+  disease:    { f: "#DD0000", s: "#880000", df: "#FFAAAA", ds: "#FFFFFF" },
+  drug:       { f: "#0055DD", s: "#002288", df: "#AADDFF", ds: "#FFFFFF" },
+  symptom:    { f: "#DD4400", s: "#882200", df: "#FFBB99", ds: "#FFFFFF" },
+  treatment:  { f: "#00AA44", s: "#005522", df: "#99FFCC", ds: "#FFFFFF" },
+  check:      { f: "#7722DD", s: "#441188", df: "#EECCFF", ds: "#FFFFFF" },
+  exam:       { f: "#7722DD", s: "#441188", df: "#EECCFF", ds: "#FFFFFF" },
+  clinical_indicator: { f: "#6600DD", s: "#330088", df: "#CCBBFF", ds: "#FFFFFF" },
+  anatomy:    { f: "#0099AA", s: "#004455", df: "#AAFFFF", ds: "#FFFFFF" },
+  procedure:  { f: "#DD0077", s: "#880044", df: "#FFBBDD", ds: "#FFFFFF" },
+  gene:       { f: "#5500DD", s: "#220088", df: "#CCAAFF", ds: "#FFFFFF" },
+  pathogen:   { f: "#CC0000", s: "#770000", df: "#FF9999", ds: "#FFFFFF" },
+  guideline:  { f: "#BB9900", s: "#664400", df: "#FFF0AA", ds: "#FFFFFF" },
+  metric:     { f: "#0055DD", s: "#002288", df: "#AADDFF", ds: "#FFFFFF" },
+  other:      { f: "#667788", s: "#445566", df: "#EEEEFF", ds: "#FFFFFF" },
 };
 
 const EC: Record<string, { l: string; d: string }> = {
-  treats: { l: "#008833", d: "#55FF88" }, causes: { l: "#CC0000", d: "#FF5555" },
-  associated_with: { l: "#0055AA", d: "#5599FF" }, contraindicated: { l: "#CC3300", d: "#FF7733" },
-  diagnoses: { l: "#6622BB", d: "#AA55FF" }, prevents: { l: "#007788", d: "#44EEFF" },
-  symptom_of: { l: "#CC4400", d: "#FF8855" }, interacts_with: { l: "#BB0055", d: "#FF4499" },
-  related_to: { l: "#667788", d: "#AABBCC" },
+  treats: { l: "#00AA44", d: "#AAFFCC" }, causes: { l: "#DD0000", d: "#FFAAAA" },
+  associated_with: { l: "#0066CC", d: "#AADDFF" }, contraindicated: { l: "#DD4400", d: "#FFBB99" },
+  diagnoses: { l: "#7722DD", d: "#EECCFF" }, prevents: { l: "#0099AA", d: "#AAFFFF" },
+  symptom_of: { l: "#DD5500", d: "#FFBB99" }, interacts_with: { l: "#DD0077", d: "#FFBBEE" },
+  related_to: { l: "#8899AA", d: "#DDEEFF" },
 };
-const EDGE_DEFAULT = { l: "#667788", d: "#AABBCC" };
+const EDGE_DEFAULT = { l: "#8899AA", d: "#DDEEFF" };
 
 function nc(g: string) { return NC[g] || NC.other; }
 function ec(r: string, dark: boolean) { const c = EC[r] || EDGE_DEFAULT; return dark ? c.d : c.l; }
@@ -60,7 +60,7 @@ function buildNodeStyle(n: GNode, dark: boolean) {
     size: r * 2,
     fill: dark ? c.df : c.f,
     stroke: dark ? c.ds : c.s,
-    lineWidth: dark ? 4 : 4.5,
+    lineWidth: dark ? 5 : 5.5,
     labelText: lbl,
     labelFill: dark ? "#FFFFFF" : "#000000",
     labelFontSize: 12,
@@ -68,8 +68,8 @@ function buildNodeStyle(n: GNode, dark: boolean) {
     labelPlacement: "bottom" as const,
     labelOffsetY: r / 2 + 6,
     cursor: "pointer" as const,
-    shadowColor: dark ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.45)",
-    shadowBlur: dark ? 18 : 12,
+    shadowColor: dark ? c.df : c.f,
+    shadowBlur: dark ? 30 : 20,
     shadowOffsetX: 3,
     shadowOffsetY: 4,
   };
@@ -78,10 +78,10 @@ function buildNodeStyle(n: GNode, dark: boolean) {
 function buildEdgeStyle(e: GEdge, dark: boolean) {
   return {
     stroke: ec(e.relationType || "", dark),
-    lineWidth: 3 + (e.weight || 1) * 0.5,
+    lineWidth: 4 + (e.weight || 1) * 0.8,
     endArrow: false,
-    shadowColor: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.10)",
-    shadowBlur: 6,
+    shadowColor: dark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.15)",
+    shadowBlur: 10,
   };
 }
 
@@ -198,16 +198,16 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
       node: {
         type: "circle",
         state: {
-          active: { stroke: "#FFFFFF", lineWidth: 7, labelFontSize: 14, labelFontWeight: 700, labelFill: "#FFFFFF", shadowColor: "rgba(255,255,255,0.95)", shadowBlur: 40 },
-          inactive: { opacity: dark ? 0.20 : 0.15 },
-          selected: { stroke: "#FFFFFF", lineWidth: 9, labelFontSize: 16, labelFontWeight: 700, labelFill: "#FFD700", shadowColor: "rgba(255,215,0,0.95)", shadowBlur: 50 },
+          active: { stroke: "#FFFFFF", lineWidth: 10, labelFontSize: 16, labelFontWeight: 700, labelFill: "#FFFFFF", shadowColor: "rgba(255,255,255,0.98)", shadowBlur: 60 },
+          inactive: { opacity: dark ? 0.25 : 0.20 },
+          selected: { stroke: "#FFD700", lineWidth: 12, labelFontSize: 18, labelFontWeight: 700, labelFill: "#FFD700", shadowColor: "rgba(255,215,0,0.98)", shadowBlur: 70 },
         },
       },
       edge: {
         type: "line",
         state: {
-          active: { stroke: "#FFFFFF", lineWidth: 6, shadowColor: "rgba(255,255,255,0.8)", shadowBlur: 18 },
-          inactive: { opacity: dark ? 0.12 : 0.10 },
+          active: { stroke: "#FFFFFF", lineWidth: 8, shadowColor: "rgba(255,255,255,0.9)", shadowBlur: 25 },
+          inactive: { opacity: dark ? 0.18 : 0.14 },
         },
       },
     });
