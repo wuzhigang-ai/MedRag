@@ -532,7 +532,7 @@ export default function ParsingPage() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
               <thead>
                 <tr style={{ borderBottom: "1.5px solid var(--bd-200)" }}>
-                  {["任务ID","文件名称","文献归宿","用户","解析状态","FAISS入库","知识图谱","时间"].map(h => (
+                  {["任务ID","文件名称","文献归宿","用户","解析状态","FAISS入库","知识图谱","时间","流程"].map(h => (
                     <th key={h} style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "var(--tx-100)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -543,6 +543,7 @@ export default function ParsingPage() {
                   const faiss = getFaissLabel(task);
                   const lrag = getLightragLabel(task);
                   const destiny = getUploadDestiny(task, taskList);
+                  const phase = getTaskPhase(task.status);
                   const createdAt = task.createdAt || task.created_at || task.uploadTime;
                   const userName = task.userName || task.user_name || task.uploadedBy || task.uploaded_by || "—";
                   return (
@@ -562,7 +563,6 @@ export default function ParsingPage() {
                       <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
                         <span title={destiny.desc} style={{ fontSize: 10, fontWeight: 500, color: destiny.color, display: "inline-flex", alignItems: "center", gap: 3, cursor: "default" }}>{destiny.icon}{destiny.label}</span>
                       </td>
-                      <td style={{ padding: "7px 8px", color: "var(--tx-300)", fontSize: 10, whiteSpace: "nowrap" }}>{userName}</td>
                       <td style={{ padding: "7px 8px", whiteSpace: "nowrap" }}>
                         <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 7px", borderRadius: 100, background: st?.bg, color: st?.color, display: "inline-flex", alignItems: "center", gap: 3 }}>{st?.icon}{st?.label}</span>
                       </td>
@@ -573,6 +573,27 @@ export default function ParsingPage() {
                         <span className={`m-badge ${lrag.cls}`} style={{ fontSize: 9, padding: "2px 6px" }}>{lrag.icon} {lrag.label}</span>
                       </td>
                       <td style={{ padding: "7px 8px", color: "var(--tx-100)", whiteSpace: "nowrap", fontSize: 10 }}>{formatTime(createdAt)}</td>
+                      <td style={{ padding: "7px 8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+                          {flowPhases.map((ph, pi) => (
+                            <div key={pi} style={{ display: "flex", alignItems: "center" }}>
+                              <div style={{
+                                width: 16, height: 16, borderRadius: "50%",
+                                background: pi <= phase ? `${ph.color}18` : "var(--bg-hover)",
+                                color: pi <= phase ? ph.color : "var(--tx-100)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: 8, transition: "all 0.3s",
+                                border: pi === phase ? `1.5px solid ${ph.color}` : `1px solid ${pi <= phase ? `${ph.color}30` : "var(--bd-200)"}`,
+                              }} title={ph.label}>
+                                {pi < phase ? <FiCheck size={6} /> : ph.icon}
+                              </div>
+                              {pi < flowPhases.length - 1 && (
+                                <div style={{ width: 8, height: 1.5, background: pi < phase ? ph.color : "var(--bd-200)", opacity: pi < phase ? 0.35 : 1 }} />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
