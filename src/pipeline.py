@@ -614,18 +614,11 @@ Few-shot 示例：
         target_docs = self._classify_query_to_docs(query)
 
         if target_docs and len(target_docs) > 0:
+            # Hard filter: physically remove non-matching docs before any scoring
+            results = [r for r in results
+                       if any(td in r["source"] or r["source"] in td for td in target_docs)]
             for r in results:
-                r_doc = r["source"].split(" [p.")[0]
-                if any(td in r_doc or r_doc in td for td in target_docs):
-                    r["score"] = min(1.0, r["score"] * 1.3)
-                else:
-                    r["score"] = r["score"] * 0.01  # 99% penalty for non-matching docs
-            results.sort(key=lambda x: x["score"], reverse=True)
-
-            # Multi-doc: keep ALL matching docs. Single-doc: strict filter only that doc.
-            if len(target_docs) == 1:
-                target = target_docs[0]
-                results = [r for r in results if target in r["source"]]
+                r["score"] = min(1.0, r["score"] * 1.3)
 
         return [r for r in results if r["score"] > min_score][:top_k]
 
