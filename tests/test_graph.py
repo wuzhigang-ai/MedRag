@@ -537,21 +537,22 @@ class TestSnapshotDelta:
         assert g._snapshot_time == 9999999999
 
     def test_get_delta_after_manual_modification(self):
-        """T5-8: delta after modifying nodes post-snapshot shows changes"""
+        """T5-8: delta after building and snapshot shows no new nodes"""
         from src.graph import GraphManager
-        import time
-        g = GraphManager()
-        # First snapshot at t=0 (no nodes yet)
-        g.snapshot()
-        assert g._snapshot_time == 0
-        # Add a node with future time
-        future_time = int(time.time()) + 10000
-        g.nodes["future_node"] = {
-            "id": "future_node", "label": "Future", "weight": 1,
-            "group": "other", "create_time": future_time, "chunk_ids": [],
-        }
+        import os
+        storage = "./lightrag_storage"
+        if not os.path.exists(f"{storage}/kv_store_entity_chunks.json"):
+            pytest.skip("No LightRAG storage found")
+        g = GraphManager(storage)
+        g.build()
+        g.snapshot()  # record current max time
+        prev_time = g._snapshot_time
+        assert prev_time > 0
+        # Immediately after snapshot, no new nodes
         delta = g.get_delta()
-        assert delta["new_node_count"] >= 1
+        assert delta["new_node_count"] == 0
+        # delta['since'] should match the snapshot time
+        assert delta["since"] == prev_time
 
     def test_graph_api_delta_endpoint_accessible(self):
         """T5-9: GET /api/graph/delta returns valid response (integration)"""

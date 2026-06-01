@@ -103,6 +103,12 @@ class GraphManager:
             '手术','治疗','修复','移植','支架','导管','消融','切除','置换','搭桥',
             '介入','管理']):
             return 'treatment'
+        # Guideline check BEFORE check (RCT would match 'ct' substring otherwise)
+        if any(k in nl for k in ['guideline','consensus','recommendation',
+            'trial','rct','meta-analysis','systematic review','cohort','registry',
+            '指南','共识','推荐','试验','研究','证据','clinicaltrials','nih','fda',
+            'ema']):
+            return 'guideline'
         if any(k in nl for k in ['ct','mri','ultrasound','echocardiograph',
             'angiograph','x-ray','pet','spect','ecg','eeg','emg','lab','assay',
             'biomarker','troponin','creatinine','gfr','egfr','bun','alt','ast',
@@ -123,11 +129,6 @@ class GraphManager:
             '血管','心脏','肾脏','肝脏','脑','肺','动脉','静脉','瓣膜','Gene',
             'Cohort']):
             return 'anatomy'
-        if any(k in nl for k in ['guideline','consensus','recommendation',
-            'trial','rct','meta-analysis','systematic review','cohort','registry',
-            '指南','共识','推荐','试验','研究','证据','clinicaltrials','nih','fda',
-            'ema']):
-            return 'guideline'
         if any(k in nl for k in ['score','index','rate','ratio','level',
             'pressure','volume','output','fraction','clearance','survival',
             'mortality','morbidity','incidence','prevalence','率','值','指数',
