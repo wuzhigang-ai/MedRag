@@ -109,19 +109,35 @@ function applyHL(g: Graph, search: string, filter: string) {
   try {
     const s = search.trim().toLowerCase(), f = filter;
     const nd = g.getNodeData();
-    if (!s && !f) { nd.forEach(n => g.setElementState({ [n.id]: {} })); return; }
+    if (!s && !f) {
+      // Reset all states — use [] not {} for G6 v5 compatibility
+      const reset: Record<string, string[]> = {};
+      nd.forEach(n => { reset[n.id] = []; });
+      g.setElementState(reset);
+      // Also reset edges
+      const ereset: Record<string, string[]> = {};
+      g.getEdgeData().forEach(e => { ereset[e.id!] = []; });
+      g.setElementState(ereset);
+      return;
+    }
+    // Batch node states
+    const nstates: Record<string, string | string[]> = {};
     nd.forEach(n => {
       const l = ((n.data?.label as string) || "").toLowerCase();
       const gr = (n.data?.group as string) || "";
-      g.setElementState({ [n.id]: (!s || l.includes(s)) && (!f || gr === f) ? "active" : "inactive" });
+      nstates[n.id] = (!s || l.includes(s)) && (!f || gr === f) ? "active" : "inactive";
     });
+    g.setElementState(nstates);
+    // Batch edge states based on connected node states
+    const estates: Record<string, string | string[]> = {};
     g.getEdgeData().forEach(e => {
       const sa = g.getElementState(String(e.source));
       const ta = g.getElementState(String(e.target));
       const bothActive = !sa?.includes("inactive") && !ta?.includes("inactive");
-      g.setElementState({ [e.id!]: bothActive ? "active" : "inactive" });
+      estates[e.id!] = bothActive ? "active" : "inactive";
     });
-  } catch { /* graph may be mid-destroy */ }
+    g.setElementState(estates);
+  } catch (err) { console.error("applyHL error:", err); }
 }
 
 export default function G6GraphView({ nodes, edges, search, filter, onNodeClick, onReady }: {
@@ -263,13 +279,17 @@ export default function G6GraphView({ nodes, edges, search, filter, onNodeClick,
         const found = nodes.find(n => String(n.id) === nid);
         if (!found) return;
         // Deselect all others, select this one
-        g.getNodeData().forEach(nd => g.setElementState({ [nd.id]: nd.id === nid ? "selected" : {} }));
+        const nstates: Record<string, string[]> = {};
+        g.getNodeData().forEach(nd => { nstates[nd.id] = nd.id === nid ? ["selected"] : []; });
+        g.setElementState(nstates);
         onNodeClick(found);
       });
 
       // ── Canvas click → deselect ──
       g.on("canvas:click", () => {
-        g.getNodeData().forEach(nd => g.setElementState({ [nd.id]: {} }));
+        const reset: Record<string, string[]> = {};
+        g.getNodeData().forEach(nd => { reset[nd.id] = []; });
+        g.setElementState(reset);
       });
 
       // ── Node hover → tooltip ──
