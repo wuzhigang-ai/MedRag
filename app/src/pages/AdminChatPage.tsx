@@ -46,7 +46,7 @@ const quickQs = [
 ];
 
 /* ── Markdown Renderer ── */
-function MdRender({ content }: { content: string }) {
+function MdRender({ content, isUser }: { content: string; isUser: boolean }) {
   const lines = content.split("\n");
   const elements: React.ReactNode[] = [];
   let tableRows: string[] = [];
@@ -62,10 +62,10 @@ function MdRender({ content }: { content: string }) {
     const headers = tableRows[0].split("|").map(h => h.trim()).filter(Boolean);
     const dataRows = tableRows.slice(sepIdx + 1).filter(r => !isSepRow(r)).map(r => r.split("|").map(c => c.trim()).filter(Boolean));
     elements.push(
-      <div key={`t-${elements.length}`} style={{ overflow: "auto", margin: "8px 0", borderRadius: 8, border: "1px solid var(--bd-100)" }}>
+      <div key={`t-${elements.length}`} style={{ overflow: "auto", margin: "8px 0", borderRadius: 8, border: `1px solid ${isUser ? "rgba(255,255,255,0.2)" : "var(--bd-100)"}` }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-          <thead><tr style={{ background: "var(--bg-hover)" }}>{headers.map((h, i) => <th key={i} style={{ padding: "6px 10px", textAlign: "left", fontWeight: 700, color: "var(--tx-700)", fontSize: 10, borderBottom: "1px solid var(--bd-200)", whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
-          <tbody>{dataRows.map((row, ri) => <tr key={ri} style={{ borderBottom: ri < dataRows.length - 1 ? "1px solid var(--bd-100)" : "none" }}>{row.map((cell, ci) => <td key={ci} style={{ padding: "5px 10px", color: "var(--tx-500)", whiteSpace: "nowrap" }}>{cell}</td>)}</tr>)}</tbody>
+          <thead><tr style={{ background: isUser ? "rgba(255,255,255,0.1)" : "var(--bg-hover)" }}>{headers.map((h, i) => <th key={i} style={{ padding: "6px 10px", textAlign: "left", fontWeight: 700, color: isUser ? "rgba(255,255,255,0.95)" : "var(--tx-700)", fontSize: 10, borderBottom: `1px solid ${isUser ? "rgba(255,255,255,0.2)" : "var(--bd-200)"}`, whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
+          <tbody>{dataRows.map((row, ri) => <tr key={ri} style={{ borderBottom: ri < dataRows.length - 1 ? `1px solid ${isUser ? "rgba(255,255,255,0.1)" : "var(--bd-100)"}` : "none" }}>{row.map((cell, ci) => <td key={ci} style={{ padding: "5px 10px", color: isUser ? "rgba(255,255,255,0.85)" : "var(--tx-500)", whiteSpace: "nowrap" }}>{cell}</td>)}</tr>)}</tbody>
         </table>
       </div>
     );
@@ -75,14 +75,14 @@ function MdRender({ content }: { content: string }) {
   lines.forEach((line, i) => {
     if (line.startsWith("| ")) { tableRows.push(line); inTable = true; return; }
     if (inTable) flushTable();
-    if (line.startsWith("## ")) elements.push(<h3 key={i} style={{ fontSize: 14, fontWeight: 700, margin: "10px 0 4px", color: "var(--tx-900)" }}>{line.replace("## ", "")}</h3>);
-    else if (line.startsWith("### ")) elements.push(<h4 key={i} style={{ fontSize: 13, fontWeight: 600, margin: "8px 0 3px", color: "var(--tx-700)" }}>{line.replace("### ", "")}</h4>);
-    else if (line.startsWith("> ")) elements.push(<blockquote key={i} style={{ borderLeft: "2px solid var(--m-cyan)", paddingLeft: 8, color: "var(--tx-300)", fontSize: 11, margin: "6px 0", lineHeight: 1.6 }}>{line.replace("> ", "")}</blockquote>);
-    else if (line.trim() === "---") elements.push(<hr key={i} style={{ border: "none", borderTop: "1px solid var(--bd-100)", margin: "8px 0" }} />);
+    if (line.startsWith("## ")) elements.push(<h3 key={i} style={{ fontSize: 14, fontWeight: 700, margin: "10px 0 4px", color: isUser ? "white" : "var(--tx-900)" }}>{line.replace("## ", "")}</h3>);
+    else if (line.startsWith("### ")) elements.push(<h4 key={i} style={{ fontSize: 13, fontWeight: 600, margin: "8px 0 3px", color: isUser ? "rgba(255,255,255,0.9)" : "var(--tx-700)" }}>{line.replace("### ", "")}</h4>);
+    else if (line.startsWith("> ")) elements.push(<blockquote key={i} style={{ borderLeft: "2px solid var(--m-cyan)", paddingLeft: 8, color: isUser ? "rgba(255,255,255,0.8)" : "var(--tx-300)", fontSize: 11, margin: "6px 0", lineHeight: 1.6 }}>{line.replace("> ", "")}</blockquote>);
+    else if (line.trim() === "---") elements.push(<hr key={i} style={{ border: "none", borderTop: `1px solid ${isUser ? "rgba(255,255,255,0.2)" : "var(--bd-100)"}`, margin: "8px 0" }} />);
     else if (line.trim() === "") elements.push(<div key={i} style={{ height: 3 }} />);
-    else if (line.startsWith("- ")) elements.push(<li key={i} style={{ marginLeft: 14, fontSize: 12, color: "var(--tx-500)", lineHeight: 1.7 }}>{line.replace("- ", "")}</li>);
-    else if (/^\d+\.\s/.test(line)) elements.push(<li key={i} style={{ marginLeft: 14, fontSize: 12, color: "var(--tx-500)", lineHeight: 1.7 }}>{line.replace(/^\d+\.\s/, "")}</li>);
-    else elements.push(<p key={i} style={{ fontSize: 12, color: "var(--tx-500)", lineHeight: 1.7 }}>{line}</p>);
+    else if (line.startsWith("- ")) elements.push(<li key={i} style={{ marginLeft: 14, fontSize: 12, color: isUser ? "rgba(255,255,255,0.9)" : "var(--tx-500)", lineHeight: 1.7 }}>{line.replace("- ", "")}</li>);
+    else if (/^\d+\.\s/.test(line)) elements.push(<li key={i} style={{ marginLeft: 14, fontSize: 12, color: isUser ? "rgba(255,255,255,0.9)" : "var(--tx-500)", lineHeight: 1.7 }}>{line.replace(/^\d+\.\s/, "")}</li>);
+    else elements.push(<p key={i} style={{ fontSize: 12, color: isUser ? "rgba(255,255,255,0.9)" : "var(--tx-500)", lineHeight: 1.7 }}>{line}</p>);
   });
   if (inTable) flushTable();
   return <>{elements}</>;
@@ -273,7 +273,7 @@ export default function AdminChatPage() {
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ padding: "10px 14px", borderRadius: msg.role === "user" ? "4px 14px 14px 14px" : "14px 4px 14px 14px", background: msg.role === "user" ? "var(--m-primary)" : "var(--bg-elevated)", color: msg.role === "user" ? "white" : "var(--tx-700)", border: msg.role === "user" ? "none" : "1px solid var(--bd-100)", boxShadow: msg.role === "user" ? "none" : "var(--sh-xs)" }}>
-                      <MdRender content={msg.content} />
+                      <MdRender content={msg.content} isUser={msg.role === "user"} />
                     </div>
                     {msg.role === "assistant" && msg.citations && msg.citations.length > 0 && (
                       <div style={{ marginTop: 6, padding: 10, borderRadius: 8, background: "rgba(37,99,235,0.03)", border: "1px solid rgba(37,99,235,0.06)" }}>
