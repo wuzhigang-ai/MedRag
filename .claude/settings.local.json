@@ -248,7 +248,9 @@
       "Bash(powershell -Command 'Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }')",
       "Bash(awk '{print \"Running: PID \"$2}')",
       "Bash(powershell -Command 'Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }')",
-      "Bash(nohup npx vite --port 5173 --host)"
+      "Bash(nohup npx vite --port 5173 --host)",
+      "Bash(node -e ' *)",
+      "Bash(rm -rf node_modules/.vite)"
     ]
   }
 }
