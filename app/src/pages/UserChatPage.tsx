@@ -46,7 +46,7 @@ function toolToRagStep(toolName: string, idx: number, elapsed: number): RagStep 
 const quickQs = [
   "How old was the patient with CPS-I deficiency at the time of liver transplantation?",
   "What was unusual about the plasma citrulline level in the CPS-I-deficient infant before transplantation?",
-  "高危型TBAD中\"不可缓解的疼痛\"和\"无法控制的高血压\"的具体操作化定义（持续时间与药物种类）是什么？",
+  "哪些临床线索及检查方法有助于内异症的超声评估？",
   "肠道DIE的\"印第安头饰\"征在超声上呈什么形态？为什么DIE很少累及肠黏膜层？",
 ];
 
